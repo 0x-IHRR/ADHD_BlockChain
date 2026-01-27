@@ -37,6 +37,7 @@ contract TaskManager {
     IVerifier public verifier;
     IPenaltyStrategy public penaltyStrategy;
     address public owner;
+    address public authorizedVerifier; // Oracle 地址，唯一可调用 submitProof
 
     // ============ 事件 ============
     event TaskCreated(uint256 indexed taskId, address indexed owner, uint256 stakeAmount, uint256 deadline);
@@ -44,6 +45,7 @@ contract TaskManager {
     event TaskSettled(uint256 indexed taskId, bool refunded);
     event VerifierUpdated(address indexed newVerifier);
     event PenaltyStrategyUpdated(address indexed newStrategy);
+    event AuthorizedVerifierUpdated(address indexed newAuthorizedVerifier);
 
     // ============ 修饰符 ============
     modifier onlyOwner() {
@@ -58,6 +60,11 @@ contract TaskManager {
 
     modifier onlyTaskOwner(uint256 taskId) {
         require(tasks[taskId].owner == msg.sender, "Not task owner");
+        _;
+    }
+
+    modifier onlyAuthorizedVerifier() {
+        require(msg.sender == authorizedVerifier, "Only Oracle can verify");
         _;
     }
 
@@ -99,7 +106,7 @@ contract TaskManager {
      * @param taskId 任务 ID
      * @param verified 验证结果
      */
-    function submitProof(uint256 taskId, bool verified) external taskExists(taskId) {
+    function submitProof(uint256 taskId, bool verified) external taskExists(taskId) onlyAuthorizedVerifier {
         Task storage task = tasks[taskId];
         require(task.status == TaskStatus.Pending, "Task not pending");
         require(block.timestamp <= task.deadline, "Task expired");
@@ -160,6 +167,11 @@ contract TaskManager {
     function setPenaltyStrategy(address _strategy) external onlyOwner {
         penaltyStrategy = IPenaltyStrategy(_strategy);
         emit PenaltyStrategyUpdated(_strategy);
+    }
+
+    function setAuthorizedVerifier(address _authorizedVerifier) external onlyOwner {
+        authorizedVerifier = _authorizedVerifier;
+        emit AuthorizedVerifierUpdated(_authorizedVerifier);
     }
 
     // ============ 视图函数 ============
