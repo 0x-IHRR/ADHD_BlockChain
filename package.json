@@ -1,0 +1,31 @@
+{
+    "name": "adhd-focus-flow",
+    "version": "0.1.0",
+    "private": true,
+    "description": "FocusFlow Monorepo: AI-driven, Blockchain-enforced ADHD productivity tool",
+    "scripts": {
+        "setup": "echo '🚧 Please initialize sub-projects first (app & ai_engine) 🚧'",
+        "----------- CONTRACTS -----------": "",
+        "chain:build": "cd contracts && forge build",
+        "chain:test": "cd contracts && forge test",
+        "chain:deploy": "cd contracts && forge script script/Deploy.s.sol",
+        "----------- AI ENGINE -----------": "",
+        "ai:dev": "source ai_engine/.venv/bin/activate && python ai_engine/streaming_chatbot.py",
+        "ai:start": "source ai_engine/.venv/bin/activate && python ai_engine/streaming_chatbot.py",
+        "----------- FRONTEND -----------": "",
+        "app:start": "cd app && npx expo start",
+        "app:android": "cd app && npx expo run:android",
+        "app:ios": "cd app && npx expo run:ios"
+    },
+    "workspaces": [
+        "ai_engine",
+        "app"
+    ],
+    "keywords": [
+        "spoonos",
+        "foundry",
+        "react-native",
+        "adhd"
+    ],
+    "author": ""
+}

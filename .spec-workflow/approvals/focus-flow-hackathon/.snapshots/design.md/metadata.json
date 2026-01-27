@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/focus-flow-hackathon/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-01-27T03:29:15.614Z",
+      "trigger": "initial",
+      "approvalId": "approval_1769484555611_r3pn6efnc",
+      "approvalTitle": "FocusFlow 技术设计文档"
+    }
+  ]
+}

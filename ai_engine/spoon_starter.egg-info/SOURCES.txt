@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+spoon_starter.egg-info/PKG-INFO
+spoon_starter.egg-info/SOURCES.txt
+spoon_starter.egg-info/dependency_links.txt
+spoon_starter.egg-info/requires.txt
+spoon_starter.egg-info/top_level.txt

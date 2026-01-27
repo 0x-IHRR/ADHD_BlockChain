@@ -1,0 +1,16 @@
+{
+  "id": "snapshot_1769484692370_hsn6rnysu",
+  "approvalId": "approval_1769484692367_5kzdt70fi",
+  "approvalTitle": "FocusFlow 开发任务清单",
+  "version": 1,
+  "timestamp": "2026-01-27T03:31:32.370Z",
+  "trigger": "initial",
+  "status": "pending",
+  "content": "# Tasks Document: FocusFlow 黑客松版\n\n## Phase 1: 智能合约层 (`/contracts`)\n\n- [ ] 1. 创建核心接口\n  - File: `contracts/src/interfaces/IVerifier.sol`\n  - File: `contracts/src/interfaces/IPenaltyStrategy.sol`\n  - 定义 `verify()` 和 `execute()` 方法签名\n  - Purpose: 建立可扩展的验证和惩罚策略接口\n  - _Requirements: Req-3, Req-4_\n\n- [ ] 2. 实现 TaskManager 主合约\n  - File: `contracts/src/TaskManager.sol`\n  - 实现 `createTask`, `submitProof`, `settle`, `claimRefund` 方法\n  - 包含 Task 结构体和状态枚举\n  - Purpose: 核心任务生命周期管理\n  - _Requirements: Req-1, Req-4_\n\n- [ ] 3. 实现 MVP 验证器\n  - File: `contracts/src/verifiers/SimpleAIVerifier.sol`\n  - 实现 `IVerifier` 接口\n  - MVP 版本：仅记录 AI 结果（信任调用者）\n  - Purpose: 简单验证逻辑，后续可升级\n  - _Requirements: Req-3_\n\n- [ ] 4. 实现 MVP 惩罚策略\n  - File: `contracts/src/strategies/BurnPenalty.sol`\n  - 实现 `IPenaltyStrategy` 接口\n  - 失败时将资金发送至 `address(0)` (销毁)\n  - Purpose: 简单惩罚逻辑，后续可升级\n  - _Requirements: Req-4_\n\n- [ ] 5. 编写合约单元测试\n  - File: `contracts/test/TaskManager.t.sol`\n  - 测试创建任务、质押、验证、结算流程\n  - 使用 Foundry cheatcodes (`vm.warp`, `vm.prank`)\n  - Purpose: 确保合约逻辑正确\n  - _Requirements: All_\n\n---\n\n## Phase 2: AI Agent 层 (`/ai_engine`)\n\n- [ ] 6. 创建 BreakdownAgent (React Agent)\n  - File: `ai_engine/agents/breakdown_agent.py`\n  - 配置 LLM Provider 和 System Prompt\n  - 输入任务描述，输出子任务列表 JSON\n  - Purpose: 任务拆解功能\n  - _Requirements: Req-2_\n\n- [ ] 7. 创建 VerifyAgent (Graph Agent)\n  - File: `ai_engine/agents/verify_agent.py`\n  - 定义 Graph 节点：Input → (Vision) → Decision → Output\n  - 返回 `{ verified: bool, reason: string }`\n  - Purpose: AI 验证任务完成度\n  - _Requirements: Req-3_\n\n- [ ] 8. 创建 HTTP API 接口\n  - File: `ai_engine/api/routes.py`\n  - 暴露 `/breakdown` 和 `/verify` 两个 POST 接口\n  - 供前端调用\n  - Purpose: 提供 RESTful API 层\n  - _Requirements: Req-2, Req-3_\n\n---\n\n## Phase 3: 前端层 (`/app`)\n\n- [ ] 9. 创建核心 Screens\n  - File: `app/screens/HomeScreen.tsx`\n  - File: `app/screens/CreateTaskScreen.tsx`\n  - File: `app/screens/TaskDetailScreen.tsx`\n  - 基础 UI 布局和导航\n  - Purpose: 搭建前端页面骨架\n  - _Requirements: All_\n\n- [ ] 10. 实现钱包连接服务\n  - File: `app/services/wallet.service.ts`\n  - 集成 Wagmi/Viem 和 WalletConnect\n  - 支持 MetaMask 等钱包\n  - Purpose: 用户钱包连接\n  - _Requirements: Req-1_\n\n- [ ] 11. 实现合约交互服务\n  - File: `app/services/contract.service.ts`\n  - 封装 `createTask`, `submitProof`, `claimRefund` 调用\n  - 处理交易状态和错误\n  - Purpose: 前端与合约交互\n  - _Requirements: Req-1, Req-4_\n\n- [ ] 12. 实现 AI 服务\n  - File: `app/services/ai.service.ts`\n  - 封装对 `/breakdown` 和 `/verify` 的 HTTP 调用\n  - Purpose: 前端与 AI Engine 交互\n  - _Requirements: Req-2, Req-3_\n\n---\n\n## Phase 4: 集成与测试\n\n- [ ] 13. 端到端流程测试\n  - 使用本地 Anvil 链 + 模拟前端\n  - 验证完整流程：创建 → 质押 → 拆解 → 验证 → 结算\n  - Purpose: 确保系统协作正常\n  - _Requirements: All_\n\n- [ ] 14. Demo 准备与文档\n  - 准备 Demo Day 演示脚本\n  - 撰写 README 使用说明\n  - Purpose: 黑客松交付物\n  - _Requirements: All_\n",
+  "fileStats": {
+    "size": 3504,
+    "lines": 112,
+    "lastModified": "2026-01-27T03:31:12.871Z"
+  },
+  "comments": []
+}

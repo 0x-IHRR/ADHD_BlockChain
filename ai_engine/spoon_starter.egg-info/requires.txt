@@ -1,0 +1,6 @@
+spoon-ai-sdk>=0.3.0
+spoon-toolkits>=0.2.0
+pycares<5.0,>=4.9
+
+[memory]
+spoon-ai-sdk[memory]>=0.0.1

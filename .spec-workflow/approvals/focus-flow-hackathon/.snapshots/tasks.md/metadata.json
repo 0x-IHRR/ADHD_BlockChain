@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/focus-flow-hackathon/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-01-27T03:31:32.370Z",
+      "trigger": "initial",
+      "approvalId": "approval_1769484692367_5kzdt70fi",
+      "approvalTitle": "FocusFlow 开发任务清单"
+    }
+  ]
+}
