@@ -24,15 +24,34 @@ import { FadeInView, PulseGlow } from '../styles/animations';
 
 const MAX_WIDTH = 480;
 
+// 时间选项常量
+const DEADLINE_OPTIONS = [
+    { label: '30m', hours: 0.5 },
+    { label: '1h', hours: 1 },
+    { label: '6h', hours: 6 },
+    { label: '24h', hours: 24 },
+    { label: '3d', hours: 72 },
+    { label: 'Custom', hours: 0 }, // 自定义
+];
+
+// 验证渠道选项
+const PLATFORM_OPTIONS = [
+    { id: 'x', label: 'X', icon: '𝕏' },
+    { id: 'github', label: 'GitHub', icon: '⌨' },
+    { id: 'other', label: 'Other', icon: '📝' },
+];
+
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
     const { addTask } = useTasks();
     const { t } = useI18n();
     const { colors } = useTheme();
     const [description, setDescription] = useState('');
-    const [platform, setPlatform] = useState('X (Twitter)');
+    const [selectedPlatform, setSelectedPlatform] = useState('x');
     const [stakeAmount, setStakeAmount] = useState('0.01');
-    const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);  // 倍率选择
+    const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
+    const [selectedDeadline, setSelectedDeadline] = useState('24h'); // 默认 24h
+    const [customHours, setCustomHours] = useState(''); // 自定义时间输入
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
@@ -66,16 +85,27 @@ export default function CreateTaskScreen() {
             return;
         }
 
+        // 计算 deadline
+        let deadlineHours = 24; // 默认 24h
+        if (selectedDeadline === 'Custom') {
+            deadlineHours = parseFloat(customHours) || 24;
+        } else {
+            const option = DEADLINE_OPTIONS.find(o => o.label === selectedDeadline);
+            deadlineHours = option?.hours || 24;
+        }
+
+        const platformLabel = PLATFORM_OPTIONS.find(p => p.id === selectedPlatform)?.label || 'X';
+
         const newTask = {
             id: Date.now(),
             description,
-            platform,
+            platform: platformLabel,
             createdAt: new Date(),
-            deadline: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h later
+            deadline: new Date(Date.now() + deadlineHours * 60 * 60 * 1000),
             status: 'pending' as const,
             stakeAmount: `${stakeAmount} ETH`,
             verificationMethod: 'ai_agent' as const,
-            subtasks: [], // Initialize empty subtasks
+            subtasks: [],
         };
 
         addTask(newTask);
@@ -158,13 +188,28 @@ export default function CreateTaskScreen() {
                             {/* Settings Card */}
                             <FadeInView delay={100}>
                                 <View style={styles.card}>
+                                    {/* 验证渠道选择 */}
                                     <View style={styles.settingRow}>
                                         <View style={styles.settingInfo}>
                                             <Text style={styles.settingLabel}>{t('createTask.platformLabel')}</Text>
                                             <Text style={styles.settingSubtext}>{t('createTask.platformSubtext')}</Text>
                                         </View>
-                                        <View style={styles.platformBadge}>
-                                            <Text style={styles.platformText}>X</Text>
+                                        <View style={styles.platformRow}>
+                                            {PLATFORM_OPTIONS.map((p) => (
+                                                <TouchableOpacity
+                                                    key={p.id}
+                                                    style={[
+                                                        styles.platformButton,
+                                                        selectedPlatform === p.id && styles.platformButtonActive
+                                                    ]}
+                                                    onPress={() => setSelectedPlatform(p.id)}
+                                                >
+                                                    <Text style={[
+                                                        styles.platformButtonText,
+                                                        selectedPlatform === p.id && styles.platformButtonTextActive
+                                                    ]}>{p.icon}</Text>
+                                                </TouchableOpacity>
+                                            ))}
                                         </View>
                                     </View>
 
@@ -218,16 +263,43 @@ export default function CreateTaskScreen() {
 
                                     <View style={styles.divider} />
 
+                                    {/* Deadline 时间选择 */}
                                     <View style={styles.settingRow}>
                                         <View style={styles.settingInfo}>
                                             <Text style={styles.settingLabel}>{t('createTask.deadlineLabel')}</Text>
                                             <Text style={styles.settingSubtext}>{t('createTask.deadlineSubtext')}</Text>
                                         </View>
-                                        <View style={styles.deadlineBadge}>
-                                            <Clock size={14} color={colors.text.secondary} />
-                                            <Text style={styles.deadlineText}>24h</Text>
-                                        </View>
                                     </View>
+                                    <View style={styles.deadlineRow}>
+                                        {DEADLINE_OPTIONS.map((option) => (
+                                            <TouchableOpacity
+                                                key={option.label}
+                                                style={[
+                                                    styles.deadlineButton,
+                                                    selectedDeadline === option.label && styles.deadlineButtonActive
+                                                ]}
+                                                onPress={() => setSelectedDeadline(option.label)}
+                                            >
+                                                <Text style={[
+                                                    styles.deadlineButtonText,
+                                                    selectedDeadline === option.label && styles.deadlineButtonTextActive
+                                                ]}>{option.label}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                    {selectedDeadline === 'Custom' && (
+                                        <View style={styles.customTimeRow}>
+                                            <TextInput
+                                                style={styles.customTimeInput}
+                                                value={customHours}
+                                                onChangeText={setCustomHours}
+                                                keyboardType="numeric"
+                                                placeholder="12"
+                                                placeholderTextColor={colors.text.muted}
+                                            />
+                                            <Text style={styles.customTimeLabel}>hours</Text>
+                                        </View>
+                                    )}
                                 </View>
                             </FadeInView>
 
@@ -491,6 +563,84 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     multiplierButtonTextDanger: {
         color: '#fff',
+    },
+
+    // Platform selector
+    platformRow: {
+        flexDirection: 'row',
+        gap: spacing.sm,
+    },
+    platformButton: {
+        width: 44,
+        height: 44,
+        borderRadius: borderRadius.md,
+        borderWidth: 1,
+        borderColor: colors.border.default,
+        backgroundColor: colors.background.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    platformButtonActive: {
+        borderColor: colors.primary[500],
+        backgroundColor: colors.primary[500] + '20',
+    },
+    platformButtonText: {
+        fontSize: 18,
+        color: colors.text.secondary,
+    },
+    platformButtonTextActive: {
+        color: colors.primary[500],
+    },
+
+    // Deadline selector
+    deadlineRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.sm,
+        marginTop: spacing.sm,
+        marginBottom: spacing.sm,
+    },
+    deadlineButton: {
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.md,
+        borderWidth: 1,
+        borderColor: colors.border.default,
+        backgroundColor: colors.background.surface,
+    },
+    deadlineButtonActive: {
+        borderColor: colors.primary[500],
+        backgroundColor: colors.primary[500],
+    },
+    deadlineButtonText: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.medium,
+        color: colors.text.secondary,
+    },
+    deadlineButtonTextActive: {
+        color: '#000',
+    },
+    customTimeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginTop: spacing.xs,
+    },
+    customTimeInput: {
+        backgroundColor: colors.background.surface,
+        borderRadius: borderRadius.md,
+        borderWidth: 1,
+        borderColor: colors.border.default,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        color: colors.text.primary,
+        fontSize: typography.fontSize.base,
+        width: 80,
+        textAlign: 'center',
+    },
+    customTimeLabel: {
+        color: colors.text.secondary,
+        fontSize: typography.fontSize.sm,
     },
 
     // Warning
