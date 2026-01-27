@@ -17,6 +17,7 @@ import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap } from 'lucide-react-nativ
 import { useTasks } from '../context/AppContext';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
+import { breakdownTask } from '../services/ai.service';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
@@ -34,19 +35,28 @@ export default function CreateTaskScreen() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
-    // Mock AI Analysis
-    const handleAIAnalyze = () => {
+    // AI Analysis
+    const handleAIAnalyze = async () => {
         if (!description.trim()) {
             Alert.alert(t('common.error'), t('createTask.errorDescription'));
             return;
         }
 
         setIsAnalyzing(true);
-        // Simulate AI delay
-        setTimeout(() => {
-            setIsAnalyzing(false);
+        try {
+            // Try to call real AI engine
+            const result = await breakdownTask(description);
+            const formattedSuggestion = result.subtasks
+                .map((step, index) => `${index + 1}. ${step.title} (${step.estimated_minutes}m)`)
+                .join('\n');
+            setAiSuggestion(formattedSuggestion);
+        } catch (error) {
+            console.log('AI Engine offline, using fallback:', error);
+            // Fallback to mock if API fails (e.g. backend not running)
             setAiSuggestion(t('createTask.aiSuggestionText'));
-        }, 1500);
+        } finally {
+            setIsAnalyzing(false);
+        }
     };
 
     const handleCreateTask = async () => {
