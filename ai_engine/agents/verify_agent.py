@@ -149,6 +149,54 @@ class VerifyAgent:
                 confidence=0.0,
                 reason="验证服务响应解析失败，请重试"
             )
+    
+    async def verify_and_submit(
+        self,
+        task_id: int,
+        task_description: str,
+        proof: str,
+        image_url: Optional[str] = None
+    ) -> dict:
+        """
+        验证任务并自动提交结果到链上
+        
+        这是完整的 Oracle 验证流程:
+        1. AI 分析用户提交的证明
+        2. 根据验证结果，以 Oracle 身份调用合约 submitProof
+        
+        Args:
+            task_id: 链上任务 ID
+            task_description: 原任务描述
+            proof: 用户提交的证明
+            image_url: 可选的图片证明 URL
+            
+        Returns:
+            dict: 包含验证结果和交易哈希
+        """
+        # 1. AI 验证
+        result = await self.verify(task_description, proof, image_url)
+        
+        # 2. 调用合约提交结果
+        try:
+            from ..oracle_signer import OracleSigner
+            signer = OracleSigner()
+            tx_hash = signer.submit_verification(task_id, result.verified)
+        except Exception as e:
+            return {
+                "verified": result.verified,
+                "confidence": result.confidence,
+                "reason": result.reason,
+                "submitted_to_chain": False,
+                "error": str(e)
+            }
+        
+        return {
+            "verified": result.verified,
+            "confidence": result.confidence,
+            "reason": result.reason,
+            "submitted_to_chain": True,
+            "tx_hash": tx_hash
+        }
 
 
 # 测试入口

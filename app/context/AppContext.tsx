@@ -12,6 +12,7 @@ export type TaskStatus = 'pending' | 'verified' | 'failed' | 'settled';
 export interface Task {
     id: number;
     description: string;
+    platform?: string;
     stakeAmount: string;
     deadline: Date;
     status: TaskStatus;

@@ -5,9 +5,10 @@ import { componentStyles } from '../styles/tokens';
 interface ThemeContextType {
     theme: Theme;
     colors: ThemeColors;
-    componentStyles: typeof componentStyles; // 这里其实也应该动态化，但暂时保持静态引用或基于 colors 动态计算
+    componentStyles: typeof componentStyles;
     setTheme: (themeId: string) => void;
     toggleTheme: () => void;
+    isDark: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -16,6 +17,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const [themeId, setThemeId] = useState<string>('pendle');
 
     const theme = themes[themeId as keyof typeof themes] || themes.pendle;
+    const isDark = themeId === 'pendle' || themeId === 'dark'; // 假设 pendle 也是深色
 
     // 切换下一个主题
     const toggleTheme = () => {
@@ -29,9 +31,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         <ThemeContext.Provider value={{
             theme,
             colors: theme.colors,
-            componentStyles, // ⚠️ 注意：componentStyles 目前是静态的，引用了静态 colors。如果需要深度主题化，需要重构 componentStyles 为函数
+            componentStyles,
             setTheme: setThemeId,
             toggleTheme,
+            isDark,
         }}>
             {children}
         </ThemeContext.Provider>

@@ -35,7 +35,7 @@ contract DeployAndTest is Script {
         // Step 2: 创建任务并质押
         console.log("\n[2] Creating task with 0.1 ETH stake...");
         uint256 deadline = block.timestamp + 86400; // 24 hours
-        taskManager.createTask{value: 0.1 ether}("Complete Solidity tutorial", deadline);
+        taskManager.createTask{value: 0.1 ether}("Complete Solidity tutorial", deadline, 2);
         console.log("  - Task #0 created");
 
         // Step 3: 验证任务
@@ -50,7 +50,7 @@ contract DeployAndTest is Script {
 
         // Step 5: 创建另一个任务测试失败场景
         console.log("\n[5] Creating another task for failure test...");
-        taskManager.createTask{value: 0.05 ether}("Task that will fail", block.timestamp + 1);
+        taskManager.createTask{value: 0.05 ether}("Task that will fail", block.timestamp + 1, 1);
         console.log("  - Task #1 created (deadline: 1 second)");
 
         vm.stopBroadcast();

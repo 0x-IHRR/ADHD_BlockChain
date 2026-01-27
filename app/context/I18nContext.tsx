@@ -30,6 +30,22 @@ const translations: Record<Language, Record<string, string>> = {
         'common.confirm': 'Confirm',
         'common.error': 'Error',
         'common.done': 'Done',
+        'common.jackpot': 'Jackpot',
+
+        // Agent Panel
+        'agent.title': 'AI Workflow',
+        'agent.idle': 'Waiting for task',
+        'agent.idleHint': 'Submit proof to start verification',
+        'agent.working': 'Working',
+        'agent.verifying': 'Verifying task:',
+        'agent.verified': 'Verified \u2713',
+        'agent.failed': 'Failed \u2717',
+        'agent.confidence': 'Confidence:',
+
+        // Leaderboard
+        'leaderboard.title': 'Hall of Focus',
+        'leaderboard.topPlayers': 'Top Players',
+        'leaderboard.recentWinners': 'Recent Winners',
 
         // Home
         'home.active': 'Active',
@@ -54,6 +70,8 @@ const translations: Record<Language, Record<string, string>> = {
         'createTask.platformSubtext': 'Where you verify',
         'createTask.stakeLabel': 'Stake Amount',
         'createTask.stakeSubtext': 'Commitment pledge',
+        'createTask.multiplierLabel': 'Risk Level',
+        'createTask.multiplierSubtext': 'Boost stakes & rewards',
         'createTask.deadlineLabel': 'Deadline',
         'createTask.deadlineSubtext': 'Time to complete',
         'createTask.warning': 'Stake will be forfeited if not verified by deadline.',
@@ -88,6 +106,22 @@ const translations: Record<Language, Record<string, string>> = {
         'common.confirm': '确认',
         'common.error': '错误',
         'common.done': '完成',
+        'common.jackpot': '奖金池',
+
+        // Agent Panel
+        'agent.title': 'AI 工作流',
+        'agent.idle': '等待任务',
+        'agent.idleHint': '提交证明后开始验证',
+        'agent.working': '工作中',
+        'agent.verifying': '正在验证任务:',
+        'agent.verified': '验证通过 \u2713',
+        'agent.failed': '验证失败 \u2717',
+        'agent.confidence': '置信度:',
+
+        // Leaderboard
+        'leaderboard.title': '专注名人堂',
+        'leaderboard.topPlayers': '硬核玩家榜',
+        'leaderboard.recentWinners': '最近中奖者',
 
         // Home
         'home.active': '进行中',
@@ -112,6 +146,8 @@ const translations: Record<Language, Record<string, string>> = {
         'createTask.platformSubtext': '验证来源',
         'createTask.stakeLabel': '质押金额',
         'createTask.stakeSubtext': '承诺质押金',
+        'createTask.multiplierLabel': '风险等级',
+        'createTask.multiplierSubtext': '提高质押和奖励',
         'createTask.deadlineLabel': '截止时间',
         'createTask.deadlineSubtext': '完成时限',
         'createTask.warning': '若未在截止时间前通过验证，质押金将被没收。',

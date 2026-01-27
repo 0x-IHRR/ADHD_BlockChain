@@ -1,0 +1,309 @@
+/**
+ * LeaderboardModal - 排行榜与奖金池详情
+ * 
+ * 显示顶部硬核玩家、最近中奖者和奖金池统计
+ */
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Modal,
+    TouchableOpacity,
+    ScrollView,
+    Image,
+} from 'react-native';
+import { X, Trophy, Flame, Crown, Zap } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
+import { spacing, typography, borderRadius } from '../styles/tokens';
+
+interface LeaderboardModalProps {
+    visible: boolean;
+    onClose: () => void;
+    jackpotAmount: string;
+}
+
+// Mock Data
+const TOP_PLAYERS = [
+    { id: 1, name: '0x12...3456', score: 420, streak: 12, multiplier: 3 },
+    { id: 2, name: '0x88...9999', score: 380, streak: 8, multiplier: 3 },
+    { id: 3, name: 'vitalik.eth', score: 350, streak: 15, multiplier: 2 },
+];
+
+const RECENT_WINNERS = [
+    { id: 1, name: '0xab...cdef', amount: '0.5 ETH', task: '30 days coding streak' },
+    { id: 2, name: 'satoshi.eth', amount: '0.2 ETH', task: 'Write whitepaper' },
+];
+
+export default function LeaderboardModal({ visible, onClose, jackpotAmount }: LeaderboardModalProps) {
+    const { colors, isDark } = useTheme();
+    const { t } = useI18n();
+
+    // 动态样式
+    const modalBg = isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <View style={[styles.overlay, { backgroundColor: modalBg }]}>
+                {/* 
+                  TODO: 如果 Expo 环境支持 BlurView，可以替换 View 实现毛玻璃效果 
+                  目前使用半透明背景作为兼容方案
+                */}
+                <View style={[styles.container, {
+                    backgroundColor: colors.background.primary,
+                    borderColor: colors.border.subtle
+                }]}>
+                    {/* Header */}
+                    <View style={[styles.header, { borderBottomColor: colors.border.subtle }]}>
+                        <View style={styles.headerTitleRow}>
+                            <Trophy size={20} color={colors.primary[500]} />
+                            <Text style={[styles.title, { color: colors.text.primary }]}>
+                                {t('leaderboard.title')}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                            <X size={20} color={colors.text.secondary} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                        {/* Jackpot Banner */}
+                        <View style={[styles.jackpotBanner, { backgroundColor: colors.glass.backgroundLight }]}>
+                            <Text style={[styles.jackpotLabel, { color: colors.text.muted }]}>
+                                {t('common.jackpot')}
+                            </Text>
+                            <Text style={[styles.jackpotValue, { color: colors.primary[500] }]}>
+                                {jackpotAmount} ETH
+                            </Text>
+                            <View style={styles.jackpotStats}>
+                                <Text style={[styles.statText, { color: colors.text.tertiary }]}>
+                                    Total Distributed: 45.2 ETH
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Top Players */}
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Crown size={18} color={colors.semantic.warning} />
+                                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                                    {t('leaderboard.topPlayers')}
+                                </Text>
+                            </View>
+
+                            {TOP_PLAYERS.map((player, index) => (
+                                <View key={player.id} style={[styles.playerRow, {
+                                    backgroundColor: colors.background.secondary,
+                                    borderColor: index === 0 ? colors.semantic.warning : 'transparent',
+                                    borderWidth: index === 0 ? 1 : 0
+                                }]}>
+                                    <View style={styles.rankCol}>
+                                        <Text style={[styles.rankText, {
+                                            color: index === 0 ? colors.semantic.warning : colors.text.muted,
+                                            fontWeight: index === 0 ? 'bold' : 'normal'
+                                        }]}>#{index + 1}</Text>
+                                    </View>
+                                    <View style={styles.playerInfo}>
+                                        <Text style={[styles.playerName, { color: colors.text.primary }]}>{player.name}</Text>
+                                        <View style={styles.badgeRow}>
+                                            {player.multiplier > 1 && (
+                                                <View style={[styles.multiplierBadge, { backgroundColor: colors.semantic.error }]}>
+                                                    <Text style={styles.multiplierText}>{player.multiplier}x</Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                    </View>
+                                    <View style={styles.scoreCol}>
+                                        <Flame size={14} color={colors.primary[400]} />
+                                        <Text style={[styles.scoreText, { color: colors.text.primary }]}>{player.score}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+
+                        {/* Recent Winners */}
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Zap size={18} color={colors.semantic.success} />
+                                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                                    {t('leaderboard.recentWinners')}
+                                </Text>
+                            </View>
+
+                            {RECENT_WINNERS.map((winner) => (
+                                <View key={winner.id} style={[styles.winnerCard, { backgroundColor: colors.background.tertiary }]}>
+                                    <View style={styles.winnerHeader}>
+                                        <Text style={[styles.winnerName, { color: colors.text.secondary }]}>{winner.name}</Text>
+                                        <Text style={[styles.winAmount, { color: colors.semantic.success }]}>+{winner.amount}</Text>
+                                    </View>
+                                    <Text style={[styles.winTask, { color: colors.text.muted }]}>{winner.task}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </ScrollView>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    container: {
+        width: '90%',
+        maxWidth: 480,
+        height: '80%',
+        maxHeight: 700,
+        borderRadius: borderRadius.xl,
+        borderWidth: 1,
+        overflow: 'hidden',
+        // Shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 20 },
+        shadowOpacity: 0.3,
+        shadowRadius: 40,
+        elevation: 10,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: spacing.lg,
+        borderBottomWidth: 1,
+    },
+    headerTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    title: {
+        fontSize: typography.fontSize.lg,
+        fontWeight: typography.fontWeight.bold,
+    },
+    closeButton: {
+        padding: spacing.xs,
+    },
+    content: {
+        padding: spacing.lg,
+    },
+
+    // Jackpot Banner
+    jackpotBanner: {
+        alignItems: 'center',
+        padding: spacing.xl,
+        borderRadius: borderRadius.lg,
+        marginBottom: spacing.xl,
+    },
+    jackpotLabel: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.medium,
+        marginBottom: spacing.xs,
+    },
+    jackpotValue: {
+        fontSize: typography.fontSize['3xl'],
+        fontWeight: typography.fontWeight.bold,
+        marginBottom: spacing.sm,
+    },
+    jackpotStats: {
+        flexDirection: 'row',
+        gap: spacing.md,
+    },
+    statText: {
+        fontSize: typography.fontSize.xs,
+    },
+
+    // Sections
+    section: {
+        marginBottom: spacing.xl,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginBottom: spacing.md,
+    },
+    sectionTitle: {
+        fontSize: typography.fontSize.base,
+        fontWeight: typography.fontWeight.bold,
+    },
+
+    // Player Row
+    playerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+        marginBottom: spacing.sm,
+    },
+    rankCol: {
+        width: 32,
+        alignItems: 'center',
+    },
+    rankText: {
+        fontSize: typography.fontSize.sm,
+    },
+    playerInfo: {
+        flex: 1,
+        marginLeft: spacing.sm,
+    },
+    playerName: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.medium,
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        marginTop: 2,
+    },
+    multiplierBadge: {
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    multiplierText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    scoreCol: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    scoreText: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.bold,
+    },
+
+    // Recent Winners
+    winnerCard: {
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+        marginBottom: spacing.sm,
+    },
+    winnerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 4,
+    },
+    winnerName: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
+    },
+    winAmount: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.bold,
+    },
+    winTask: {
+        fontSize: typography.fontSize.sm,
+    },
+});

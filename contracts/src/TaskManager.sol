@@ -27,6 +27,7 @@ contract TaskManager {
         uint256 deadline;
         TaskStatus status;
         uint256 createdAt;
+        uint8 multiplier;  // 质押倍率: 1, 2, 或 3
     }
 
     // ============ 状态变量 ============
@@ -38,14 +39,22 @@ contract TaskManager {
     IPenaltyStrategy public penaltyStrategy;
     address public owner;
     address public authorizedVerifier; // Oracle 地址，唯一可调用 submitProof
+    
+    // ============ 奖金池系统 ============
+    address public treasury;           // 平台金库地址
+    uint256 public jackpot;            // 用户奖金池余额
+    uint256 public constant PLATFORM_FEE_PERCENT = 30;  // 平台抽成 30%
+    uint256 public constant JACKPOT_PERCENT = 70;       // 奖金池 70%
 
     // ============ 事件 ============
-    event TaskCreated(uint256 indexed taskId, address indexed owner, uint256 stakeAmount, uint256 deadline);
+    event TaskCreated(uint256 indexed taskId, address indexed owner, uint256 stakeAmount, uint256 deadline, uint8 multiplier);
     event TaskVerified(uint256 indexed taskId, bool success);
     event TaskSettled(uint256 indexed taskId, bool refunded);
     event VerifierUpdated(address indexed newVerifier);
     event PenaltyStrategyUpdated(address indexed newStrategy);
     event AuthorizedVerifierUpdated(address indexed newAuthorizedVerifier);
+    event JackpotIncreased(uint256 indexed taskId, uint256 amount, uint256 newTotal);
+    event TreasuryWithdrawn(address indexed to, uint256 amount);
 
     // ============ 修饰符 ============
     modifier onlyOwner() {
@@ -81,10 +90,12 @@ contract TaskManager {
      * @notice 创建新任务并质押资金
      * @param description 任务描述
      * @param deadline 截止时间戳
+     * @param multiplier 质押倍率 (1, 2, 或 3)
      */
-    function createTask(string calldata description, uint256 deadline) external payable {
+    function createTask(string calldata description, uint256 deadline, uint8 multiplier) external payable {
         require(msg.value > 0, "Stake required");
         require(deadline > block.timestamp, "Deadline must be future");
+        require(multiplier >= 1 && multiplier <= 3, "Multiplier must be 1-3");
 
         uint256 taskId = nextTaskId++;
         tasks[taskId] = Task({
@@ -94,11 +105,12 @@ contract TaskManager {
             stakeAmount: msg.value,
             deadline: deadline,
             status: TaskStatus.Pending,
-            createdAt: block.timestamp
+            createdAt: block.timestamp,
+            multiplier: multiplier
         });
         userTasks[msg.sender].push(taskId);
 
-        emit TaskCreated(taskId, msg.sender, msg.value, deadline);
+        emit TaskCreated(taskId, msg.sender, msg.value, deadline, multiplier);
     }
 
     /**
@@ -151,8 +163,19 @@ contract TaskManager {
         task.stakeAmount = 0;
         task.status = TaskStatus.Settled;
 
-        // 执行惩罚策略 (传递资金)
-        penaltyStrategy.execute{value: amount}(taskId, task.owner, amount);
+        // 奖金池分成: 30% 平台, 70% 奖金池
+        uint256 platformFee = (amount * PLATFORM_FEE_PERCENT) / 100;
+        uint256 toJackpot = amount - platformFee;
+        
+        // 平台费用转入 treasury
+        if (treasury != address(0) && platformFee > 0) {
+            (bool success, ) = payable(treasury).call{value: platformFee}("");
+            require(success, "Treasury transfer failed");
+        }
+        
+        // 剩余进入奖金池
+        jackpot += toJackpot;
+        emit JackpotIncreased(taskId, toJackpot, jackpot);
 
         emit TaskSettled(taskId, false);
     }
@@ -174,6 +197,22 @@ contract TaskManager {
         emit AuthorizedVerifierUpdated(_authorizedVerifier);
     }
 
+    function setTreasury(address _treasury) external onlyOwner {
+        treasury = _treasury;
+    }
+
+    /**
+     * @notice 从合约提取奖金池资金 (仅 owner 可调用，用于分配给成功者)
+     * @param amount 提取金额
+     * @param to 提取地址
+     */
+    function withdrawJackpot(uint256 amount, address to) external onlyOwner {
+        require(amount <= jackpot, "Insufficient jackpot");
+        jackpot -= amount;
+        (bool success, ) = payable(to).call{value: amount}("");
+        require(success, "Withdraw failed");
+    }
+
     // ============ 视图函数 ============
 
     function getTask(uint256 taskId) external view returns (Task memory) {
@@ -186,5 +225,9 @@ contract TaskManager {
 
     function getTaskCount() external view returns (uint256) {
         return nextTaskId;
+    }
+
+    function getJackpot() external view returns (uint256) {
+        return jackpot;
     }
 }

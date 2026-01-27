@@ -32,6 +32,7 @@ export default function CreateTaskScreen() {
     const [description, setDescription] = useState('');
     const [platform, setPlatform] = useState('X (Twitter)');
     const [stakeAmount, setStakeAmount] = useState('0.01');
+    const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);  // 倍率选择
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
@@ -182,6 +183,36 @@ export default function CreateTaskScreen() {
                                                 keyboardType="numeric"
                                             />
                                             <Text style={styles.currencyText}>ETH</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.divider} />
+
+                                    {/* Multiplier Selector */}
+                                    <View style={styles.settingRow}>
+                                        <View style={styles.settingInfo}>
+                                            <Text style={styles.settingLabel}>{t('createTask.multiplierLabel')}</Text>
+                                            <Text style={styles.settingSubtext}>{t('createTask.multiplierSubtext')}</Text>
+                                        </View>
+                                        <View style={styles.multiplierRow}>
+                                            {([1, 2, 3] as const).map((m) => (
+                                                <TouchableOpacity
+                                                    key={m}
+                                                    style={[
+                                                        styles.multiplierButton,
+                                                        multiplier === m && styles.multiplierButtonActive,
+                                                        m === 3 && styles.multiplierButtonDanger,
+                                                        m === 3 && multiplier === m && styles.multiplierButtonDangerActive
+                                                    ]}
+                                                    onPress={() => setMultiplier(m)}
+                                                >
+                                                    <Text style={[
+                                                        styles.multiplierButtonText,
+                                                        multiplier === m && styles.multiplierButtonTextActive,
+                                                        m === 3 && multiplier === m && styles.multiplierButtonTextDanger
+                                                    ]}>{m}x</Text>
+                                                </TouchableOpacity>
+                                            ))}
                                         </View>
                                     </View>
 
@@ -424,6 +455,42 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     deadlineText: {
         color: colors.text.secondary,
         fontSize: typography.fontSize.sm,
+    },
+
+    // Multiplier Selector
+    multiplierRow: {
+        flexDirection: 'row',
+        gap: spacing.sm,
+    },
+    multiplierButton: {
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.md,
+        backgroundColor: colors.glass.backgroundLight,
+        borderWidth: 1,
+        borderColor: colors.border.default,
+    },
+    multiplierButtonActive: {
+        backgroundColor: colors.primary[500],
+        borderColor: colors.primary[500],
+    },
+    multiplierButtonDanger: {
+        borderColor: colors.semantic.errorLight,
+    },
+    multiplierButtonDangerActive: {
+        backgroundColor: colors.semantic.error,
+        borderColor: colors.semantic.error,
+    },
+    multiplierButtonText: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.bold,
+        color: colors.text.secondary,
+    },
+    multiplierButtonTextActive: {
+        color: '#000',
+    },
+    multiplierButtonTextDanger: {
+        color: '#fff',
     },
 
     // Warning

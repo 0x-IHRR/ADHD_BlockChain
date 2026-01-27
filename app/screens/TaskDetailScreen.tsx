@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -17,45 +17,25 @@ import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { FadeInView, PulseGlow } from '../styles/animations';
+import { VerifyModal } from '../components';
 
 const MAX_WIDTH = 480;
 
 type DetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetail'>;
 
-// 进度条组件
-const ProgressBar = ({ progress, color }: { progress: number; color: string }) => {
-    const { colors } = useTheme();
-    return (
-        <View style={[styles.progressContainer, { backgroundColor: colors.border.default }]}>
-            <View style={[styles.progressBar, { width: `${progress * 100}%`, backgroundColor: color }]} />
-        </View>
-    );
-};
-
-// 状态卡片组件
-const StatusCard = ({ status, color, icon: Icon, label }: any) => {
-    const { colors } = useTheme();
-    return (
-        <View style={[styles.statusCard, { backgroundColor: colors.background.tertiary, borderColor: colors.border.subtle }]}>
-            <View style={[styles.statusIconContainer, { backgroundColor: colors.glass.backgroundLight }]}>
-                <Icon size={24} color={color} />
-            </View>
-            <View style={styles.statusContent}>
-                <Text style={[styles.statusLabel, { color: colors.text.muted }]}>{label}</Text>
-                <Text style={[styles.statusValue, { color }]}>{status}</Text>
-            </View>
-        </View>
-    );
-};
-
 export default function TaskDetailScreen() {
     const navigation = useNavigation();
     const route = useRoute<DetailsScreenRouteProp>();
-    const { tasks, verifyTask } = useTasks();
-    const { walletAddress } = useWallet(); // Might be unused but keeps consistent
+    const { tasks, updateTaskStatus } = useTasks();
+    const { address } = useWallet();
     const { t } = useI18n();
     const { colors } = useTheme();
     const task = tasks.find(t => t.id === route.params.taskId);
+
+    // VerifyModal 状态
+    const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+
+    const styles = useMemo(() => getStyles(colors), [colors]);
 
     if (!task) {
         return (
@@ -70,11 +50,39 @@ export default function TaskDetailScreen() {
     }
 
     const handleVerify = () => {
-        // Simulate verification
-        verifyTask(task.id, true);
+        // 打开验证模态框
+        setVerifyModalVisible(true);
     };
 
-    const styles = useMemo(() => getStyles(colors), [colors]);
+    const handleVerificationComplete = (result: any) => {
+        // 更新任务状态
+        updateTaskStatus(task.id, result.verified ? 'verified' : 'failed');
+        setVerifyModalVisible(false);
+    };
+
+    // 进度条组件
+    const ProgressBar = ({ progress, color }: { progress: number; color: string }) => {
+        return (
+            <View style={[styles.progressContainer, { backgroundColor: colors.border.default }]}>
+                <View style={[styles.progressBar, { width: `${progress * 100}%`, backgroundColor: color }]} />
+            </View>
+        );
+    };
+
+    // 状态卡片组件
+    const StatusCard = ({ status, color, icon: Icon, label }: any) => {
+        return (
+            <View style={[styles.statusCard, { backgroundColor: colors.background.tertiary, borderColor: colors.border.subtle }]}>
+                <View style={[styles.statusIconContainer, { backgroundColor: colors.glass.backgroundLight }]}>
+                    <Icon size={24} color={color} />
+                </View>
+                <View style={styles.statusContent}>
+                    <Text style={[styles.statusLabel, { color: colors.text.muted }]}>{label}</Text>
+                    <Text style={[styles.statusValue, { color }]}>{status}</Text>
+                </View>
+            </View>
+        );
+    };
 
     const statusConfig = {
         pending: { label: t('status.active'), color: colors.semantic.warning, icon: Clock, progress: 0.3 },
@@ -202,6 +210,15 @@ export default function TaskDetailScreen() {
                     )}
                 </View>
             </SafeAreaView>
+
+            {/* 验证模态框 */}
+            <VerifyModal
+                visible={verifyModalVisible}
+                onClose={() => setVerifyModalVisible(false)}
+                taskId={task.id}
+                taskDescription={task.description}
+                onVerificationComplete={handleVerificationComplete}
+            />
         </View>
     );
 }

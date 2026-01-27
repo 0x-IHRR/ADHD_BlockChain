@@ -118,6 +118,48 @@ async def verify_task(request: VerifyRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class VerifyAndSubmitRequest(BaseModel):
+    task_id: int
+    task_description: str
+    proof: str
+    image_url: Optional[str] = None
+
+
+class VerifyAndSubmitResponse(BaseModel):
+    verified: bool
+    confidence: float
+    reason: str
+    submitted_to_chain: bool
+    tx_hash: Optional[str] = None
+    error: Optional[str] = None
+
+
+@app.post("/verify-and-submit", response_model=VerifyAndSubmitResponse)
+async def verify_and_submit_task(request: VerifyAndSubmitRequest):
+    """
+    验证任务并自动提交结果到链上 (Oracle 模式)
+    
+    这是完整的验证流程:
+    1. AI 分析用户提交的证明
+    2. 以 Oracle 身份调用合约 submitProof
+    
+    - **task_id**: 链上任务 ID
+    - **task_description**: 原任务描述
+    - **proof**: 用户提交的完成证明
+    - **image_url**: (可选) 图片证明 URL
+    """
+    try:
+        result = await verify_agent.verify_and_submit(
+            task_id=request.task_id,
+            task_description=request.task_description,
+            proof=request.proof,
+            image_url=request.image_url
+        )
+        return VerifyAndSubmitResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============ 启动入口 ============
 
 if __name__ == "__main__":

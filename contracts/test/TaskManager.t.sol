@@ -25,6 +25,9 @@ contract TaskManagerTest is Test {
         
         // 部署主合约
         taskManager = new TaskManager(address(verifier), address(penaltyStrategy));
+        
+        // 设置测试合约为授权验证者 (Oracle)
+        taskManager.setAuthorizedVerifier(address(this));
 
         // 给测试用户一些 ETH
         vm.deal(user, 10 ether);
@@ -36,7 +39,7 @@ contract TaskManagerTest is Test {
         vm.prank(user);
         uint256 deadline = block.timestamp + ONE_DAY;
         
-        taskManager.createTask{value: STAKE_AMOUNT}("Complete Solidity study", deadline);
+        taskManager.createTask{value: STAKE_AMOUNT}("Complete Solidity study", deadline, 1);
 
         TaskManager.Task memory task = taskManager.getTask(0);
         assertEq(task.owner, user);
@@ -50,14 +53,14 @@ contract TaskManagerTest is Test {
         uint256 deadline = block.timestamp + ONE_DAY;
         
         vm.expectRevert("Stake required");
-        taskManager.createTask{value: 0}("No stake task", deadline);
+        taskManager.createTask{value: 0}("No stake task", deadline, 1);
     }
 
     function test_CreateTask_RevertIfPastDeadline() public {
         vm.prank(user);
         
         vm.expectRevert("Deadline must be future");
-        taskManager.createTask{value: STAKE_AMOUNT}("Expired task", block.timestamp - 1);
+        taskManager.createTask{value: STAKE_AMOUNT}("Expired task", block.timestamp - 1, 1);
     }
 
     // ============ 验证任务测试 ============
@@ -65,7 +68,7 @@ contract TaskManagerTest is Test {
     function test_SubmitProof_Success() public {
         // 创建任务
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         // 提交验证成功
         taskManager.submitProof(0, true);
@@ -76,7 +79,7 @@ contract TaskManagerTest is Test {
 
     function test_SubmitProof_Fail() public {
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         taskManager.submitProof(0, false);
 
@@ -88,7 +91,7 @@ contract TaskManagerTest is Test {
 
     function test_ClaimRefund_Success() public {
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         taskManager.submitProof(0, true);
 
@@ -105,7 +108,7 @@ contract TaskManagerTest is Test {
 
     function test_ClaimRefund_RevertIfNotVerified() public {
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         vm.prank(user);
         vm.expectRevert("Not verified");
@@ -116,7 +119,7 @@ contract TaskManagerTest is Test {
 
     function test_Settle_BurnsStakeAfterDeadline() public {
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         // 时间快进超过截止时间
         vm.warp(block.timestamp + ONE_DAY + 1);
@@ -131,7 +134,7 @@ contract TaskManagerTest is Test {
 
     function test_Settle_RevertIfNotExpired() public {
         vm.prank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Test task", block.timestamp + ONE_DAY, 1);
 
         vm.expectRevert("Not expired");
         taskManager.settle(0);
@@ -141,8 +144,8 @@ contract TaskManagerTest is Test {
 
     function test_GetUserTasks() public {
         vm.startPrank(user);
-        taskManager.createTask{value: STAKE_AMOUNT}("Task 1", block.timestamp + ONE_DAY);
-        taskManager.createTask{value: STAKE_AMOUNT}("Task 2", block.timestamp + ONE_DAY);
+        taskManager.createTask{value: STAKE_AMOUNT}("Task 1", block.timestamp + ONE_DAY, 1);
+        taskManager.createTask{value: STAKE_AMOUNT}("Task 2", block.timestamp + ONE_DAY, 2);
         vm.stopPrank();
 
         uint256[] memory userTaskIds = taskManager.getUserTasks(user);
