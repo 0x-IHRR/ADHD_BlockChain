@@ -2,6 +2,7 @@
  * VerifyModal - 任务验证提交模态框
  * 
  * 允许用户输入证明文本，调用 AI 验证并提交到链上
+ * 支持图片上传 (法官模式)
  */
 import React, { useState } from 'react';
 import {
@@ -14,8 +15,11 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    Image,
+    Alert,
 } from 'react-native';
-import { X, Send, CheckCircle, XCircle, ExternalLink } from 'lucide-react-native';
+import { X, Send, CheckCircle, XCircle, ExternalLink, Camera, ImagePlus, Trash2 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
@@ -45,9 +49,47 @@ export default function VerifyModal({
     const { t } = useI18n();
 
     const [proof, setProof] = useState('');
+    const [imageUri, setImageUri] = useState<string | null>(null);
     const [state, setState] = useState<ModalState>('input');
     const [result, setResult] = useState<VerifyAndSubmitResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    // 图片选择 - 相册
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please grant photo library access.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsEditing: true,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
+    // 拍照
+    const takePhoto = async () => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please grant camera access.');
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            quality: 0.8,
+            allowsEditing: true,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!proof.trim()) return;
@@ -85,6 +127,7 @@ export default function VerifyModal({
     const handleClose = () => {
         // 重置状态
         setProof('');
+        setImageUri(null);
         setState('input');
         setResult(null);
         setError(null);
@@ -152,6 +195,50 @@ export default function VerifyModal({
                                     onChangeText={setProof}
                                     textAlignVertical="top"
                                 />
+
+                                {/* 图片上传区域 */}
+                                <View style={styles.imageSection}>
+                                    <Text style={[styles.label, { color: colors.text.muted }]}>
+                                        Add Screenshot/Photo (Optional)
+                                    </Text>
+
+                                    {imageUri ? (
+                                        <View style={styles.imagePreviewContainer}>
+                                            <Image
+                                                source={{ uri: imageUri }}
+                                                style={styles.imagePreview}
+                                                resizeMode="cover"
+                                            />
+                                            <TouchableOpacity
+                                                style={[styles.removeImageButton, { backgroundColor: colors.semantic.error }]}
+                                                onPress={() => setImageUri(null)}
+                                            >
+                                                <Trash2 size={16} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : (
+                                        <View style={styles.imagePickerRow}>
+                                            <TouchableOpacity
+                                                style={[styles.imagePickerButton, { borderColor: colors.border.default }]}
+                                                onPress={pickImage}
+                                            >
+                                                <ImagePlus size={20} color={colors.text.secondary} />
+                                                <Text style={[styles.imagePickerText, { color: colors.text.secondary }]}>
+                                                    Gallery
+                                                </Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.imagePickerButton, { borderColor: colors.border.default }]}
+                                                onPress={takePhoto}
+                                            >
+                                                <Camera size={20} color={colors.text.secondary} />
+                                                <Text style={[styles.imagePickerText, { color: colors.text.secondary }]}>
+                                                    Camera
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </View>
 
                                 <TouchableOpacity
                                     style={[styles.submitButton, { backgroundColor: colors.primary[500] }]}
@@ -327,5 +414,42 @@ const styles = StyleSheet.create({
     retryButtonText: {
         fontSize: typography.fontSize.sm,
         fontWeight: typography.fontWeight.medium,
+    },
+    // 图片上传样式
+    imageSection: {
+        marginBottom: spacing.lg,
+    },
+    imagePickerRow: {
+        flexDirection: 'row',
+        gap: spacing.md,
+    },
+    imagePickerButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.sm,
+        padding: spacing.lg,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        borderStyle: 'dashed',
+    },
+    imagePickerText: {
+        fontSize: typography.fontSize.sm,
+    },
+    imagePreviewContainer: {
+        position: 'relative',
+    },
+    imagePreview: {
+        width: '100%',
+        height: 150,
+        borderRadius: borderRadius.lg,
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: spacing.sm,
+        right: spacing.sm,
+        borderRadius: borderRadius.full,
+        padding: spacing.sm,
     },
 });

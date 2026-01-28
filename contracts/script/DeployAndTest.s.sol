@@ -26,12 +26,13 @@ contract DeployAndTest is Script {
         console.log("\n[1] Deploying contracts...");
         verifier = new SimpleAIVerifier(msg.sender);
         penaltyStrategy = new BurnPenalty();
-        // 新构造函数：verifier, penaltyStrategy, authorizedVerifier, treasury
+        // 新构造函数：verifier, penaltyStrategy, authorizedVerifier, treasury, petManager
         taskManager = new TaskManager(
             address(verifier), 
             address(penaltyStrategy),
             msg.sender,  // Oracle 地址
-            msg.sender   // Treasury 地址 (测试用部署者地址)
+            msg.sender,  // Treasury 地址 (测试用部署者地址)
+            address(0)   // PetManager (暂不部署)
         );
         
         console.log("  - Verifier:", address(verifier));

@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./interfaces/IVerifier.sol";
 import "./interfaces/IPenaltyStrategy.sol";
+import "./interfaces/IPetManager.sol";
 
 /**
  * @title TaskManager
@@ -37,6 +38,7 @@ contract TaskManager {
 
     IVerifier public verifier;
     IPenaltyStrategy public penaltyStrategy;
+    IPetManager public petManager;     // 电子宠物管理合约
     address public owner;
     address public authorizedVerifier; // Oracle 地址，唯一可调用 submitProof
     
@@ -82,7 +84,8 @@ contract TaskManager {
         address _verifier, 
         address _penaltyStrategy,
         address _authorizedVerifier,
-        address _treasury
+        address _treasury,
+        address _petManager
     ) {
         require(_authorizedVerifier != address(0), "Oracle address required");
         
@@ -91,6 +94,7 @@ contract TaskManager {
         penaltyStrategy = IPenaltyStrategy(_penaltyStrategy);
         authorizedVerifier = _authorizedVerifier;
         treasury = _treasury;
+        petManager = IPetManager(_petManager);
     }
 
     // ============ 核心函数 ============
@@ -134,8 +138,16 @@ contract TaskManager {
 
         if (verified) {
             task.status = TaskStatus.Verified;
+            // 验证成功，治愈宠物
+            if (address(petManager) != address(0)) {
+                petManager.healPet(task.owner, 5);
+            }
         } else {
             task.status = TaskStatus.Failed;
+            // 验证失败，对宠物造成伤害
+            if (address(petManager) != address(0)) {
+                petManager.damagePet(task.owner, task.multiplier);
+            }
         }
 
         emit TaskVerified(taskId, verified);

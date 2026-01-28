@@ -15,6 +15,7 @@
     "clsx": "^2.1.1",
     "ethers": "^6.16.0",
     "expo": "~54.0.32",
+    "expo-image-picker": "~17.0.10",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^0.563.0",
     "nativewind": "^4.2.1",

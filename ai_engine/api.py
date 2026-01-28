@@ -160,6 +160,81 @@ async def verify_and_submit_task(request: VerifyAndSubmitRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============ 图片上传验证 (法官模式) ============
+
+from fastapi import File, UploadFile, Form
+import os
+import uuid
+import base64
+
+# 临时图片存储目录
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@app.post("/verify-with-image", response_model=VerifyAndSubmitResponse)
+async def verify_with_image(
+    task_id: int = Form(...),
+    task_description: str = Form(...),
+    proof: str = Form(...),
+    image: Optional[UploadFile] = File(None)
+):
+    """
+    验证任务 (支持图片上传) - 法官模式
+    
+    接受 multipart/form-data 格式，支持上传截图/照片作为证明
+    
+    - **task_id**: 链上任务 ID
+    - **task_description**: 原任务描述  
+    - **proof**: 用户提交的文字证明
+    - **image**: (可选) 图片文件 (jpg/png/webp)
+    """
+    image_url = None
+    
+    try:
+        # 如果有图片，保存并生成 URL
+        if image and image.filename:
+            # 验证文件类型
+            allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+            if image.content_type not in allowed_types:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid image type: {image.content_type}. Allowed: {allowed_types}"
+                )
+            
+            # 生成唯一文件名
+            ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
+            filename = f"{uuid.uuid4()}.{ext}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            
+            # 保存文件
+            content = await image.read()
+            with open(filepath, "wb") as f:
+                f.write(content)
+            
+            # 生成本地 URL (也可换成云存储 URL)
+            image_url = f"file://{filepath}"
+            
+            # 可选：生成 base64 data URL 供 AI 分析
+            # image_data = base64.b64encode(content).decode("utf-8")
+            # image_url = f"data:{image.content_type};base64,{image_data}"
+        
+        # 调用验证 Agent
+        result = await verify_agent.verify_and_submit(
+            task_id=task_id,
+            task_description=task_description,
+            proof=proof,
+            image_url=image_url
+        )
+        
+        return VerifyAndSubmitResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============ 启动入口 ============
 
 if __name__ == "__main__":
@@ -169,3 +244,4 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
+

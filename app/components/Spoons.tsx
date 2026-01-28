@@ -28,8 +28,8 @@ import Animated, {
     useDerivedValue,
 } from 'react-native-reanimated';
 
-// 状态类型
-export type SpoonsMood = 'neutral' | 'thinking' | 'happy' | 'shaking';
+// 状态类型 (增加 dying 和 dead)
+export type SpoonsMood = 'neutral' | 'thinking' | 'happy' | 'shaking' | 'dying' | 'dead';
 
 interface SpoonsProps {
     mood?: SpoonsMood;
@@ -38,7 +38,7 @@ interface SpoonsProps {
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-export default function Spoons({ mood = 'neutral', size = 120 }: SpoonsProps) {
+export default function Spoons({ mood = 'neutral', size = 180 }: SpoonsProps) {
     // 动画值
     const rotation = useSharedValue(0);
     const bounce = useSharedValue(0);
@@ -133,6 +133,10 @@ export default function Spoons({ mood = 'neutral', size = 120 }: SpoonsProps) {
                 return { body: '#1BE3C2', glow: '#1BE3C2' }; // 成功绿
             case 'shaking':
                 return { body: '#FF4757', glow: '#FF4757' }; // 失败红
+            case 'dying':
+                return { body: '#FFA500', glow: '#FF8C00' }; // 橙色警告 (虚弱)
+            case 'dead':
+                return { body: '#4A4A4A', glow: '#2A2A2A' }; // 灰色死亡
             default:
                 return { body: '#C0C0C0', glow: '#FFFFFF' }; // 银色中立
         }
@@ -223,6 +227,24 @@ export default function Spoons({ mood = 'neutral', size = 120 }: SpoonsProps) {
                     // 思考 ~ 嘴
                     <Path
                         d="M 42 50 Q 46 53 50 50 Q 54 47 58 50"
+                        fill="none"
+                        stroke="#1A1A22"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                    />
+                ) : mood === 'dying' ? (
+                    // 虚弱 - 下垂嘴
+                    <Path
+                        d="M 42 52 Q 50 48 58 52"
+                        fill="none"
+                        stroke="#1A1A22"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                    />
+                ) : mood === 'dead' ? (
+                    // 死亡 - 平嘴 + X 眼睛 (需额外绘制)
+                    <Path
+                        d="M 42 50 L 58 50"
                         fill="none"
                         stroke="#1A1A22"
                         strokeWidth="2"
