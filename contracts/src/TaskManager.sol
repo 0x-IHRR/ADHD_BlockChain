@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "./interfaces/IVerifier.sol";
 import "./interfaces/IPenaltyStrategy.sol";
 import "./interfaces/IPetManager.sol";
+import "./interfaces/IAchievementNFT.sol";
 
 /**
  * @title TaskManager
@@ -39,6 +40,7 @@ contract TaskManager {
     IVerifier public verifier;
     IPenaltyStrategy public penaltyStrategy;
     IPetManager public petManager;     // 电子宠物管理合约
+    IAchievementNFT public achievementNFT; // 成就徽章 NFT 合约
     address public owner;
     address public authorizedVerifier; // Oracle 地址，唯一可调用 submitProof
     
@@ -108,7 +110,17 @@ contract TaskManager {
     function createTask(string calldata description, uint256 deadline, uint8 multiplier) external payable {
         require(msg.value > 0, "Stake required");
         require(deadline > block.timestamp, "Deadline must be future");
-        require(multiplier >= 1 && multiplier <= 3, "Multiplier must be 1-3");
+        
+        // 倍率验证: 1-3 免费，5/10 需要 Master 徽章
+        if (multiplier <= 3) {
+            require(multiplier >= 1, "Multiplier must be >= 1");
+        } else {
+            require(multiplier == 5 || multiplier == 10, "High multiplier must be 5 or 10");
+            require(
+                address(achievementNFT) != address(0) && achievementNFT.canUseHighMultiplier(msg.sender),
+                "Need Master badge for 5x/10x"
+            );
+        }
 
         uint256 taskId = nextTaskId++;
         tasks[taskId] = Task({
@@ -141,6 +153,10 @@ contract TaskManager {
             // 验证成功，治愈宠物
             if (address(petManager) != address(0)) {
                 petManager.healPet(task.owner, 5);
+            }
+            // 增加用户完成任务数 (用于成就徽章)
+            if (address(achievementNFT) != address(0)) {
+                try achievementNFT.incrementCompletedCount(task.owner) {} catch {}
             }
         } else {
             task.status = TaskStatus.Failed;
@@ -220,6 +236,10 @@ contract TaskManager {
 
     function setTreasury(address _treasury) external onlyOwner {
         treasury = _treasury;
+    }
+
+    function setAchievementNFT(address _achievementNFT) external onlyOwner {
+        achievementNFT = IAchievementNFT(_achievementNFT);
     }
 
     /**

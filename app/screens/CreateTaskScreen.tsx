@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock } from 'lucide-react-native';
 import { useTasks } from '../context/AppContext';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { breakdownTask } from '../services/ai.service';
+import { useAchievementNFT } from '../hooks/useAchievementNFT';
 import { createTaskOnChain } from '../services/contract.service';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
@@ -50,7 +51,8 @@ export default function CreateTaskScreen() {
     const [description, setDescription] = useState('');
     const [selectedPlatform, setSelectedPlatform] = useState('x');
     const [stakeAmount, setStakeAmount] = useState('0.01');
-    const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
+    const [multiplier, setMultiplier] = useState<1 | 2 | 3 | 5 | 10>(1);
+    const { state: achievementState } = useAchievementNFT(); // NFT 成就状态
     const [selectedDeadline, setSelectedDeadline] = useState('24h'); // 默认 24h
     const [customHours, setCustomHours] = useState(''); // 自定义时间输入
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -288,6 +290,32 @@ export default function CreateTaskScreen() {
                                                     ]}>{m}x</Text>
                                                 </TouchableOpacity>
                                             ))}
+                                            {/* 5x/10x 高倍率 - 需要 Flow Keeper 徽章 */}
+                                            {([5, 10] as const).map((m) => {
+                                                const isLocked = !achievementState?.canUseHighMultiplier;
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={m}
+                                                        style={[
+                                                            styles.multiplierButton,
+                                                            styles.multiplierButtonPremium,
+                                                            multiplier === m && styles.multiplierButtonPremiumActive,
+                                                            isLocked && styles.multiplierButtonLocked
+                                                        ]}
+                                                        onPress={() => !isLocked && setMultiplier(m)}
+                                                        disabled={isLocked}
+                                                    >
+                                                        <View style={styles.multiplierButtonContent}>
+                                                            {isLocked && <Lock size={12} color="#888" style={{ marginRight: 4 }} />}
+                                                            <Text style={[
+                                                                styles.multiplierButtonText,
+                                                                multiplier === m && styles.multiplierButtonTextPremium,
+                                                                isLocked && styles.multiplierButtonTextLocked
+                                                            ]}>{m}x</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
                                         </View>
                                     </View>
 
@@ -583,6 +611,24 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.semantic.error,
         borderColor: colors.semantic.error,
     },
+    multiplierButtonPremium: {
+        borderColor: colors.primary[400],
+        borderStyle: 'dashed',
+    },
+    multiplierButtonPremiumActive: {
+        backgroundColor: colors.primary[400],
+        borderColor: colors.primary[400],
+        borderStyle: 'solid',
+    },
+    multiplierButtonLocked: {
+        opacity: 0.5,
+        borderColor: colors.border.subtle,
+        borderStyle: 'dashed',
+    },
+    multiplierButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     multiplierButtonText: {
         fontSize: typography.fontSize.sm,
         fontWeight: typography.fontWeight.bold,
@@ -593,6 +639,12 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     multiplierButtonTextDanger: {
         color: '#fff',
+    },
+    multiplierButtonTextPremium: {
+        color: '#000',
+    },
+    multiplierButtonTextLocked: {
+        color: colors.text.muted,
     },
 
     // Platform selector

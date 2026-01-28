@@ -21,12 +21,13 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown, Layers } from 'lucide-react-native';
+import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown, Layers, Award } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useWallet, SUPPORTED_NETWORKS } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import WalletSelectorModal from './WalletSelectorModal';
+import AchievementModal from './AchievementModal';
 
 // 响应式断点
 const BREAKPOINT_TABLET = 768;
@@ -37,13 +38,15 @@ interface MainLayoutProps {
     rightPanel?: ReactNode;
     jackpotAmount?: string;
     onJackpotPress?: () => void;
+    achievementNFTAddress?: string; // NFT 合约地址
 }
 
 export default function MainLayout({
     children,
     rightPanel,
     jackpotAmount = '0.00',
-    onJackpotPress
+    onJackpotPress,
+    achievementNFTAddress
 }: MainLayoutProps) {
     const { width } = useWindowDimensions();
     const { colors, toggleTheme } = useTheme();
@@ -54,6 +57,7 @@ export default function MainLayout({
     const [showWalletSelector, setShowWalletSelector] = useState(false);
     const [showWalletMenu, setShowWalletMenu] = useState(false);
     const [showNetworkMenu, setShowNetworkMenu] = useState(false);
+    const [showAchievementModal, setShowAchievementModal] = useState(false);
 
     // 关闭所有下拉菜单
     const closeAllDropdowns = useCallback(() => {
@@ -107,6 +111,21 @@ export default function MainLayout({
                                 </Text>
                                 <Text style={[styles.jackpotValue, { color: colors.primary[400] }]}>
                                     {jackpotAmount} ETH
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* 成就徽章按钮 */}
+                            <TouchableOpacity
+                                style={[styles.achievementChip, {
+                                    backgroundColor: colors.glass.background,
+                                    borderColor: colors.primary[500] + '40'
+                                }]}
+                                onPress={() => setShowAchievementModal(true)}
+                                activeOpacity={0.7}
+                            >
+                                <Award size={16} color={colors.primary[400]} />
+                                <Text style={[styles.achievementLabel, { color: colors.text.muted }]}>
+                                    成就
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -287,6 +306,13 @@ export default function MainLayout({
                 visible={showWalletSelector}
                 onClose={() => setShowWalletSelector(false)}
             />
+
+            {/* 成就徽章 Modal */}
+            <AchievementModal
+                visible={showAchievementModal}
+                onClose={() => setShowAchievementModal(false)}
+                contractAddress={achievementNFTAddress}
+            />
         </View>
     );
 }
@@ -365,6 +391,21 @@ const styles = StyleSheet.create({
     jackpotValue: {
         fontSize: typography.fontSize.sm,
         fontWeight: typography.fontWeight.bold,
+    },
+
+    // Achievement Chip
+    achievementChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        borderWidth: 1,
+    },
+    achievementLabel: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
     },
 
     // Icon Buttons
