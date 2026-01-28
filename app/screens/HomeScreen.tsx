@@ -18,6 +18,7 @@ import { useTheme } from '../context/ThemeContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { FadeInView, PulseGlow } from '../styles/animations';
 import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView } from '../components';
+import { getAchievementNFTAddress } from '../services/contract.service';
 
 // 状态标签
 const StatusBadge = ({ status }: { status: TaskStatus }) => {
@@ -142,6 +143,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             rightPanel={rightPanel}
             jackpotAmount={jackpotAmount}
             onJackpotPress={() => setLeaderboardVisible(true)}
+            achievementNFTAddress={getAchievementNFTAddress()}
         >
             <LeaderboardModal
                 visible={isLeaderboardVisible}
