@@ -10,12 +10,13 @@
  * │                           │                             │
  * └───────────────────────────┴─────────────────────────────┘
  */
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useCallback } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
+    Pressable,
     Platform,
     useWindowDimensions,
 } from 'react-native';
@@ -54,6 +55,12 @@ export default function MainLayout({
     const [showWalletMenu, setShowWalletMenu] = useState(false);
     const [showNetworkMenu, setShowNetworkMenu] = useState(false);
 
+    // 关闭所有下拉菜单
+    const closeAllDropdowns = useCallback(() => {
+        setShowWalletMenu(false);
+        setShowNetworkMenu(false);
+    }, []);
+
     // 响应式布局判断
     const isDesktop = width >= BREAKPOINT_DESKTOP;
     const isTablet = width >= BREAKPOINT_TABLET && width < BREAKPOINT_DESKTOP;
@@ -61,6 +68,9 @@ export default function MainLayout({
 
     // 是否显示右侧面板
     const showRightPanel = isDesktop && rightPanel;
+
+    // 是否有下拉菜单打开
+    const hasOpenDropdown = showWalletMenu || showNetworkMenu;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -242,6 +252,14 @@ export default function MainLayout({
                     </View>
                 </View>
 
+                {/* 下拉菜单遮罩层 - 点击关闭所有下拉菜单 */}
+                {hasOpenDropdown && (
+                    <Pressable
+                        style={styles.dropdownOverlay}
+                        onPress={closeAllDropdowns}
+                    />
+                )}
+
                 {/* Main Content Area */}
                 <View style={styles.mainContent}>
                     {/* Left Panel: Main Content */}
@@ -279,6 +297,17 @@ const styles = StyleSheet.create({
     },
     safeArea: {
         flex: 1,
+    },
+
+    // 下拉菜单遮罩层
+    dropdownOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 50,
+        backgroundColor: 'transparent',
     },
 
     // Navbar
