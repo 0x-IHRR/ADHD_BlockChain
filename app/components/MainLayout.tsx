@@ -200,13 +200,10 @@ export default function MainLayout({
                                 onPress={() => {
                                     if (isConnected) {
                                         setShowWalletMenu(!showWalletMenu);
+                                        setShowNetworkMenu(false);
                                     } else {
-                                        // 如果有多个钱包，显示选择器；否则直接连接
-                                        if (availableWallets.length > 1) {
-                                            setShowWalletSelector(true);
-                                        } else {
-                                            connect();
-                                        }
+                                        // 每次都显示钱包选择器，让用户选择要连接的钱包
+                                        setShowWalletSelector(true);
                                     }
                                 }}
                             >
