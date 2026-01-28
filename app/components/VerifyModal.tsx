@@ -25,7 +25,8 @@ import Spoons from './Spoons';
 interface VerifyModalProps {
     visible: boolean;
     onClose: () => void;
-    taskId: number;
+    localTaskId: number;        // 本地任务 ID (用于日志和 UI)
+    chainTaskId?: number;       // 链上任务 ID (用于合约交互)
     taskDescription: string;
     onVerificationComplete: (result: VerifyAndSubmitResult) => void;
 }
@@ -35,7 +36,8 @@ type ModalState = 'input' | 'verifying' | 'success' | 'failed';
 export default function VerifyModal({
     visible,
     onClose,
-    taskId,
+    localTaskId,
+    chainTaskId,
     taskDescription,
     onVerificationComplete,
 }: VerifyModalProps) {
@@ -54,8 +56,15 @@ export default function VerifyModal({
         setError(null);
 
         try {
+            // 使用 chainTaskId 进行链上验证，如果没有则使用本地 ID (仅测试用)
+            const taskIdForChain = chainTaskId ?? localTaskId;
+
+            if (!chainTaskId) {
+                console.warn('警告: 使用本地 ID 进行验证，可能与链上不匹配');
+            }
+
             const verifyResult = await verifyAndSubmit(
-                taskId,
+                taskIdForChain,
                 taskDescription,
                 proof.trim()
             );

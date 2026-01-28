@@ -215,7 +215,8 @@ export default function TaskDetailScreen() {
             <VerifyModal
                 visible={verifyModalVisible}
                 onClose={() => setVerifyModalVisible(false)}
-                taskId={task.id}
+                localTaskId={task.id}
+                chainTaskId={task.chainTaskId}
                 taskDescription={task.description}
                 onVerificationComplete={handleVerificationComplete}
             />

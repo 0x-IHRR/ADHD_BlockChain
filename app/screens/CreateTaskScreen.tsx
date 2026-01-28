@@ -18,6 +18,7 @@ import { useTasks } from '../context/AppContext';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { breakdownTask } from '../services/ai.service';
+import { createTaskOnChain } from '../services/contract.service';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
@@ -43,7 +44,7 @@ const PLATFORM_OPTIONS = [
 
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
-    const { addTask } = useTasks();
+    const { addTask, updateTaskChainId } = useTasks();
     const { t } = useI18n();
     const { colors } = useTheme();
     const [description, setDescription] = useState('');
@@ -53,6 +54,7 @@ export default function CreateTaskScreen() {
     const [selectedDeadline, setSelectedDeadline] = useState('24h'); // 默认 24h
     const [customHours, setCustomHours] = useState(''); // 自定义时间输入
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isCreating, setIsCreating] = useState(false); // 创建任务加载状态
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
     // AI Analysis
@@ -96,20 +98,48 @@ export default function CreateTaskScreen() {
 
         const platformLabel = PLATFORM_OPTIONS.find(p => p.id === selectedPlatform)?.label || 'X';
 
-        const newTask = {
-            id: Date.now(),
-            description,
-            platform: platformLabel,
-            createdAt: new Date(),
-            deadline: new Date(Date.now() + deadlineHours * 60 * 60 * 1000),
-            status: 'pending' as const,
-            stakeAmount: `${stakeAmount} ETH`,
-            verificationMethod: 'ai_agent' as const,
-            subtasks: [],
-        };
+        setIsCreating(true);
 
-        addTask(newTask);
-        navigation.goBack();
+        try {
+            // 1. 先添加本地任务 (立即显示在 UI)
+            const newTask = addTask({
+                description,
+                platform: platformLabel,
+                deadline: new Date(Date.now() + deadlineHours * 60 * 60 * 1000),
+                status: 'pending' as const,
+                stakeAmount: `${stakeAmount} ETH`,
+                multiplier,
+                subtasks: [],
+            });
+
+            // 2. 调用链上创建任务
+            try {
+                const { taskId: chainTaskId, txHash } = await createTaskOnChain(
+                    description,
+                    deadlineHours,
+                    stakeAmount,
+                    multiplier
+                );
+
+                // 3. 同步链上 ID 到本地任务
+                updateTaskChainId(newTask.id, chainTaskId, txHash);
+                console.log('任务创建成功:', { localId: newTask.id, chainTaskId, txHash });
+            } catch (chainError) {
+                // 链上调用失败，但本地任务已创建（可稍后重试）
+                console.warn('链上创建失败，任务仅保存在本地:', chainError);
+                Alert.alert(
+                    t('common.warning') || '警告',
+                    '任务已保存到本地，但链上创建失败。请稍后重试上链。'
+                );
+            }
+
+            navigation.goBack();
+        } catch (error) {
+            console.error('任务创建失败:', error);
+            Alert.alert(t('common.error'), '创建任务失败，请重试');
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     const styles = useMemo(() => getStyles(colors), [colors]);
