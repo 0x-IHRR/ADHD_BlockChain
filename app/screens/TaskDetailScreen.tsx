@@ -5,10 +5,11 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ArrowLeft, CheckCircle, Clock, AlertCircle, Share2, ExternalLink, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, Clock, AlertCircle, Share2, ExternalLink, ShieldCheck, Wallet, Flame } from 'lucide-react-native';
 import { useTasks, TaskStatus } from '../context/AppContext';
 import { useWallet } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
@@ -18,6 +19,7 @@ import { ThemeColors } from '../styles/themes';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { FadeInView, PulseGlow } from '../styles/animations';
 import { VerifyModal } from '../components';
+import { claimRefundOnChain, settleTaskOnChain } from '../services/contract.service';
 
 const MAX_WIDTH = 480;
 
@@ -34,6 +36,8 @@ export default function TaskDetailScreen() {
 
     // VerifyModal 状态
     const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -59,6 +63,39 @@ export default function TaskDetailScreen() {
         updateTaskStatus(task.id, result.verified ? 'verified' : 'failed');
         setVerifyModalVisible(false);
     };
+
+    // 领取退款
+    const handleClaimRefund = async () => {
+        if (!task.chainTaskId) return;
+        setActionLoading(true);
+        setActionError(null);
+        try {
+            await claimRefundOnChain(task.chainTaskId);
+            updateTaskStatus(task.id, 'settled');
+        } catch (e: any) {
+            setActionError(e.message || 'Failed to claim refund');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // 结算超时任务
+    const handleSettle = async () => {
+        if (!task.chainTaskId) return;
+        setActionLoading(true);
+        setActionError(null);
+        try {
+            await settleTaskOnChain(task.chainTaskId);
+            updateTaskStatus(task.id, 'settled');
+        } catch (e: any) {
+            setActionError(e.message || 'Failed to settle task');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // 检查任务是否已超时
+    const isTimedOut = task.deadline.getTime() < Date.now() && task.status === 'pending';
 
     // 进度条组件
     const ProgressBar = ({ progress, color }: { progress: number; color: string }) => {
@@ -191,7 +228,7 @@ export default function TaskDetailScreen() {
                     </ScrollView>
 
                     {/* Action Button */}
-                    {task.status === 'pending' && (
+                    {task.status === 'pending' && !isTimedOut && (
                         <FadeInView delay={250}>
                             <View style={styles.footer}>
                                 <PulseGlow color={colors.primary[500]}>
@@ -205,6 +242,64 @@ export default function TaskDetailScreen() {
                                         </Text>
                                     </TouchableOpacity>
                                 </PulseGlow>
+                            </View>
+                        </FadeInView>
+                    )}
+
+                    {/* Claim Refund Button (验证成功后) */}
+                    {task.status === 'verified' && (
+                        <FadeInView delay={250}>
+                            <View style={styles.footer}>
+                                <TouchableOpacity
+                                    style={[styles.actionButton, { backgroundColor: colors.semantic.success }]}
+                                    onPress={handleClaimRefund}
+                                    disabled={actionLoading}
+                                >
+                                    {actionLoading ? (
+                                        <ActivityIndicator color="#000" />
+                                    ) : (
+                                        <>
+                                            <Wallet size={20} color="#000" />
+                                            <Text style={styles.actionButtonText}>
+                                                {t('taskDetail.claimRefund')}
+                                            </Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                                {actionError && (
+                                    <Text style={[styles.errorText, { color: colors.semantic.error }]}>
+                                        {actionError}
+                                    </Text>
+                                )}
+                            </View>
+                        </FadeInView>
+                    )}
+
+                    {/* Settle Button (超时任务) */}
+                    {isTimedOut && (
+                        <FadeInView delay={250}>
+                            <View style={styles.footer}>
+                                <TouchableOpacity
+                                    style={[styles.actionButton, { backgroundColor: colors.semantic.error }]}
+                                    onPress={handleSettle}
+                                    disabled={actionLoading}
+                                >
+                                    {actionLoading ? (
+                                        <ActivityIndicator color="#FFF" />
+                                    ) : (
+                                        <>
+                                            <Flame size={20} color="#FFF" />
+                                            <Text style={[styles.actionButtonText, { color: '#FFF' }]}>
+                                                {t('taskDetail.settleTask')}
+                                            </Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                                {actionError && (
+                                    <Text style={[styles.errorText, { color: colors.semantic.error }]}>
+                                        {actionError}
+                                    </Text>
+                                )}
                             </View>
                         </FadeInView>
                     )}
@@ -446,6 +541,11 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         color: '#000',
         fontSize: typography.fontSize.lg,
         fontWeight: typography.fontWeight.bold,
+    },
+    errorText: {
+        marginTop: spacing.sm,
+        fontSize: typography.fontSize.sm,
+        textAlign: 'center',
     },
 });
 

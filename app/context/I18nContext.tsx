@@ -86,6 +86,8 @@ const translations: Record<Language, Record<string, string>> = {
         'taskDetail.method': 'Method',
         'taskDetail.proof': 'Proof',
         'taskDetail.verifyButton': 'Verify Task',
+        'taskDetail.claimRefund': 'Claim Refund',
+        'taskDetail.settleTask': 'Settle (Timed Out)',
         'taskDetail.left': 'left',
         'taskDetail.dueNow': 'Due now',
 
@@ -170,6 +172,8 @@ const translations: Record<Language, Record<string, string>> = {
         'taskDetail.method': '验证方式',
         'taskDetail.proof': '链上证明',
         'taskDetail.verifyButton': '验证任务',
+        'taskDetail.claimRefund': '领取退款',
+        'taskDetail.settleTask': '结算（已超时）',
         'taskDetail.left': '剩余',
         'taskDetail.dueNow': '即将截止',
 

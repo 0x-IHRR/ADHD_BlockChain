@@ -242,6 +242,10 @@ contract TaskManager {
         achievementNFT = IAchievementNFT(_achievementNFT);
     }
 
+    function setPetManager(address _petManager) external onlyOwner {
+        petManager = IPetManager(_petManager);
+    }
+
     /**
      * @notice 从合约提取奖金池资金 (仅 owner 可调用，用于分配给成功者)
      * @param amount 提取金额
