@@ -23,11 +23,13 @@ contract TaskManagerTest is Test {
         verifier = new SimpleAIVerifier(aiOperator);
         penaltyStrategy = new BurnPenalty();
         
-        // 部署主合约
-        taskManager = new TaskManager(address(verifier), address(penaltyStrategy));
-        
-        // 设置测试合约为授权验证者 (Oracle)
-        taskManager.setAuthorizedVerifier(address(this));
+        // 部署主合约 (测试合约作为 Oracle，无 treasury)
+        taskManager = new TaskManager(
+            address(verifier), 
+            address(penaltyStrategy),
+            address(this),  // 测试合约作为 Oracle
+            address(0)      // 无 treasury
+        );
 
         // 给测试用户一些 ETH
         vm.deal(user, 10 ether);

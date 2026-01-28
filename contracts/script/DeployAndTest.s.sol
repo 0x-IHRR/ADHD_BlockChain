@@ -26,16 +26,19 @@ contract DeployAndTest is Script {
         console.log("\n[1] Deploying contracts...");
         verifier = new SimpleAIVerifier(msg.sender);
         penaltyStrategy = new BurnPenalty();
-        taskManager = new TaskManager(address(verifier), address(penaltyStrategy));
+        // 新构造函数：verifier, penaltyStrategy, authorizedVerifier, treasury
+        taskManager = new TaskManager(
+            address(verifier), 
+            address(penaltyStrategy),
+            msg.sender,  // Oracle 地址
+            msg.sender   // Treasury 地址 (测试用部署者地址)
+        );
         
         console.log("  - Verifier:", address(verifier));
         console.log("  - PenaltyStrategy:", address(penaltyStrategy));
         console.log("  - TaskManager:", address(taskManager));
-        
-        // Step 1.5: 设置 Oracle 授权验证者 (部署者地址)
-        console.log("\n[1.5] Setting authorized Oracle verifier...");
-        taskManager.setAuthorizedVerifier(msg.sender);
-        console.log("  - Oracle set to:", msg.sender);
+        console.log("  - Oracle (authorizedVerifier):", msg.sender);
+        console.log("  - Treasury:", msg.sender);
 
         // Step 2: 创建任务并质押
         console.log("\n[2] Creating task with 0.1 ETH stake...");

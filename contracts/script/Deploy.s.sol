@@ -21,14 +21,13 @@ contract Deploy is Script {
         SimpleAIVerifier verifier = new SimpleAIVerifier(msg.sender);
         BurnPenalty penaltyStrategy = new BurnPenalty();
         
-        // 部署主合约
-        TaskManager taskManager = new TaskManager(address(verifier), address(penaltyStrategy));
-        
-        // 设置 Oracle (部署者作为 Oracle)
-        taskManager.setAuthorizedVerifier(msg.sender);
-        
-        // 设置 Treasury (部署者接收平台费)
-        taskManager.setTreasury(msg.sender);
+        // 部署主合约 (构造函数包含 oracle 和 treasury)
+        TaskManager taskManager = new TaskManager(
+            address(verifier), 
+            address(penaltyStrategy),
+            msg.sender,  // Oracle
+            msg.sender   // Treasury
+        );
         
         vm.stopBroadcast();
 

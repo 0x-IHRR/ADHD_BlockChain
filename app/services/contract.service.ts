@@ -6,14 +6,15 @@ import { ethers } from 'ethers';
 
 // 合约 ABI (简化版 - 只包含需要的函数)
 export const TASK_MANAGER_ABI = [
-    'function createTask(string memory description, uint256 deadline) external payable',
+    'function createTask(string calldata description, uint256 deadline, uint8 multiplier) external payable',
     'function submitProof(uint256 taskId, bool verified) external',
     'function claimRefund(uint256 taskId) external',
     'function settle(uint256 taskId) external',
-    'function getTask(uint256 taskId) external view returns (tuple(uint256 id, address owner, string description, uint256 stakeAmount, uint256 deadline, uint8 status, uint256 createdAt))',
+    'function getTask(uint256 taskId) external view returns (tuple(uint256 id, address owner, string description, uint256 stakeAmount, uint256 deadline, uint8 status, uint256 createdAt, uint8 multiplier))',
     'function getUserTasks(address user) external view returns (uint256[])',
-    'event TaskCreated(uint256 indexed taskId, address indexed owner, string description, uint256 stakeAmount, uint256 deadline)',
-    'event TaskVerified(uint256 indexed taskId, bool verified)',
+    'function getJackpot() external view returns (uint256)',
+    'event TaskCreated(uint256 indexed taskId, address indexed owner, uint256 stakeAmount, uint256 deadline, uint8 multiplier)',
+    'event TaskVerified(uint256 indexed taskId, bool success)',
     'event TaskSettled(uint256 indexed taskId, bool refunded)',
 ] as const;
 
@@ -33,6 +34,7 @@ export interface OnChainTask {
     deadline: bigint;
     status: TaskStatus;
     createdAt: bigint;
+    multiplier: number;
 }
 
 // 默认 Anvil 测试账户私钥 (仅用于开发!)
@@ -106,15 +108,19 @@ export function calculateDeadline(hoursFromNow: number): bigint {
 export async function createTaskOnChain(
     description: string,
     deadlineHours: number,
-    stakeEth: string
+    stakeEth: string,
+    multiplier: number = 1
 ): Promise<{ taskId: number; txHash: string }> {
     const contract = getContract();
     const deadline = calculateDeadline(deadlineHours);
     const value = parseEth(stakeEth);
 
-    console.log('Creating task on chain:', { description, deadline, value });
+    // 验证 multiplier 范围
+    const validMultiplier = Math.max(1, Math.min(3, multiplier));
 
-    const tx = await contract.createTask(description, deadline, { value });
+    console.log('Creating task on chain:', { description, deadline, value, multiplier: validMultiplier });
+
+    const tx = await contract.createTask(description, deadline, validMultiplier, { value });
     const receipt = await tx.wait();
 
     // 从事件中获取 taskId
@@ -184,6 +190,7 @@ export async function getTaskFromChain(taskId: number): Promise<OnChainTask | nu
             deadline: task.deadline,
             status: task.status,
             createdAt: task.createdAt,
+            multiplier: Number(task.multiplier),
         };
     } catch (error) {
         console.error('Failed to get task from chain:', error);

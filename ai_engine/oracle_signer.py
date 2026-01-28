@@ -36,7 +36,8 @@ TASK_MANAGER_ABI = [
                     {"name": "stakeAmount", "type": "uint256"},
                     {"name": "deadline", "type": "uint256"},
                     {"name": "status", "type": "uint8"},
-                    {"name": "createdAt", "type": "uint256"}
+                    {"name": "createdAt", "type": "uint256"},
+                    {"name": "multiplier", "type": "uint8"}
                 ],
                 "type": "tuple"
             }
@@ -110,7 +111,8 @@ class OracleSigner:
             "stakeAmount": task[3],
             "deadline": task[4],
             "status": task[5],
-            "createdAt": task[6]
+            "createdAt": task[6],
+            "multiplier": task[7]
         }
     
     def submit_verification(self, task_id: int, verified: bool) -> str:

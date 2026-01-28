@@ -78,10 +78,19 @@ contract TaskManager {
     }
 
     // ============ 构造函数 ============
-    constructor(address _verifier, address _penaltyStrategy) {
+    constructor(
+        address _verifier, 
+        address _penaltyStrategy,
+        address _authorizedVerifier,
+        address _treasury
+    ) {
+        require(_authorizedVerifier != address(0), "Oracle address required");
+        
         owner = msg.sender;
         verifier = IVerifier(_verifier);
         penaltyStrategy = IPenaltyStrategy(_penaltyStrategy);
+        authorizedVerifier = _authorizedVerifier;
+        treasury = _treasury;
     }
 
     // ============ 核心函数 ============
