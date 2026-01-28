@@ -2,8 +2,9 @@
  * App Context - 全局状态管理
  * 管理任务列表、钱包状态等
  */
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Subtask } from '../services/ai.service';
+import { getJackpotBalance } from '../services/contract.service';
 
 // 任务状态类型
 export type TaskStatus = 'pending' | 'verified' | 'failed' | 'settled';
@@ -39,6 +40,10 @@ interface AppContextType {
     updateTaskChainId: (localId: number, chainTaskId: number, txHash?: string) => void;
     getTaskById: (taskId: number) => Task | undefined;
     getTaskByChainId: (chainTaskId: number) => Task | undefined;
+
+    // 游戏数据
+    jackpotAmount: string;
+    fetchJackpot: () => Promise<void>;
 
     // 钱包状态
     wallet: WalletState;
@@ -88,6 +93,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [wallet, setWallet] = useState<WalletState>(initialWallet);
     const [isLoading, setIsLoading] = useState(false);
+    const [jackpotAmount, setJackpotAmount] = useState('0.0000');
+
+    // 获取奖金池余额
+    const fetchJackpot = useCallback(async () => {
+        const amount = await getJackpotBalance();
+        setJackpotAmount(amount.replace(' ETH', '')); // 保持纯数字格式或根据 UI 需求调整
+    }, []);
+
+    // 定时刷新奖金池
+    useEffect(() => {
+        fetchJackpot();
+        const interval = setInterval(fetchJackpot, 30000); // 30s 刷新一次
+        return () => clearInterval(interval);
+    }, [fetchJackpot]);
 
     // 添加任务 (返回新任务对象，支持链上 ID)
     const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt'> & { chainTaskId?: number }): Task => {
@@ -156,6 +175,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             connectWallet: connectWalletHandler,
             disconnectWallet: disconnectWalletHandler,
             isLoading,
+            jackpotAmount,
+            fetchJackpot,
         }}>
             {children}
         </AppContext.Provider>
@@ -173,8 +194,8 @@ export function useApp() {
 
 // 便捷 Hooks
 export function useTasks() {
-    const { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId } = useApp();
-    return { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId };
+    const { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot } = useApp();
+    return { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot };
 }
 
 export function useWallet() {

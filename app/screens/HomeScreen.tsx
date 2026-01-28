@@ -117,7 +117,7 @@ type HomeScreenProps = {
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-    const { tasks } = useTasks();
+    const { tasks, jackpotAmount } = useTasks();
     const { t } = useI18n();
     const { colors } = useTheme();
 
@@ -131,7 +131,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     });
 
     // Mock Jackpot (后续从合约读取)
-    const jackpotAmount = '12.45';
+    // const jackpotAmount = '12.45'; (已替换为真实数据)
     const [isLeaderboardVisible, setLeaderboardVisible] = useState(false);
 
     // 右侧 Agent 面板

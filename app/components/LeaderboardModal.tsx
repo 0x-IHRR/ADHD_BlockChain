@@ -17,6 +17,8 @@ import { X, Trophy, Flame, Crown, Zap } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
+import { getAllTasksFromChain, OnChainTask, TaskStatus, formatEth } from '../services/contract.service';
+import { useWallet } from '../context/WalletContext';
 
 interface LeaderboardModalProps {
     visible: boolean;
@@ -24,21 +26,95 @@ interface LeaderboardModalProps {
     jackpotAmount: string;
 }
 
-// Mock Data
-const TOP_PLAYERS = [
-    { id: 1, name: '0x12...3456', score: 420, streak: 12, multiplier: 3 },
-    { id: 2, name: '0x88...9999', score: 380, streak: 8, multiplier: 3 },
-    { id: 3, name: 'vitalik.eth', score: 350, streak: 15, multiplier: 2 },
-];
+interface Player {
+    id: string;
+    name: string;
+    score: number;
+    streak: number;
+    multiplier: number;
+}
 
-const RECENT_WINNERS = [
-    { id: 1, name: '0xab...cdef', amount: '0.5 ETH', task: '30 days coding streak' },
-    { id: 2, name: 'satoshi.eth', amount: '0.2 ETH', task: 'Write whitepaper' },
-];
+interface Winner {
+    id: string;
+    name: string;
+    amount: string;
+    task: string;
+}
 
 export default function LeaderboardModal({ visible, onClose, jackpotAmount }: LeaderboardModalProps) {
     const { colors, isDark } = useTheme();
     const { t } = useI18n();
+    const { shortAddress } = useWallet();
+
+    const [loading, setLoading] = React.useState(false);
+    const [players, setPlayers] = React.useState<Player[]>([]);
+    const [winners, setWinners] = React.useState<Winner[]>([]);
+
+    // 加载数据
+    React.useEffect(() => {
+        if (visible) {
+            loadLeaderboardData();
+        }
+    }, [visible]);
+
+    const loadLeaderboardData = async () => {
+        setLoading(true);
+        try {
+            const allTasks = await getAllTasksFromChain();
+
+            // 1. 计算排行榜 (Top Players)
+            const userStats = new Map<string, { score: number, verifiedCount: number, maxMultiplier: number }>();
+
+            allTasks.forEach(task => {
+                // 只统计已验证或已结算的任务
+                if (task.status === TaskStatus.Verified || task.status === TaskStatus.Settled) {
+                    const stats = userStats.get(task.owner) || { score: 0, verifiedCount: 0, maxMultiplier: 1 };
+
+                    // 分数计算: 基础分10 * 倍率
+                    const taskScore = 10 * (task.multiplier || 1);
+                    stats.score += taskScore;
+                    stats.verifiedCount += 1;
+                    stats.maxMultiplier = Math.max(stats.maxMultiplier, task.multiplier || 1);
+
+                    userStats.set(task.owner, stats);
+                }
+            });
+
+            const sortedPlayers: Player[] = Array.from(userStats.entries())
+                .map(([owner, stats]) => ({
+                    id: owner,
+                    name: `${owner.slice(0, 6)}...${owner.slice(-4)}`,
+                    score: stats.score,
+                    streak: stats.verifiedCount, // 简化: 用总验证数代替连胜
+                    multiplier: stats.maxMultiplier
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10); // Top 10
+
+            setPlayers(sortedPlayers);
+
+            // 2. 获取最近中奖者 (Recent Winners)
+            // 过滤出 Verified 的任务
+            const recentVerified = allTasks
+                .filter(t => t.status === TaskStatus.Verified || t.status === TaskStatus.Settled)
+                .sort((a, b) => Number(b.createdAt - a.createdAt))
+                .slice(0, 5);
+
+            const recentWinnersFormatted: Winner[] = recentVerified.map(t => ({
+                id: t.id.toString(),
+                name: `${t.owner.slice(0, 6)}...${t.owner.slice(-4)}`,
+                amount: formatEth(t.stakeAmount), // 显示质押金额作为赢得的基数
+                task: t.description
+            }));
+
+            setWinners(recentWinnersFormatted);
+
+        } catch (error) {
+            console.error('Failed to load leaderboard:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // 动态样式
     const modalBg = isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
@@ -97,34 +173,43 @@ export default function LeaderboardModal({ visible, onClose, jackpotAmount }: Le
                                 </Text>
                             </View>
 
-                            {TOP_PLAYERS.map((player, index) => (
-                                <View key={player.id} style={[styles.playerRow, {
-                                    backgroundColor: colors.background.secondary,
-                                    borderColor: index === 0 ? colors.semantic.warning : 'transparent',
-                                    borderWidth: index === 0 ? 1 : 0
-                                }]}>
-                                    <View style={styles.rankCol}>
-                                        <Text style={[styles.rankText, {
-                                            color: index === 0 ? colors.semantic.warning : colors.text.muted,
-                                            fontWeight: index === 0 ? 'bold' : 'normal'
-                                        }]}>#{index + 1}</Text>
-                                    </View>
-                                    <View style={styles.playerInfo}>
-                                        <Text style={[styles.playerName, { color: colors.text.primary }]}>{player.name}</Text>
-                                        <View style={styles.badgeRow}>
-                                            {player.multiplier > 1 && (
-                                                <View style={[styles.multiplierBadge, { backgroundColor: colors.semantic.error }]}>
-                                                    <Text style={styles.multiplierText}>{player.multiplier}x</Text>
-                                                </View>
-                                            )}
+                            {players.length === 0 ? (
+                                <Text style={{ padding: 20, textAlign: 'center', color: colors.text.muted }}>
+                                    {loading ? 'Loading...' : 'No players yet. Be the first!'}
+                                </Text>
+                            ) : (
+                                players.map((player, index) => (
+                                    <View key={player.id} style={[styles.playerRow, {
+                                        backgroundColor: colors.background.secondary,
+                                        borderColor: index === 0 ? colors.semantic.warning : 'transparent',
+                                        borderWidth: index === 0 ? 1 : 0
+                                    }]}>
+                                        <View style={styles.rankCol}>
+                                            <Text style={[styles.rankText, {
+                                                color: index === 0 ? colors.semantic.warning : colors.text.muted,
+                                                fontWeight: index === 0 ? 'bold' : 'normal'
+                                            }]}>#{index + 1}</Text>
+                                        </View>
+                                        <View style={styles.playerInfo}>
+                                            <Text style={[styles.playerName, { color: colors.text.primary }]}>{player.name}</Text>
+                                            <View style={styles.badgeRow}>
+                                                {player.multiplier > 1 && (
+                                                    <View style={[styles.multiplierBadge, { backgroundColor: colors.semantic.error }]}>
+                                                        <Text style={styles.multiplierText}>{player.multiplier}x</Text>
+                                                    </View>
+                                                )}
+                                                <Text style={{ fontSize: 10, color: colors.text.tertiary, marginLeft: 4 }}>
+                                                    {player.streak} wins
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.scoreCol}>
+                                            <Flame size={14} color={colors.primary[400]} />
+                                            <Text style={[styles.scoreText, { color: colors.text.primary }]}>{player.score}</Text>
                                         </View>
                                     </View>
-                                    <View style={styles.scoreCol}>
-                                        <Flame size={14} color={colors.primary[400]} />
-                                        <Text style={[styles.scoreText, { color: colors.text.primary }]}>{player.score}</Text>
-                                    </View>
-                                </View>
-                            ))}
+                                ))
+                            )}
                         </View>
 
                         {/* Recent Winners */}
@@ -136,15 +221,23 @@ export default function LeaderboardModal({ visible, onClose, jackpotAmount }: Le
                                 </Text>
                             </View>
 
-                            {RECENT_WINNERS.map((winner) => (
-                                <View key={winner.id} style={[styles.winnerCard, { backgroundColor: colors.background.tertiary }]}>
-                                    <View style={styles.winnerHeader}>
-                                        <Text style={[styles.winnerName, { color: colors.text.secondary }]}>{winner.name}</Text>
-                                        <Text style={[styles.winAmount, { color: colors.semantic.success }]}>+{winner.amount}</Text>
+                            {winners.length === 0 ? (
+                                <Text style={{ padding: 20, textAlign: 'center', color: colors.text.muted }}>
+                                    {loading ? 'Loading...' : 'No winners yet.'}
+                                </Text>
+                            ) : (
+                                winners.map((winner) => (
+                                    <View key={winner.id} style={[styles.winnerCard, { backgroundColor: colors.background.tertiary }]}>
+                                        <View style={styles.winnerHeader}>
+                                            <Text style={[styles.winnerName, { color: colors.text.secondary }]}>{winner.name}</Text>
+                                            <Text style={[styles.winAmount, { color: colors.semantic.success }]}>+{winner.amount}</Text>
+                                        </View>
+                                        <Text style={[styles.winTask, { color: colors.text.muted }]} numberOfLines={1}>
+                                            {winner.task}
+                                        </Text>
                                     </View>
-                                    <Text style={[styles.winTask, { color: colors.text.muted }]}>{winner.task}</Text>
-                                </View>
-                            ))}
+                                ))
+                            )}
                         </View>
                     </ScrollView>
                 </View>

@@ -223,9 +223,54 @@ export async function getWalletBalance(): Promise<string> {
 }
 
 /**
- * 获取钱包地址
+ * 获取奖金池余额 (Wei)
  */
-export async function getWalletAddress(): Promise<string> {
-    const signer = getSigner();
-    return signer.getAddress();
+export async function getJackpotBalance(): Promise<string> {
+    try {
+        const contract = getContract();
+        const jackpot = await contract.getJackpot();
+        return formatEth(jackpot);
+    } catch (error) {
+        console.error('Failed to get jackpot:', error);
+        return '0.0000 ETH';
+    }
+}
+
+/**
+ * 获取总任务数
+ */
+export async function getTaskCountOnChain(): Promise<number> {
+    try {
+        const contract = getContract();
+        const count = await contract.getTaskCount();
+        return Number(count);
+    } catch (error) {
+        console.error('Failed to get task count:', error);
+        return 0;
+    }
+}
+
+/**
+ * 获取这所有任务 (用于排行榜)
+ * 注意：实际生产中应该使用 Graph 索引，这里循环获取仅用于 Hackathon Demo
+ */
+export async function getAllTasksFromChain(): Promise<OnChainTask[]> {
+    try {
+        const count = await getTaskCountOnChain();
+        const tasks: OnChainTask[] = [];
+
+        // 倒序获取最近的任务，最多获取 50 个
+        const start = Math.max(0, count - 50);
+
+        const promises = [];
+        for (let i = count - 1; i >= start; i--) {
+            promises.push(getTaskFromChain(i));
+        }
+
+        const results = await Promise.all(promises);
+        return results.filter((t): t is OnChainTask => t !== null);
+    } catch (error) {
+        console.error('Failed to get all tasks:', error);
+        return [];
+    }
 }
