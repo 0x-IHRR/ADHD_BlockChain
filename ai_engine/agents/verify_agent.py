@@ -134,13 +134,25 @@ class VerifyAgent:
             clean_response = clean_response[:-3]
         clean_response = clean_response.strip()
         
+        # confidence 阈值 - 低于此值自动判定为未通过
+        CONFIDENCE_THRESHOLD = 0.7
+        
         # 解析 JSON 响应
         try:
             result_json = json.loads(clean_response)
+            verified = result_json.get("verified", False)
+            confidence = result_json.get("confidence", 0.5)
+            reason = result_json.get("reason", "无法解析验证理由")
+            
+            # 如果 confidence 低于阈值，强制判定为未通过
+            if confidence < CONFIDENCE_THRESHOLD and verified:
+                verified = False
+                reason = f"置信度 ({confidence:.2f}) 低于阈值 ({CONFIDENCE_THRESHOLD})，判定为未完成。原因: {reason}"
+            
             return VerifyResult(
-                verified=result_json.get("verified", False),
-                confidence=result_json.get("confidence", 0.5),
-                reason=result_json.get("reason", "无法解析验证理由")
+                verified=verified,
+                confidence=confidence,
+                reason=reason
             )
         except (json.JSONDecodeError, KeyError):
             # 解析失败，默认不通过

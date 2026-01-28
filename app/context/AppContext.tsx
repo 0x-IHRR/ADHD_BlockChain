@@ -10,14 +10,17 @@ export type TaskStatus = 'pending' | 'verified' | 'failed' | 'settled';
 
 // 任务类型
 export interface Task {
-    id: number;
+    id: number;             // 本地 ID (用于 UI)
+    chainTaskId?: number;   // 链上任务 ID (用于合约交互)
     description: string;
     platform?: string;
     stakeAmount: string;
+    multiplier?: number;    // 质押倍率 (1, 2, 3)
     deadline: Date;
     status: TaskStatus;
     subtasks: Subtask[];
     createdAt: Date;
+    txHash?: string;        // 创建任务的交易哈希
 }
 
 // 钱包状态类型
@@ -31,9 +34,11 @@ export interface WalletState {
 interface AppContextType {
     // 任务状态
     tasks: Task[];
-    addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
+    addTask: (task: Omit<Task, 'id' | 'createdAt'> & { chainTaskId?: number }) => Task;
     updateTaskStatus: (taskId: number, status: TaskStatus) => void;
+    updateTaskChainId: (localId: number, chainTaskId: number, txHash?: string) => void;
     getTaskById: (taskId: number) => Task | undefined;
+    getTaskByChainId: (chainTaskId: number) => Task | undefined;
 
     // 钱包状态
     wallet: WalletState;
@@ -84,14 +89,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [wallet, setWallet] = useState<WalletState>(initialWallet);
     const [isLoading, setIsLoading] = useState(false);
 
-    // 添加任务
-    const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt'>) => {
+    // 添加任务 (返回新任务对象，支持链上 ID)
+    const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt'> & { chainTaskId?: number }): Task => {
         const newTask: Task = {
             ...taskData,
             id: Date.now(),
             createdAt: new Date(),
         };
         setTasks(prev => [newTask, ...prev]);
+        return newTask;
+    }, []);
+
+    // 更新任务的链上 ID (创建任务后从事件获取)
+    const updateTaskChainId = useCallback((localId: number, chainTaskId: number, txHash?: string) => {
+        setTasks(prev => prev.map(task =>
+            task.id === localId
+                ? { ...task, chainTaskId, txHash }
+                : task
+        ));
     }, []);
 
     // 更新任务状态
@@ -101,9 +116,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ));
     }, []);
 
-    // 获取单个任务
+    // 获取单个任务 (通过本地 ID)
     const getTaskById = useCallback((taskId: number) => {
         return tasks.find(task => task.id === taskId);
+    }, [tasks]);
+
+    // 获取单个任务 (通过链上 ID)
+    const getTaskByChainId = useCallback((chainTaskId: number) => {
+        return tasks.find(task => task.chainTaskId === chainTaskId);
     }, [tasks]);
 
     // 连接钱包 (模拟实现)
@@ -129,7 +149,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             tasks,
             addTask,
             updateTaskStatus,
+            updateTaskChainId,
             getTaskById,
+            getTaskByChainId,
             wallet,
             connectWallet: connectWalletHandler,
             disconnectWallet: disconnectWalletHandler,
@@ -151,8 +173,8 @@ export function useApp() {
 
 // 便捷 Hooks
 export function useTasks() {
-    const { tasks, addTask, updateTaskStatus, getTaskById } = useApp();
-    return { tasks, addTask, updateTaskStatus, getTaskById };
+    const { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId } = useApp();
+    return { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId };
 }
 
 export function useWallet() {
