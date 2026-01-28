@@ -1,13 +1,31 @@
 /**
  * Wallet Context - 管理 Web3 钱包连接状态
- * 支持 MetaMask 等浏览器扩展钱包
+ * 支持 EIP-6963 多钱包检测 (MetaMask, OKX Wallet, Rabby 等)
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { ethers } from 'ethers';
 import { Platform } from 'react-native';
 
-// ============ 类型定义 ============
+// ============ EIP-6963 类型定义 ============
+
+interface EIP6963ProviderInfo {
+    uuid: string;
+    name: string;
+    icon: string;
+    rdns: string;
+}
+
+interface EIP6963ProviderDetail {
+    info: EIP6963ProviderInfo;
+    provider: any;
+}
+
+interface EIP6963AnnounceProviderEvent extends Event {
+    detail: EIP6963ProviderDetail;
+}
+
+// ============ 钱包状态类型定义 ============
 
 interface WalletState {
     isConnected: boolean;
@@ -19,11 +37,16 @@ interface WalletState {
 }
 
 interface WalletContextType extends WalletState {
-    connect: () => Promise<void>;
+    connect: (provider?: any) => Promise<void>;
     disconnect: () => void;
     shortAddress: string;
     provider: ethers.BrowserProvider | null;
     signer: ethers.Signer | null;
+    // EIP-6963 多钱包支持
+    availableWallets: EIP6963ProviderDetail[];
+    showWalletSelector: boolean;
+    setShowWalletSelector: (show: boolean) => void;
+    selectedWalletInfo: EIP6963ProviderInfo | null;
 }
 
 // ============ 初始状态 ============
@@ -43,9 +66,12 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 // ============ 辅助函数 ============
 
-// 检查是否在浏览器环境且有 ethereum 对象
+// 检查是否在浏览器环境
+const isWeb = () => Platform.OS === 'web' && typeof window !== 'undefined';
+
+// 获取传统 ethereum 对象 (fallback)
 const getEthereum = (): any => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (isWeb()) {
         return (window as any).ethereum;
     }
     return null;
@@ -60,7 +86,7 @@ const formatAddress = (address: string | null): string => {
 // 格式化余额
 const formatBalance = (balance: bigint): string => {
     const eth = Number(balance) / 1e18;
-    return `${eth.toFixed(4)} ETH`;
+    return eth.toFixed(4);
 };
 
 // ============ Provider ============
@@ -73,6 +99,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const [state, setState] = useState<WalletState>(initialState);
     const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
     const [signer, setSigner] = useState<ethers.Signer | null>(null);
+
+    // EIP-6963 多钱包状态
+    const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
+    const [showWalletSelector, setShowWalletSelector] = useState(false);
+    const [selectedWalletInfo, setSelectedWalletInfo] = useState<EIP6963ProviderInfo | null>(null);
+    const [currentProvider, setCurrentProvider] = useState<any>(null);
 
     // 更新钱包信息
     const updateWalletInfo = useCallback(async (browserProvider: ethers.BrowserProvider, accounts: string[]) => {
@@ -104,28 +136,100 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
     }, []);
 
-    // 连接钱包
-    const connect = useCallback(async () => {
-        const ethereum = getEthereum();
+    // EIP-6963: 监听钱包扩展公告
+    useEffect(() => {
+        if (!isWeb()) return;
 
-        if (!ethereum) {
+        const walletMap = new Map<string, EIP6963ProviderDetail>();
+
+        const handleAnnounceProvider = (event: Event) => {
+            const { detail } = event as EIP6963AnnounceProviderEvent;
+            if (detail && detail.info && detail.provider) {
+                walletMap.set(detail.info.uuid, detail);
+                setAvailableWallets(Array.from(walletMap.values()));
+            }
+        };
+
+        // 监听钱包公告事件
+        window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
+
+        // 请求所有钱包公告自己
+        window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+        // 如果 1 秒后没有检测到 EIP-6963 钱包，fallback 到传统检测
+        const fallbackTimer = setTimeout(() => {
+            if (walletMap.size === 0) {
+                const ethereum = getEthereum();
+                if (ethereum) {
+                    // 创建一个伪 EIP-6963 条目
+                    const fallbackWallet: EIP6963ProviderDetail = {
+                        info: {
+                            uuid: 'legacy-ethereum',
+                            name: ethereum.isMetaMask ? 'MetaMask' :
+                                ethereum.isOkxWallet ? 'OKX Wallet' :
+                                    ethereum.isCoinbaseWallet ? 'Coinbase Wallet' :
+                                        'Browser Wallet',
+                            icon: '', // 无图标
+                            rdns: 'unknown',
+                        },
+                        provider: ethereum,
+                    };
+                    setAvailableWallets([fallbackWallet]);
+                }
+            }
+        }, 1000);
+
+        return () => {
+            window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
+            clearTimeout(fallbackTimer);
+        };
+    }, []);
+
+    // 连接钱包
+    const connect = useCallback(async (selectedProvider?: any) => {
+        // 如果没有指定 provider 且没有可用钱包，显示错误
+        if (!selectedProvider && availableWallets.length === 0) {
+            const ethereum = getEthereum();
+            if (!ethereum) {
+                setState(prev => ({
+                    ...prev,
+                    error: 'No wallet detected. Please install a Web3 wallet.',
+                }));
+                // 不再自动打开 MetaMask 下载页
+                return;
+            }
+            selectedProvider = ethereum;
+        }
+
+        // 如果没有指定 provider，使用第一个可用的
+        if (!selectedProvider) {
+            selectedProvider = availableWallets[0]?.provider;
+        }
+
+        if (!selectedProvider) {
             setState(prev => ({
                 ...prev,
-                error: 'Please install MetaMask or another Web3 wallet',
+                error: 'No wallet provider available',
             }));
-
-            // 打开 MetaMask 安装页面
-            if (Platform.OS === 'web') {
-                window.open('https://metamask.io/download/', '_blank');
-            }
             return;
         }
 
         setState(prev => ({ ...prev, isConnecting: true, error: null }));
+        setShowWalletSelector(false);
 
         try {
-            const browserProvider = new ethers.BrowserProvider(ethereum);
+            const browserProvider = new ethers.BrowserProvider(selectedProvider);
             const accounts = await browserProvider.send('eth_requestAccounts', []);
+
+            // 记录当前使用的 provider
+            setCurrentProvider(selectedProvider);
+
+            // 设置选中的钱包信息
+            const walletDetail = availableWallets.find(w => w.provider === selectedProvider);
+            if (walletDetail) {
+                setSelectedWalletInfo(walletDetail.info);
+            }
+
             await updateWalletInfo(browserProvider, accounts);
         } catch (error: any) {
             console.error('Wallet connection failed:', error);
@@ -135,19 +239,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 error: error.message || 'Connection failed',
             }));
         }
-    }, [updateWalletInfo]);
+    }, [updateWalletInfo, availableWallets]);
 
     // 断开连接
     const disconnect = useCallback(() => {
         setState(initialState);
         setProvider(null);
         setSigner(null);
+        setCurrentProvider(null);
+        setSelectedWalletInfo(null);
     }, []);
 
     // 监听钱包事件
     useEffect(() => {
-        const ethereum = getEthereum();
-        if (!ethereum) return;
+        if (!currentProvider) return;
 
         const handleAccountsChanged = async (accounts: string[]) => {
             if (accounts.length === 0) {
@@ -158,8 +263,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         };
 
         const handleChainChanged = () => {
-            // 链变更时刷新页面（推荐做法）
-            if (Platform.OS === 'web') {
+            // 链变更时刷新页面
+            if (isWeb()) {
                 window.location.reload();
             }
         };
@@ -168,31 +273,58 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             disconnect();
         };
 
-        ethereum.on('accountsChanged', handleAccountsChanged);
-        ethereum.on('chainChanged', handleChainChanged);
-        ethereum.on('disconnect', handleDisconnect);
+        currentProvider.on?.('accountsChanged', handleAccountsChanged);
+        currentProvider.on?.('chainChanged', handleChainChanged);
+        currentProvider.on?.('disconnect', handleDisconnect);
 
-        // 检查是否已经连接
+        return () => {
+            currentProvider.removeListener?.('accountsChanged', handleAccountsChanged);
+            currentProvider.removeListener?.('chainChanged', handleChainChanged);
+            currentProvider.removeListener?.('disconnect', handleDisconnect);
+        };
+    }, [currentProvider, provider, updateWalletInfo, disconnect]);
+
+    // 启动时检查是否已连接
+    useEffect(() => {
+        if (!isWeb()) return;
+
         const checkConnection = async () => {
-            try {
-                const accounts = await ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    const browserProvider = new ethers.BrowserProvider(ethereum);
-                    await updateWalletInfo(browserProvider, accounts);
+            // 优先检查 EIP-6963 钱包
+            for (const wallet of availableWallets) {
+                try {
+                    const accounts = await wallet.provider.request?.({ method: 'eth_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        const browserProvider = new ethers.BrowserProvider(wallet.provider);
+                        setCurrentProvider(wallet.provider);
+                        setSelectedWalletInfo(wallet.info);
+                        await updateWalletInfo(browserProvider, accounts);
+                        return;
+                    }
+                } catch (e) {
+                    // 忽略错误，继续检查下一个
                 }
-            } catch (error) {
-                console.error('Failed to check wallet connection:', error);
+            }
+
+            // Fallback: 检查传统 ethereum
+            const ethereum = getEthereum();
+            if (ethereum) {
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        const browserProvider = new ethers.BrowserProvider(ethereum);
+                        setCurrentProvider(ethereum);
+                        await updateWalletInfo(browserProvider, accounts);
+                    }
+                } catch (error) {
+                    console.error('Failed to check wallet connection:', error);
+                }
             }
         };
 
-        checkConnection();
-
-        return () => {
-            ethereum.removeListener('accountsChanged', handleAccountsChanged);
-            ethereum.removeListener('chainChanged', handleChainChanged);
-            ethereum.removeListener('disconnect', handleDisconnect);
-        };
-    }, [provider, updateWalletInfo, disconnect]);
+        // 等待钱包检测完成后再检查连接
+        const timer = setTimeout(checkConnection, 1500);
+        return () => clearTimeout(timer);
+    }, [availableWallets, updateWalletInfo]);
 
     const value: WalletContextType = {
         ...state,
@@ -201,6 +333,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         shortAddress: formatAddress(state.address),
         provider,
         signer,
+        availableWallets,
+        showWalletSelector,
+        setShowWalletSelector,
+        selectedWalletInfo,
     };
 
     return (

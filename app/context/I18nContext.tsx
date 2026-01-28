@@ -94,6 +94,14 @@ const translations: Record<Language, Record<string, string>> = {
         'status.done': 'Done',
         'status.failed': 'Failed',
         'status.settled': 'Settled',
+
+        // Wallet
+        'wallet.selectWallet': 'Select Wallet',
+        'wallet.noWalletDetected': 'No wallet detected',
+        'wallet.installWalletHint': 'Please install a Web3 wallet extension',
+        'wallet.multiWalletHint': 'Supports MetaMask, OKX, Rabby and more',
+        'wallet.disconnect': 'Disconnect',
+        'wallet.connected': 'Connected',
     },
     zh: {
         // Brand
@@ -170,6 +178,14 @@ const translations: Record<Language, Record<string, string>> = {
         'status.done': '已完成',
         'status.failed': '失败',
         'status.settled': '已结算',
+
+        // Wallet
+        'wallet.selectWallet': '选择钱包',
+        'wallet.noWalletDetected': '未检测到钱包',
+        'wallet.installWalletHint': '请安装 Web3 钱包扩展',
+        'wallet.multiWalletHint': '支持 MetaMask、OKX、Rabby 等钱包',
+        'wallet.disconnect': '断开连接',
+        'wallet.connected': '已连接',
     },
 };
 

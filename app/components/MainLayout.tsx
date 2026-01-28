@@ -10,7 +10,7 @@
  * │                           │                             │
  * └───────────────────────────┴─────────────────────────────┘
  */
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import {
     View,
     Text,
@@ -20,11 +20,12 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Zap, Trophy, Wallet, Globe, Palette } from 'lucide-react-native';
+import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useWallet } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
+import WalletSelectorModal from './WalletSelectorModal';
 
 // 响应式断点
 const BREAKPOINT_TABLET = 768;
@@ -45,8 +46,12 @@ export default function MainLayout({
 }: MainLayoutProps) {
     const { width } = useWindowDimensions();
     const { colors, toggleTheme } = useTheme();
-    const { connect, disconnect, isConnected, shortAddress, balance } = useWallet();
+    const { connect, disconnect, isConnected, shortAddress, balance, availableWallets } = useWallet();
     const { language, toggleLanguage, t } = useI18n();
+
+    // 钱包选择器和下拉菜单状态
+    const [showWalletSelector, setShowWalletSelector] = useState(false);
+    const [showWalletMenu, setShowWalletMenu] = useState(false);
 
     // 响应式布局判断
     const isDesktop = width >= BREAKPOINT_DESKTOP;
@@ -127,27 +132,61 @@ export default function MainLayout({
                             </View>
                         )}
 
-                        {/* Wallet Button */}
-                        <TouchableOpacity
-                            style={[
-                                styles.walletButton,
-                                {
-                                    backgroundColor: isConnected ? colors.glass.background : colors.primary[500],
-                                    borderColor: isConnected ? colors.primary[500] : 'transparent'
-                                }
-                            ]}
-                            onPress={isConnected ? disconnect : connect}
-                        >
-                            {isConnected && (
-                                <View style={[styles.walletDot, { backgroundColor: colors.semantic.success }]} />
+                        {/* Wallet Button / Menu */}
+                        <View style={styles.walletWrapper}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.walletButton,
+                                    {
+                                        backgroundColor: isConnected ? colors.glass.background : colors.primary[500],
+                                        borderColor: isConnected ? colors.primary[500] : 'transparent'
+                                    }
+                                ]}
+                                onPress={() => {
+                                    if (isConnected) {
+                                        setShowWalletMenu(!showWalletMenu);
+                                    } else {
+                                        // 如果有多个钱包，显示选择器；否则直接连接
+                                        if (availableWallets.length > 1) {
+                                            setShowWalletSelector(true);
+                                        } else {
+                                            connect();
+                                        }
+                                    }
+                                }}
+                            >
+                                {isConnected && (
+                                    <View style={[styles.walletDot, { backgroundColor: colors.semantic.success }]} />
+                                )}
+                                <Text style={[
+                                    styles.walletText,
+                                    { color: isConnected ? colors.primary[500] : '#000' }
+                                ]}>
+                                    {isConnected ? shortAddress : t('common.connect')}
+                                </Text>
+                                {isConnected && (
+                                    <ChevronDown size={14} color={colors.primary[500]} />
+                                )}
+                            </TouchableOpacity>
+
+                            {/* 钱包下拉菜单 */}
+                            {showWalletMenu && isConnected && (
+                                <View style={[styles.walletMenu, { backgroundColor: colors.background.secondary, borderColor: colors.border.default }]}>
+                                    <TouchableOpacity
+                                        style={styles.walletMenuItem}
+                                        onPress={() => {
+                                            disconnect();
+                                            setShowWalletMenu(false);
+                                        }}
+                                    >
+                                        <LogOut size={16} color={colors.semantic.error} />
+                                        <Text style={[styles.walletMenuText, { color: colors.semantic.error }]}>
+                                            {t('wallet.disconnect')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
                             )}
-                            <Text style={[
-                                styles.walletText,
-                                { color: isConnected ? colors.primary[500] : '#000' }
-                            ]}>
-                                {isConnected ? shortAddress : t('common.connect')}
-                            </Text>
-                        </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
@@ -172,6 +211,12 @@ export default function MainLayout({
                     )}
                 </View>
             </SafeAreaView>
+
+            {/* 钱包选择器 Modal */}
+            <WalletSelectorModal
+                visible={showWalletSelector}
+                onClose={() => setShowWalletSelector(false)}
+            />
         </View>
     );
 }
@@ -284,6 +329,31 @@ const styles = StyleSheet.create({
     walletText: {
         fontSize: typography.fontSize.sm,
         fontWeight: typography.fontWeight.semibold,
+    },
+    walletWrapper: {
+        position: 'relative',
+    },
+    walletMenu: {
+        position: 'absolute',
+        top: '100%',
+        right: 0,
+        marginTop: spacing.xs,
+        minWidth: 150,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        overflow: 'hidden',
+        zIndex: 1000,
+    },
+    walletMenuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    walletMenuText: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.medium,
     },
 
     // Main Content
