@@ -3,7 +3,7 @@
  * 
  * 显示 Agent 验证过程的实时状态
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -19,7 +19,9 @@ import {
     Loader,
     Sparkles,
     ArrowRight,
-    Zap
+    Zap,
+    Heart,
+    AlertTriangle
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
@@ -103,8 +105,12 @@ const WorkflowStep = ({ step, isLast }: { step: AgentStep; isLast: boolean }) =>
 export default function AgentPanel({ state }: AgentPanelProps) {
     const { colors } = useTheme();
     const { t } = useI18n();
-    const { isDead, revivePet, loading: petLoading } = usePet();
+    const { pet, isDead, isDying, revivePet, loading: petLoading } = usePet();
     const { isConnected: walletActive } = useWallet();
+
+    // 抖动动画
+    const shakeAnim = useRef(new Animated.Value(0)).current;
+    const [showDamage, setShowDamage] = useState(false);
 
     const handleRevive = async () => {
         try {
@@ -114,8 +120,31 @@ export default function AgentPanel({ state }: AgentPanelProps) {
         }
     };
 
+    // 触发抖动动画
+    const triggerShake = () => {
+        setShowDamage(true);
+        Animated.sequence([
+            Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 5, duration: 50, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+        ]).start();
+        setTimeout(() => setShowDamage(false), 2000);
+    };
+
+    // 监听验证失败触发抖动
+    useEffect(() => {
+        if (state.result && !state.result.verified) {
+            triggerShake();
+        }
+    }, [state.result]);
+
     // 根据 Agent 状态计算 Spoons mood
     const getFocusDragonMood = (): FocusDragonMood => {
+        if (isDead) return 'dead';
+        if (isDying) return 'dying';
         if (state.result) {
             return state.result.verified ? 'happy' : 'shaking';
         }
@@ -190,9 +219,36 @@ export default function AgentPanel({ state }: AgentPanelProps) {
     return (
         <View style={styles.container}>
             {/* Focus Dragon 吉祥物 - 工作状态 */}
-            <View style={styles.spoonsContainer}>
+            <Animated.View style={[styles.spoonsContainer, { transform: [{ translateX: shakeAnim }] }]}>
                 <FocusDragon mood={getFocusDragonMood()} size={80} />
-            </View>
+
+                {/* HP 血条 */}
+                {pet && (
+                    <View style={styles.hpContainer}>
+                        <Heart size={14} color={isDying ? colors.semantic.error : colors.primary[400]} />
+                        <View style={[styles.hpBarBg, { backgroundColor: colors.background.tertiary }]}>
+                            <View style={[
+                                styles.hpBarFill,
+                                {
+                                    width: `${pet.hp}%`,
+                                    backgroundColor: isDying ? colors.semantic.error : colors.semantic.success
+                                }
+                            ]} />
+                        </View>
+                        <Text style={[styles.hpText, { color: isDying ? colors.semantic.error : colors.text.secondary }]}>
+                            {pet.hp}/100
+                        </Text>
+                    </View>
+                )}
+
+                {/* HP 伤害提示 */}
+                {showDamage && (
+                    <View style={[styles.damageNotice, { backgroundColor: colors.semantic.error }]}>
+                        <AlertTriangle size={14} color="#FFF" />
+                        <Text style={styles.damageText}>-20 HP</Text>
+                    </View>
+                )}
+            </Animated.View>
 
             {/* Header */}
             <View style={styles.header}>
@@ -318,6 +374,46 @@ const styles = StyleSheet.create({
     spoonsContainer: {
         alignItems: 'center',
         marginBottom: spacing.md,
+    },
+
+    // HP Bar styles
+    hpContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginTop: spacing.sm,
+        width: '80%',
+    },
+    hpBarBg: {
+        flex: 1,
+        height: 8,
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    hpBarFill: {
+        height: '100%',
+        borderRadius: 4,
+    },
+    hpText: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
+        minWidth: 45,
+    },
+    damageNotice: {
+        position: 'absolute',
+        top: -10,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.md,
+    },
+    damageText: {
+        color: '#FFF',
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.bold,
     },
 
     // Header
