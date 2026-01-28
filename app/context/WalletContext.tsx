@@ -3,7 +3,7 @@
  * 支持 EIP-6963 多钱包检测 (MetaMask, OKX Wallet, Rabby 等)
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { ethers } from 'ethers';
 import { Platform } from 'react-native';
 
@@ -25,6 +25,25 @@ interface EIP6963AnnounceProviderEvent extends Event {
     detail: EIP6963ProviderDetail;
 }
 
+// ============ 网络配置 ============
+
+interface NetworkConfig {
+    chainId: number;
+    name: string;
+    shortName: string;
+    rpcUrl?: string;
+    symbol: string;
+    explorer?: string;
+}
+
+export const SUPPORTED_NETWORKS: NetworkConfig[] = [
+    { chainId: 1, name: 'Ethereum Mainnet', shortName: 'ETH', symbol: 'ETH', explorer: 'https://etherscan.io' },
+    { chainId: 11155111, name: 'Sepolia Testnet', shortName: 'Sepolia', symbol: 'ETH', explorer: 'https://sepolia.etherscan.io' },
+    { chainId: 8453, name: 'Base', shortName: 'Base', symbol: 'ETH', explorer: 'https://basescan.org' },
+    { chainId: 84532, name: 'Base Sepolia', shortName: 'Base Sep', symbol: 'ETH', explorer: 'https://sepolia.basescan.org' },
+    { chainId: 31337, name: 'Localhost (Anvil)', shortName: 'Local', symbol: 'ETH', rpcUrl: 'http://127.0.0.1:8545' },
+];
+
 // ============ 钱包状态类型定义 ============
 
 interface WalletState {
@@ -39,7 +58,9 @@ interface WalletState {
 interface WalletContextType extends WalletState {
     connect: (provider?: any) => Promise<void>;
     disconnect: () => void;
+    switchNetwork: (chainId: number) => Promise<void>;
     shortAddress: string;
+    networkName: string;
     provider: ethers.BrowserProvider | null;
     signer: ethers.Signer | null;
     // EIP-6963 多钱包支持
@@ -250,6 +271,61 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setSelectedWalletInfo(null);
     }, []);
 
+    // 切换网络
+    const switchNetwork = useCallback(async (targetChainId: number) => {
+        if (!currentProvider) {
+            setState(prev => ({ ...prev, error: 'No wallet connected' }));
+            return;
+        }
+
+        const network = SUPPORTED_NETWORKS.find(n => n.chainId === targetChainId);
+        if (!network) {
+            setState(prev => ({ ...prev, error: 'Unsupported network' }));
+            return;
+        }
+
+        try {
+            // 尝试切换网络
+            await currentProvider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: `0x${targetChainId.toString(16)}` }],
+            });
+        } catch (switchError: any) {
+            // 如果网络不存在，尝试添加
+            if (switchError.code === 4902 && network.rpcUrl) {
+                try {
+                    await currentProvider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: `0x${targetChainId.toString(16)}`,
+                            chainName: network.name,
+                            nativeCurrency: {
+                                name: network.symbol,
+                                symbol: network.symbol,
+                                decimals: 18,
+                            },
+                            rpcUrls: [network.rpcUrl],
+                            blockExplorerUrls: network.explorer ? [network.explorer] : undefined,
+                        }],
+                    });
+                } catch (addError: any) {
+                    console.error('Failed to add network:', addError);
+                    setState(prev => ({ ...prev, error: addError.message || 'Failed to add network' }));
+                }
+            } else {
+                console.error('Failed to switch network:', switchError);
+                setState(prev => ({ ...prev, error: switchError.message || 'Failed to switch network' }));
+            }
+        }
+    }, [currentProvider]);
+
+    // 获取当前网络名称
+    const networkName = useMemo(() => {
+        if (!state.chainId) return 'Unknown';
+        const network = SUPPORTED_NETWORKS.find(n => n.chainId === state.chainId);
+        return network?.shortName || `Chain ${state.chainId}`;
+    }, [state.chainId]);
+
     // 监听钱包事件
     useEffect(() => {
         if (!currentProvider) return;
@@ -330,7 +406,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         ...state,
         connect,
         disconnect,
+        switchNetwork,
         shortAddress: formatAddress(state.address),
+        networkName,
         provider,
         signer,
         availableWallets,

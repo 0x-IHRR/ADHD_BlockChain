@@ -20,9 +20,9 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown } from 'lucide-react-native';
+import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown, Layers } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
-import { useWallet } from '../context/WalletContext';
+import { useWallet, SUPPORTED_NETWORKS } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import WalletSelectorModal from './WalletSelectorModal';
@@ -46,12 +46,13 @@ export default function MainLayout({
 }: MainLayoutProps) {
     const { width } = useWindowDimensions();
     const { colors, toggleTheme } = useTheme();
-    const { connect, disconnect, isConnected, shortAddress, balance, availableWallets } = useWallet();
+    const { connect, disconnect, switchNetwork, isConnected, shortAddress, balance, availableWallets, networkName, chainId } = useWallet();
     const { language, toggleLanguage, t } = useI18n();
 
     // 钱包选择器和下拉菜单状态
     const [showWalletSelector, setShowWalletSelector] = useState(false);
     const [showWalletMenu, setShowWalletMenu] = useState(false);
+    const [showNetworkMenu, setShowNetworkMenu] = useState(false);
 
     // 响应式布局判断
     const isDesktop = width >= BREAKPOINT_DESKTOP;
@@ -129,6 +130,60 @@ export default function MainLayout({
                                 <Text style={[styles.balanceText, { color: colors.text.secondary }]}>
                                     {balance} ETH
                                 </Text>
+                            </View>
+                        )}
+
+                        {/* Network Selector (when connected) */}
+                        {isConnected && (
+                            <View style={styles.networkWrapper}>
+                                <TouchableOpacity
+                                    style={[styles.networkButton, {
+                                        backgroundColor: colors.glass.backgroundLight,
+                                        borderColor: colors.border.default
+                                    }]}
+                                    onPress={() => {
+                                        setShowNetworkMenu(!showNetworkMenu);
+                                        setShowWalletMenu(false);
+                                    }}
+                                >
+                                    <Layers size={14} color={colors.text.secondary} />
+                                    <Text style={[styles.networkText, { color: colors.text.secondary }]}>
+                                        {networkName}
+                                    </Text>
+                                    <ChevronDown size={12} color={colors.text.muted} />
+                                </TouchableOpacity>
+
+                                {/* 网络下拉菜单 */}
+                                {showNetworkMenu && (
+                                    <View style={[styles.networkMenu, {
+                                        backgroundColor: colors.background.secondary,
+                                        borderColor: colors.border.default
+                                    }]}>
+                                        {SUPPORTED_NETWORKS.map((network) => (
+                                            <TouchableOpacity
+                                                key={network.chainId}
+                                                style={[
+                                                    styles.networkMenuItem,
+                                                    chainId === network.chainId && { backgroundColor: colors.primary[500] + '20' }
+                                                ]}
+                                                onPress={() => {
+                                                    switchNetwork(network.chainId);
+                                                    setShowNetworkMenu(false);
+                                                }}
+                                            >
+                                                <Text style={[
+                                                    styles.networkMenuText,
+                                                    { color: chainId === network.chainId ? colors.primary[500] : colors.text.primary }
+                                                ]}>
+                                                    {network.shortName}
+                                                </Text>
+                                                {chainId === network.chainId && (
+                                                    <View style={[styles.networkDot, { backgroundColor: colors.semantic.success }]} />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
                             </View>
                         )}
 
@@ -354,6 +409,51 @@ const styles = StyleSheet.create({
     walletMenuText: {
         fontSize: typography.fontSize.sm,
         fontWeight: typography.fontWeight.medium,
+    },
+
+    // Network Selector
+    networkWrapper: {
+        position: 'relative',
+    },
+    networkButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        borderWidth: 1,
+    },
+    networkText: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
+    },
+    networkMenu: {
+        position: 'absolute',
+        top: '100%',
+        right: 0,
+        marginTop: spacing.xs,
+        minWidth: 160,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        overflow: 'hidden',
+        zIndex: 1000,
+    },
+    networkMenuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    networkMenuText: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: typography.fontWeight.medium,
+    },
+    networkDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     },
 
     // Main Content
