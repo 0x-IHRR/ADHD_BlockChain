@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
         paddingVertical: spacing.md,
         borderBottomWidth: 1,
+        zIndex: 100,
     },
     navLeft: {
         flexDirection: 'row',
@@ -387,6 +388,7 @@ const styles = StyleSheet.create({
     },
     walletWrapper: {
         position: 'relative',
+        zIndex: 200,
     },
     walletMenu: {
         position: 'absolute',
@@ -397,7 +399,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         borderWidth: 1,
         overflow: 'hidden',
-        zIndex: 1000,
+        zIndex: 9999,
     },
     walletMenuItem: {
         flexDirection: 'row',
@@ -414,6 +416,7 @@ const styles = StyleSheet.create({
     // Network Selector
     networkWrapper: {
         position: 'relative',
+        zIndex: 200,
     },
     networkButton: {
         flexDirection: 'row',
@@ -437,7 +440,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         borderWidth: 1,
         overflow: 'hidden',
-        zIndex: 1000,
+        zIndex: 9999,
     },
     networkMenuItem: {
         flexDirection: 'row',
