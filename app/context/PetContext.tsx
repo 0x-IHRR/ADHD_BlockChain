@@ -7,6 +7,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useWallet } from './WalletContext';
 import { ethers } from 'ethers';
+import { USE_MOCK_DATA, MOCK_CONFIG } from '../config/demo';
+import { MOCK_PET } from '../mocks/leaderboard';
 
 // 宠物状态类型
 export type PetStatus = 'alive' | 'dead' | 'none';
@@ -66,6 +68,17 @@ export function PetProvider({ children, petManagerAddress }: PetProviderProps) {
 
     // 刷新宠物状态
     const refreshPet = useCallback(async () => {
+        // 如果启用 Mock 数据，使用预设宠物状态
+        if (USE_MOCK_DATA && MOCK_CONFIG.pet) {
+            setPet({
+                hp: MOCK_PET.hp,
+                status: MOCK_PET.status,
+                deathCount: MOCK_PET.deathCount,
+                createdAt: MOCK_PET.createdAt,
+            });
+            return;
+        }
+
         if (!address || !petManagerAddress || !provider) {
             setPet(null);
             return;

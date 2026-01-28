@@ -10,6 +10,7 @@ import {
     StyleSheet,
     ScrollView,
     Animated,
+    TouchableOpacity,
 } from 'react-native';
 import {
     Brain,
@@ -24,6 +25,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import FocusDragon, { FocusDragonMood } from './FocusDragon';
+import { usePet } from '../context/PetContext';
+import { useWallet } from '../context/WalletContext';
 
 export type AgentStep = {
     id: string;
@@ -100,6 +103,16 @@ const WorkflowStep = ({ step, isLast }: { step: AgentStep; isLast: boolean }) =>
 export default function AgentPanel({ state }: AgentPanelProps) {
     const { colors } = useTheme();
     const { t } = useI18n();
+    const { isDead, revivePet, loading: petLoading } = usePet();
+    const { isConnected: walletActive } = useWallet();
+
+    const handleRevive = async () => {
+        try {
+            await revivePet();
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     // 根据 Agent 状态计算 Spoons mood
     const getFocusDragonMood = (): FocusDragonMood => {
@@ -114,6 +127,43 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
     // 空闲状态
     if (!state.isActive && !state.result) {
+        // 如果宠物死亡，显示复活界面
+        if (isDead) {
+            return (
+                <View style={styles.container}>
+                    <View style={styles.header}>
+                        <Brain size={20} color={colors.text.muted} />
+                        <Text style={[styles.headerTitle, { color: colors.text.muted }]}>
+                            {t('agent.title')}
+                        </Text>
+                    </View>
+                    <View style={styles.idleState}>
+                        <FocusDragon mood="dead" size={100} />
+                        <Text style={[styles.idleText, { color: colors.semantic.error }]}>
+                            Spoons has fainted!
+                        </Text>
+                        <Text style={[styles.idleHint, { color: colors.text.secondary }]}>
+                            Revive Spoons to continue completing tasks.
+                        </Text>
+
+                        <View style={styles.reviveContainer}>
+                            <View style={styles.costTag}>
+                                <Text style={styles.costText}>Cost: 0.01 ETH</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.reviveButton, { backgroundColor: colors.primary[500], opacity: petLoading ? 0.7 : 1 }]}
+                                onPress={handleRevive}
+                                disabled={petLoading}
+                            >
+                                {petLoading ? <Loader size={18} color="#000" /> : <Zap size={18} color="#000" />}
+                                <Text style={styles.reviveButtonText}>Revive Spoons</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            );
+        }
+
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
@@ -230,6 +280,40 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: spacing.xl,
+    },
+    // 复活样式
+    reviveContainer: {
+        marginTop: spacing.xl,
+        alignItems: 'center',
+        gap: spacing.md,
+        width: '100%',
+    },
+    costTag: {
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+        borderRadius: borderRadius.full,
+    },
+    costText: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
+        color: '#666',
+    },
+    reviveButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.sm,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.xl,
+        borderRadius: borderRadius.lg,
+        width: '100%',
+        maxWidth: 200,
+    },
+    reviveButtonText: {
+        color: '#000',
+        fontWeight: typography.fontWeight.bold,
+        fontSize: typography.fontSize.sm,
     },
     spoonsContainer: {
         alignItems: 'center',

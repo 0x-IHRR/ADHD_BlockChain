@@ -29,7 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // 状态类型
-export type FocusDragonMood = 'neutral' | 'thinking' | 'happy' | 'working' | 'tired' | 'shaking';
+export type FocusDragonMood = 'neutral' | 'thinking' | 'happy' | 'working' | 'tired' | 'shaking' | 'dying' | 'dead';
 
 interface FocusDragonProps {
     mood?: FocusDragonMood;
@@ -142,6 +142,26 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
                 glowOpacity.value = withTiming(0.6, { duration: 200 });
                 break;
 
+            case 'dying':
+                // 虚弱喘息
+                scale.value = withRepeat(
+                    withSequence(
+                        withTiming(0.98, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+                        withTiming(0.95, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+                    ),
+                    -1,
+                    true
+                );
+                rotation.value = withTiming(10, { duration: 1000 });
+                break;
+
+            case 'dead':
+                // 倒下
+                rotation.value = withTiming(90, { duration: 500, easing: Easing.bounce });
+                scale.value = withTiming(0.8, { duration: 500 });
+                eyeBlink.value = 0; // 停止眨眼
+                break;
+
             default:
                 // 中性 - 轻微呼吸
                 scale.value = withRepeat(
@@ -178,6 +198,10 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
                 return { body: '#A0A0A0', accent: '#808080', glow: '#808080' }; // 疲惫灰
             case 'shaking':
                 return { body: '#FF4757', accent: '#CC3945', glow: '#FF4757' }; // 失败红
+            case 'dying':
+                return { body: '#FFA502', accent: '#FF7F50', glow: '#FFA502' }; // 橙色虚弱
+            case 'dead':
+                return { body: '#747D8C', accent: '#2F3542', glow: '#000000' }; // 灰色死亡
             default:
                 return { body: '#7ED7A0', accent: '#5FB580', glow: '#7ED7A0' }; // 薄荷绿中立
         }
@@ -321,16 +345,36 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
 
                 {/* 眼睛 - 左 */}
                 <G>
-                    <Circle cx="40" cy="32" r="6" fill="#FFFFFF" />
-                    <Circle cx="41" cy="32" r="4" fill="#1A1A22" />
-                    <Circle cx="39" cy="30" r="1.5" fill="#FFFFFF" />
+                    {mood === 'dead' ? (
+                        // X 眼睛 - 左
+                        <G>
+                            <Path d="M 37 29 L 43 35" stroke="#1A1A22" strokeWidth="1.5" />
+                            <Path d="M 43 29 L 37 35" stroke="#1A1A22" strokeWidth="1.5" />
+                        </G>
+                    ) : (
+                        <G>
+                            <Circle cx="40" cy="32" r="6" fill="#FFFFFF" />
+                            <Circle cx="41" cy="32" r="4" fill="#1A1A22" />
+                            <Circle cx="39" cy="30" r="1.5" fill="#FFFFFF" />
+                        </G>
+                    )}
                 </G>
 
                 {/* 眼睛 - 右 */}
                 <G>
-                    <Circle cx="60" cy="32" r="6" fill="#FFFFFF" />
-                    <Circle cx="61" cy="32" r="4" fill="#1A1A22" />
-                    <Circle cx="59" cy="30" r="1.5" fill="#FFFFFF" />
+                    {mood === 'dead' ? (
+                        // X 眼睛 - 右
+                        <G>
+                            <Path d="M 57 29 L 63 35" stroke="#1A1A22" strokeWidth="1.5" />
+                            <Path d="M 63 29 L 57 35" stroke="#1A1A22" strokeWidth="1.5" />
+                        </G>
+                    ) : (
+                        <G>
+                            <Circle cx="60" cy="32" r="6" fill="#FFFFFF" />
+                            <Circle cx="61" cy="32" r="4" fill="#1A1A22" />
+                            <Circle cx="59" cy="30" r="1.5" fill="#FFFFFF" />
+                        </G>
+                    )}
                 </G>
 
                 {/* 嘴巴 - 根据 mood 变化 */}

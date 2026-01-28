@@ -19,6 +19,8 @@ import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { getAllTasksFromChain, OnChainTask, TaskStatus, formatEth } from '../services/contract.service';
 import { useWallet } from '../context/WalletContext';
+import { USE_MOCK_DATA, MOCK_CONFIG } from '../config/demo';
+import { MOCK_PLAYERS, MOCK_WINNERS, MOCK_JACKPOT } from '../mocks/leaderboard';
 
 interface LeaderboardModalProps {
     visible: boolean;
@@ -60,6 +62,15 @@ export default function LeaderboardModal({ visible, onClose, jackpotAmount }: Le
     const loadLeaderboardData = async () => {
         setLoading(true);
         try {
+            // 如果启用 Mock 数据，直接使用预设数据
+            if (USE_MOCK_DATA && MOCK_CONFIG.leaderboard) {
+                setPlayers(MOCK_PLAYERS);
+                setWinners(MOCK_WINNERS);
+                setLoading(false);
+                return;
+            }
+
+            // 否则从链上获取真实数据
             const allTasks = await getAllTasksFromChain();
 
             // 1. 计算排行榜 (Top Players)
@@ -155,11 +166,11 @@ export default function LeaderboardModal({ visible, onClose, jackpotAmount }: Le
                                 {t('common.jackpot')}
                             </Text>
                             <Text style={[styles.jackpotValue, { color: colors.primary[500] }]}>
-                                {jackpotAmount} ETH
+                                {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.current : jackpotAmount} ETH
                             </Text>
                             <View style={styles.jackpotStats}>
                                 <Text style={[styles.statText, { color: colors.text.tertiary }]}>
-                                    Total Distributed: 45.2 ETH
+                                    Total Distributed: {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.totalDistributed : '0'} ETH
                                 </Text>
                             </View>
                         </View>
