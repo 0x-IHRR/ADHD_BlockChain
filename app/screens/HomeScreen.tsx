@@ -17,7 +17,7 @@ import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { FadeInView, PulseGlow } from '../styles/animations';
-import { MainLayout, AgentPanel, AgentState, LeaderboardModal } from '../components';
+import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView } from '../components';
 
 // 状态标签
 const StatusBadge = ({ status }: { status: TaskStatus }) => {
@@ -71,10 +71,11 @@ const TaskCard = ({ task, onPress, index }: { task: Task; onPress: () => void; i
 
     return (
         <FadeInView delay={150 + index * 80}>
-            <TouchableOpacity
+            <HoverableView
                 style={[styles.taskCard, cardStyle]}
                 onPress={onPress}
-                activeOpacity={0.7}
+                effect="scale"
+                scaleAmount={1.02}
             >
                 <View style={styles.taskRow}>
                     <View style={styles.taskInfo}>
@@ -99,16 +100,16 @@ const TaskCard = ({ task, onPress, index }: { task: Task; onPress: () => void; i
                         </Text>
                     </View>
                 </View>
-            </TouchableOpacity>
+            </HoverableView>
         </FadeInView>
     );
 };
 
 const StatCard = ({ value, label, color }: { value: number; label: string; color: string }) => (
-    <View style={styles.statCard}>
+    <HoverableView style={styles.statCard} effect="lift" liftAmount={-2}>
         <Text style={[styles.statValue, { color }]}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </HoverableView>
 );
 
 type HomeScreenProps = {

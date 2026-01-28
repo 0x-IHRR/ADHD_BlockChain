@@ -9,6 +9,7 @@ import React, { useState, useCallback, ReactNode } from 'react';
 import {
     Pressable,
     StyleSheet,
+    StyleProp,
     ViewStyle,
     Platform,
 } from 'react-native';
@@ -21,7 +22,7 @@ import Animated, {
 
 interface HoverableViewProps {
     children: ReactNode;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     onPress?: () => void;
     disabled?: boolean;
     // 悬停效果类型
