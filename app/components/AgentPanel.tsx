@@ -23,7 +23,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
-import Spoons, { SpoonsMood } from './Spoons';
+import FocusDragon, { FocusDragonMood } from './FocusDragon';
 
 export type AgentStep = {
     id: string;
@@ -102,7 +102,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
     const { t } = useI18n();
 
     // 根据 Agent 状态计算 Spoons mood
-    const getSpoonsMood = (): SpoonsMood => {
+    const getFocusDragonMood = (): FocusDragonMood => {
         if (state.result) {
             return state.result.verified ? 'happy' : 'shaking';
         }
@@ -124,8 +124,8 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                 </View>
 
                 <View style={styles.idleState}>
-                    {/* Spoons 吉祥物 */}
-                    <Spoons mood="neutral" size={100} />
+                    {/* Focus Dragon 吉祥物 */}
+                    <FocusDragon mood="neutral" size={100} />
                     <Text style={[styles.idleText, { color: colors.text.muted }]}>
                         {t('agent.idle')}
                     </Text>
@@ -139,9 +139,9 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
     return (
         <View style={styles.container}>
-            {/* Spoons 吉祥物 - 工作状态 */}
+            {/* Focus Dragon 吉祥物 - 工作状态 */}
             <View style={styles.spoonsContainer}>
-                <Spoons mood={getSpoonsMood()} size={80} />
+                <FocusDragon mood={getFocusDragonMood()} size={80} />
             </View>
 
             {/* Header */}
