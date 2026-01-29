@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { MOCK_CONFIG } from '../config/demo';
+import HoverableView from './HoverableView';
 
 // Mock 用户画像数据
 const MOCK_PROFILE = {
@@ -65,7 +66,7 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
     return (
         <View style={styles.container}>
             {/* Focus Score - 大圆圈 (直接从这里开始，无标题) */}
-            <View style={[styles.scoreSection, { backgroundColor: colors.glass.backgroundLight }]}>
+            <HoverableView style={[styles.scoreSection, { backgroundColor: colors.glass.backgroundLight }]} effect="scale" scaleAmount={1.05}>
                 <View style={[styles.scoreCircle, { borderColor: getScoreColor(profile.focusScore) }]}>
                     <Text style={[styles.scoreValue, { color: getScoreColor(profile.focusScore) }]}>
                         {profile.focusScore}
@@ -74,20 +75,20 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
                 <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
                     {texts.focusScore}
                 </Text>
-            </View>
+            </HoverableView>
 
             {/* Streak 连续天数 */}
-            <View style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]}>
+            <HoverableView style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]} effect="lift" liftAmount={-3}>
                 <Text style={[styles.streakValue, { color: colors.semantic.warning }]}>
                     🔥 {profile.streak}
                 </Text>
                 <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
                     {texts.streak}
                 </Text>
-            </View>
+            </HoverableView>
 
             {/* Weekly Goal 本周目标 */}
-            <View style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]}>
+            <HoverableView style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]} effect="lift" liftAmount={-3}>
                 <Text style={[styles.metricCardLabel, { color: colors.text.muted }]}>
                     {texts.weeklyGoal}
                 </Text>
@@ -105,7 +106,7 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
                 <Text style={[styles.progressText, { color: colors.text.secondary }]}>
                     {profile.weeklyGoal.completed}/{profile.weeklyGoal.target}
                 </Text>
-            </View>
+            </HoverableView>
 
             {/* 优势标签 */}
             <View style={styles.tagsSection}>
@@ -114,9 +115,11 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
                 </Text>
                 <View style={styles.tagsColumn}>
                     {profile.strengths.map((s, i) => (
-                        <View
+                        <HoverableView
                             key={i}
                             style={[styles.tag, { backgroundColor: colors.semantic.success + '20' }]}
+                            effect="scale"
+                            scaleAmount={1.05}
                         >
                             {s.icon === 'zap' ? (
                                 <Zap size={14} color={colors.semantic.success} />
@@ -126,7 +129,7 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
                             <Text style={[styles.tagText, { color: colors.semantic.success }]}>
                                 {texts[s.key as keyof typeof texts] || s.key}
                             </Text>
-                        </View>
+                        </HoverableView>
                     ))}
                 </View>
             </View>
@@ -134,12 +137,12 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
             {/* 改进建议 */}
             {profile.improvements.length > 0 && (
                 <View style={styles.improvementSection}>
-                    <View style={[styles.improvementCard, { backgroundColor: colors.semantic.warning + '15' }]}>
+                    <HoverableView style={[styles.improvementCard, { backgroundColor: colors.semantic.warning + '15' }]} effect="scale" scaleAmount={1.03}>
                         <AlertTriangle size={16} color={colors.semantic.warning} />
                         <Text style={[styles.improvementText, { color: colors.text.secondary }]}>
                             {texts[profile.improvements[0].key as keyof typeof texts] || profile.improvements[0].key}
                         </Text>
-                    </View>
+                    </HoverableView>
                 </View>
             )}
         </View>

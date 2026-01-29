@@ -3,11 +3,12 @@
  * 
  * 显示过去一年的任务完成情况，类似 GitHub 贡献图
  */
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 
 interface DayData {
     date: Date;
@@ -61,6 +62,121 @@ const MONTH_NAMES_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 
 const WEEKDAY_LABELS_ZH = ['', '一', '', '三', '', '五', ''];
 const WEEKDAY_LABELS_EN = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
+// Helper to check if two dates are the same day
+const isSameDay = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate();
+};
+
+// Heatmap Cell component with hover and today pulse
+interface HeatmapCellProps {
+    day: DayData | null;
+    isToday: boolean;
+    getColor: (intensity: number | null) => string;
+    borderColor: string;
+    isZh: boolean;
+}
+
+const HeatmapCell = ({ day, isToday, getColor, borderColor, isZh }: HeatmapCellProps) => {
+    const { colors } = useTheme();
+    const [isHovered, setIsHovered] = useState(false);
+    const pulseOpacity = useSharedValue(1);
+    const pulseScale = useSharedValue(1);
+
+    // Today pulsing animation
+    useEffect(() => {
+        if (isToday) {
+            pulseOpacity.value = withRepeat(
+                withSequence(
+                    withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+                ),
+                -1,
+                true
+            );
+            pulseScale.value = withRepeat(
+                withSequence(
+                    withTiming(1.2, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+                ),
+                -1,
+                true
+            );
+        }
+    }, [isToday]);
+
+    const todayPulseStyle = useAnimatedStyle(() => ({
+        position: 'absolute',
+        width: CELL_SIZE + 4,
+        height: CELL_SIZE + 4,
+        borderRadius: 3,
+        backgroundColor: colors.primary[500],
+        opacity: pulseOpacity.value,
+        transform: [{ scale: pulseScale.value }],
+    }));
+
+    const hoverProps = Platform.OS === 'web' ? {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+    } : {};
+
+    if (!day) {
+        return <View style={[styles.cell, { backgroundColor: 'transparent' }]} />;
+    }
+
+    const tooltipText = isZh
+        ? `${day.date.getMonth() + 1}月${day.date.getDate()}日: ${day.count} 个任务`
+        : `${day.date.toLocaleDateString('en', { month: 'short', day: 'numeric' })}: ${day.count} tasks`;
+
+    return (
+        <Pressable
+            {...hoverProps}
+            style={[
+                styles.cellWrapper,
+                isHovered && { zIndex: 9999 }
+            ]}
+        >
+            {/* Today pulse ring */}
+            {isToday && <Animated.View style={todayPulseStyle} />}
+
+            <View
+                style={[
+                    styles.cell,
+                    {
+                        backgroundColor: getColor(day.intensity),
+                        borderColor: isToday ? colors.primary[500] : borderColor,
+                        borderWidth: isToday ? 2 : 0,
+                    }
+                ]}
+            />
+
+            {/* Hover tooltip */}
+            {isHovered && (
+                <View style={[
+                    styles.tooltip,
+                    {
+                        backgroundColor: colors.background.primary,
+                        borderColor: colors.border.default,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 9999,
+                    }
+                ]}>
+                    <Text style={[styles.tooltipText, { color: colors.text.primary }]}>
+                        {tooltipText}
+                    </Text>
+                </View>
+            )}
+        </Pressable>
+    );
+};
+
+const CELL_SIZE = 11;
+const CELL_GAP = 3;
+
 export default function ActivityHeatmap({ data, weeks = 26 }: ActivityHeatmapProps) {
     const { colors } = useTheme();
     const { language } = useI18n();
@@ -68,6 +184,7 @@ export default function ActivityHeatmap({ data, weeks = 26 }: ActivityHeatmapPro
     const isZh = language === 'zh';
     const monthNames = isZh ? MONTH_NAMES_ZH : MONTH_NAMES_EN;
     const weekdayLabels = isZh ? WEEKDAY_LABELS_ZH : WEEKDAY_LABELS_EN;
+    const today = new Date();
 
     // 使用传入数据或生成 Mock 数据
     const activityData = useMemo(() => data || generateMockData(weeks), [data, weeks]);
@@ -191,16 +308,15 @@ export default function ActivityHeatmap({ data, weeks = 26 }: ActivityHeatmapPro
                                 <View key={colIndex} style={styles.weekColumn}>
                                     {[0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => {
                                         const day = week[dayOfWeek];
+                                        const isToday = day ? isSameDay(day.date, today) : false;
                                         return (
-                                            <View
+                                            <HeatmapCell
                                                 key={dayOfWeek}
-                                                style={[
-                                                    styles.cell,
-                                                    {
-                                                        backgroundColor: day ? getColor(day.intensity) : 'transparent',
-                                                        borderColor: day ? colors.border.subtle : 'transparent',
-                                                    }
-                                                ]}
+                                                day={day}
+                                                isToday={isToday}
+                                                getColor={getColor}
+                                                borderColor={colors.border.subtle}
+                                                isZh={isZh}
                                             />
                                         );
                                     })}
@@ -230,9 +346,6 @@ export default function ActivityHeatmap({ data, weeks = 26 }: ActivityHeatmapPro
     );
 }
 
-const CELL_SIZE = 11;
-const CELL_GAP = 3;
-
 const styles = StyleSheet.create({
     container: {
         paddingVertical: spacing.md,
@@ -254,6 +367,7 @@ const styles = StyleSheet.create({
     },
     gridWrapper: {
         flexDirection: 'column',
+        overflow: 'visible',
     },
     monthRow: {
         flexDirection: 'row',
@@ -272,6 +386,7 @@ const styles = StyleSheet.create({
     },
     gridBody: {
         flexDirection: 'row',
+        overflow: 'visible',
     },
     weekdayColumn: {
         marginRight: spacing.xs,
@@ -287,9 +402,11 @@ const styles = StyleSheet.create({
     },
     grid: {
         flexDirection: 'row',
+        overflow: 'visible',
     },
     weekColumn: {
         flexDirection: 'column',
+        overflow: 'visible',
     },
     cell: {
         width: CELL_SIZE,
@@ -314,5 +431,31 @@ const styles = StyleSheet.create({
         height: CELL_SIZE,
         borderRadius: 2,
         marginHorizontal: 1,
+    },
+    cellWrapper: {
+        position: 'relative',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: CELL_GAP,
+        marginBottom: CELL_GAP,
+        overflow: 'visible',
+    },
+    tooltip: {
+        position: 'absolute',
+        bottom: CELL_SIZE + 12,
+        left: '50%',
+        transform: [{ translateX: -60 }],
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.md,
+        borderWidth: 1,
+        zIndex: 9999,
+        minWidth: 120,
+        overflow: 'visible',
+    },
+    tooltipText: {
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.semibold,
+        textAlign: 'center',
     },
 });

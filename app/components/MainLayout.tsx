@@ -29,6 +29,7 @@ import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import WalletSelectorModal from './WalletSelectorModal';
 import AchievementModal from './AchievementModal';
+import HoverableView from './HoverableView';
 import { USE_MOCK_DATA, MOCK_CONFIG } from '../config/demo';
 import { MOCK_JACKPOT } from '../mocks/leaderboard';
 
@@ -138,37 +139,42 @@ export default function MainLayout({
                     {/* Center: Jackpot & Stats (Desktop only) */}
                     {!isMobile && (
                         <View style={styles.navCenter}>
-                            <TouchableOpacity
-                                style={[styles.jackpotChip, {
-                                    backgroundColor: colors.glass.background,
-                                    borderColor: colors.primary[500] + '40'
-                                }]}
-                                onPress={onJackpotPress}
-                                activeOpacity={0.7}
-                            >
-                                <Trophy size={16} color={colors.primary[400]} />
-                                <Text style={[styles.jackpotLabel, { color: colors.text.muted }]}>
-                                    {t('common.jackpot')}
-                                </Text>
-                                <Text style={[styles.jackpotValue, { color: colors.primary[400] }]}>
-                                    {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.current : jackpotAmount} ETH
-                                </Text>
-                            </TouchableOpacity>
+                            {/* Jackpot Button with Glow Hover */}
+                            <HoverableView effect="glow">
+                                <TouchableOpacity
+                                    style={[styles.jackpotChip, {
+                                        backgroundColor: colors.glass.background,
+                                        borderColor: colors.primary[500] + '40'
+                                    }]}
+                                    onPress={onJackpotPress}
+                                    activeOpacity={0.7}
+                                >
+                                    <Trophy size={16} color={colors.primary[400]} />
+                                    <Text style={[styles.jackpotLabel, { color: colors.text.muted }]}>
+                                        {t('common.jackpot')}
+                                    </Text>
+                                    <Text style={[styles.jackpotValue, { color: colors.primary[400] }]}>
+                                        {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.current : jackpotAmount} ETH
+                                    </Text>
+                                </TouchableOpacity>
+                            </HoverableView>
 
-                            {/* 成就徽章按钮 */}
-                            <TouchableOpacity
-                                style={[styles.achievementChip, {
-                                    backgroundColor: colors.glass.background,
-                                    borderColor: colors.primary[500] + '40'
-                                }]}
-                                onPress={() => setShowAchievementModal(true)}
-                                activeOpacity={0.7}
-                            >
-                                <Award size={16} color={colors.primary[400]} />
-                                <Text style={[styles.achievementLabel, { color: colors.text.muted }]}>
-                                    成就
-                                </Text>
-                            </TouchableOpacity>
+                            {/* 成就徽章按钮 with Glow Hover */}
+                            <HoverableView effect="glow">
+                                <TouchableOpacity
+                                    style={[styles.achievementChip, {
+                                        backgroundColor: colors.glass.background,
+                                        borderColor: colors.primary[500] + '40'
+                                    }]}
+                                    onPress={() => setShowAchievementModal(true)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Award size={16} color={colors.primary[400]} />
+                                    <Text style={[styles.achievementLabel, { color: colors.text.muted }]}>
+                                        成就
+                                    </Text>
+                                </TouchableOpacity>
+                            </HoverableView>
                         </View>
                     )}
 

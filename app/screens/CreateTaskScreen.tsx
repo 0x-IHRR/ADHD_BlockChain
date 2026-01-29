@@ -76,14 +76,14 @@ export default function CreateTaskScreen() {
         setIsAnalyzing(true);
         setAiThinkingSteps([]);
 
-        // 模拟思考过程步骤
+        // 模拟思考过程步骤 (极简风格，无 emoji)
         const thinkingSteps = [
-            '🔍 分析任务描述...',
-            '🧠 理解任务目标...',
-            customPrompt ? `📝 应用自定义策略: "${customPrompt}"` : '📝 选择最佳拆解策略...',
-            '✂️ 拆分为可执行步骤...',
-            '⏱️ 估算每步时间...',
-            '✅ 生成最终方案...',
+            '分析任务描述...',
+            '理解任务目标...',
+            customPrompt ? `应用自定义策略: "${customPrompt}"` : '选择最佳拆解策略...',
+            '拆分为可执行步骤...',
+            '估算每步时间...',
+            '生成最终方案...',
         ];
 
         // 逐步展示思考过程
@@ -302,17 +302,7 @@ export default function CreateTaskScreen() {
                                             )}
                                         </TouchableOpacity>
 
-                                        {aiSuggestion && (
-                                            <FadeInView delay={0}>
-                                                <View style={styles.suggestionBox}>
-                                                    <View style={styles.suggestionHeader}>
-                                                        <Sparkles size={14} color={colors.primary[500]} />
-                                                        <Text style={styles.suggestionTitle}>{t('createTask.aiSuggestionTitle')}</Text>
-                                                    </View>
-                                                    <Text style={styles.suggestionText}>{aiSuggestion}</Text>
-                                                </View>
-                                            </FadeInView>
-                                        )}
+                                        {/* AI 建议已移至右侧面板 */}
                                     </View>
                                 </FadeInView>
 
@@ -502,7 +492,7 @@ export default function CreateTaskScreen() {
                                 ) : (
                                     aiThinkingSteps.map((step, index) => (
                                         <FadeInView key={index} delay={0}>
-                                            <View style={[styles.thinkingStep, { backgroundColor: colors.glass.backgroundLight }]}>
+                                            <View style={styles.thinkingStep}>
                                                 <Text style={[styles.thinkingStepText, { color: colors.text.secondary }]}>
                                                     {step}
                                                 </Text>
@@ -518,16 +508,24 @@ export default function CreateTaskScreen() {
                                 )}
                             </View>
 
-                            {/* AI 结果摘要 */}
+                            {/* AI 结果摘要 + AI 建议 */}
                             {aiSuggestion && (
                                 <FadeInView delay={0}>
-                                    <View style={[styles.resultSummary, { backgroundColor: colors.semantic.success + '15' }]}>
+                                    <View style={styles.resultSummary}>
                                         <Text style={[styles.resultSummaryTitle, { color: colors.semantic.success }]}>
-                                            ✅ {t('createTask.analysisComplete')}
+                                            {t('createTask.analysisComplete')}
                                         </Text>
                                         <Text style={[styles.resultSummaryText, { color: colors.text.secondary }]}>
                                             {t('createTask.stepsGenerated').replace('{count}', String(aiSuggestion.split('\n').length))}
                                         </Text>
+                                    </View>
+                                    {/* AI 建议内容 */}
+                                    <View style={styles.suggestionBox}>
+                                        <View style={styles.suggestionHeader}>
+                                            <Sparkles size={14} color={colors.primary[500]} />
+                                            <Text style={styles.suggestionTitle}>{t('createTask.aiSuggestionTitle')}</Text>
+                                        </View>
+                                        <Text style={styles.suggestionText}>{aiSuggestion}</Text>
                                     </View>
                                 </FadeInView>
                             )}
@@ -666,7 +664,7 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
 
     // AI Thinking styles
     thinkingSteps: {
-        flex: 1,
+        // No flex: 1 - only take up needed space
         marginTop: spacing.sm,
     },
     emptyThinking: {
@@ -789,11 +787,10 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         fontWeight: typography.fontWeight.medium,
     },
 
-    // Suggestion
+    // Suggestion - transparent background for ethereal effect
     suggestionBox: {
         marginTop: spacing.lg,
-        backgroundColor: colors.glass.backgroundLight,
-        borderRadius: borderRadius.lg,
+        // No background - text floats on void
         padding: spacing.lg,
     },
     suggestionHeader: {

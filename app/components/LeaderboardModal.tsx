@@ -189,37 +189,52 @@ export default function LeaderboardModal({ visible, onClose, jackpotAmount }: Le
                                     {loading ? 'Loading...' : 'No players yet. Be the first!'}
                                 </Text>
                             ) : (
-                                players.map((player, index) => (
-                                    <View key={player.id} style={[styles.playerRow, {
-                                        backgroundColor: colors.background.secondary,
-                                        borderColor: index === 0 ? colors.semantic.warning : 'transparent',
-                                        borderWidth: index === 0 ? 1 : 0
-                                    }]}>
-                                        <View style={styles.rankCol}>
-                                            <Text style={[styles.rankText, {
-                                                color: index === 0 ? colors.semantic.warning : colors.text.muted,
-                                                fontWeight: index === 0 ? 'bold' : 'normal'
-                                            }]}>#{index + 1}</Text>
-                                        </View>
-                                        <View style={styles.playerInfo}>
-                                            <Text style={[styles.playerName, { color: colors.text.primary }]}>{player.name}</Text>
-                                            <View style={styles.badgeRow}>
-                                                {player.multiplier > 1 && (
-                                                    <View style={[styles.multiplierBadge, { backgroundColor: colors.semantic.error }]}>
-                                                        <Text style={styles.multiplierText}>{player.multiplier}x</Text>
-                                                    </View>
-                                                )}
-                                                <Text style={{ fontSize: 10, color: colors.text.tertiary, marginLeft: 4 }}>
-                                                    {player.streak} wins
-                                                </Text>
+                                players.map((player, index) => {
+                                    // 前三名边框颜色: 金、银、铜
+                                    const getRankBorderColor = (rank: number) => {
+                                        if (rank === 0) return '#FFD700'; // 金色
+                                        if (rank === 1) return '#C0C0C0'; // 银色
+                                        if (rank === 2) return '#CD7F32'; // 铜色
+                                        return 'transparent';
+                                    };
+                                    const getRankTextColor = (rank: number) => {
+                                        if (rank === 0) return '#FFD700';
+                                        if (rank === 1) return '#C0C0C0';
+                                        if (rank === 2) return '#CD7F32';
+                                        return colors.text.muted;
+                                    };
+                                    return (
+                                        <View key={player.id} style={[styles.playerRow, {
+                                            backgroundColor: colors.background.secondary,
+                                            borderColor: getRankBorderColor(index),
+                                            borderWidth: index < 3 ? 1.5 : 0
+                                        }]}>
+                                            <View style={styles.rankCol}>
+                                                <Text style={[styles.rankText, {
+                                                    color: getRankTextColor(index),
+                                                    fontWeight: index < 3 ? 'bold' : 'normal'
+                                                }]}>#{index + 1}</Text>
+                                            </View>
+                                            <View style={styles.playerInfo}>
+                                                <Text style={[styles.playerName, { color: colors.text.primary }]}>{player.name}</Text>
+                                                <View style={styles.badgeRow}>
+                                                    {player.multiplier > 1 && (
+                                                        <View style={[styles.multiplierBadge, { backgroundColor: colors.semantic.error }]}>
+                                                            <Text style={styles.multiplierText}>{player.multiplier}x</Text>
+                                                        </View>
+                                                    )}
+                                                    <Text style={{ fontSize: 10, color: colors.text.tertiary, marginLeft: 4 }}>
+                                                        {player.streak} wins
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                            <View style={styles.scoreCol}>
+                                                <Flame size={14} color={colors.primary[400]} />
+                                                <Text style={[styles.scoreText, { color: colors.text.primary }]}>{player.score}</Text>
                                             </View>
                                         </View>
-                                        <View style={styles.scoreCol}>
-                                            <Flame size={14} color={colors.primary[400]} />
-                                            <Text style={[styles.scoreText, { color: colors.text.primary }]}>{player.score}</Text>
-                                        </View>
-                                    </View>
-                                ))
+                                    );
+                                })
                             )}
                         </View>
 

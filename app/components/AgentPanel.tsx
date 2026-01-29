@@ -11,6 +11,7 @@ import {
     ScrollView,
     Animated,
     TouchableOpacity,
+    Platform,
 } from 'react-native';
 import {
     Brain,
@@ -32,6 +33,57 @@ import FocusDragon, { FocusDragonMood } from './FocusDragon';
 import ActivityHeatmap from './ActivityHeatmap';
 import { usePet } from '../context/PetContext';
 import { useWallet } from '../context/WalletContext';
+import AnimatedRN, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
+
+// Dragon Hover Glow Wrapper - Thin skin-hugging glow
+const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
+    const { colors } = useTheme();
+    const glowOpacity = useSharedValue(0);
+
+    const handleHoverIn = () => {
+        glowOpacity.value = withRepeat(
+            withSequence(
+                withTiming(0.5, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+                withTiming(0.2, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1,
+            true
+        );
+    };
+
+    const handleHoverOut = () => {
+        glowOpacity.value = withTiming(0, { duration: 300 });
+    };
+
+    // Thin glow ring that hugs the dragon - using border instead of filled circle
+    const glowStyle = useAnimatedStyle(() => ({
+        position: 'absolute',
+        width: 140,
+        height: 155,
+        borderRadius: 70,
+        backgroundColor: 'transparent',
+        borderWidth: 3,
+        borderColor: colors.primary[400],
+        opacity: glowOpacity.value,
+        // Slight glow via shadow
+        shadowColor: colors.primary[400],
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 6,
+    }));
+
+    const hoverProps = Platform.OS === 'web' ? {
+        onMouseEnter: handleHoverIn,
+        onMouseLeave: handleHoverOut,
+    } : {};
+
+    return (
+        <View style={{ alignItems: 'center', justifyContent: 'center' }} {...hoverProps}>
+            <AnimatedRN.View style={glowStyle} />
+            {children}
+        </View>
+    );
+};
 
 export type AgentStep = {
     id: string;
@@ -213,7 +265,9 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                         </Text>
                     </View>
                     <View style={styles.idleState}>
-                        <FocusDragon mood="dead" size={140} />
+                        <DragonHoverGlow>
+                            <FocusDragon mood="dead" size={140} />
+                        </DragonHoverGlow>
                         <Text style={[styles.idleText, { color: colors.semantic.error }]}>
                             Spoons has fainted!
                         </Text>
@@ -248,7 +302,9 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
-                    <FocusDragon mood="neutral" size={140} />
+                    <DragonHoverGlow>
+                        <FocusDragon mood="neutral" size={140} />
+                    </DragonHoverGlow>
                     <Text style={[styles.idleText, { color: colors.text.muted }]}>
                         {t('agent.idle')}
                     </Text>
@@ -264,7 +320,9 @@ export default function AgentPanel({ state }: AgentPanelProps) {
         <View style={styles.container}>
             {/* Focus Dragon 吉祥物 - 工作状态 */}
             <Animated.View style={[styles.spoonsContainer, { transform: [{ translateX: shakeAnim }] }]}>
-                <FocusDragon mood={getFocusDragonMood()} size={120} />
+                <DragonHoverGlow>
+                    <FocusDragon mood={getFocusDragonMood()} size={120} />
+                </DragonHoverGlow>
 
                 {/* HP 血条 */}
                 {pet && (
