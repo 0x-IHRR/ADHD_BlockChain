@@ -17,10 +17,10 @@
 
 ---
 
-### Bug 3: 本地无法切换到 Anvil 网络
-**问题**: 网络下拉菜单显示 Anvil 选项但无法切换
-**原因**: 可能是 RPC URL 配置问题或钱包未添加 Anvil 网络
-**文件**: `app/context/WalletContext.tsx`
+### ✅ Bug 3: 本地无法切换到 Anvil 网络 (已修复)
+**问题**: 点击 Anvil 网络无响应
+**原因**: MetaMask 限制添加 http:// 的本地 RPC
+**修复**: 在 `MainLayout.tsx` 添加 `handleNetworkSwitch`，点击 Anvil 时显示手动配置指南
 
 ---
 

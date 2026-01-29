@@ -18,6 +18,7 @@ import {
     TouchableOpacity,
     Pressable,
     Platform,
+    Alert,
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -66,6 +67,33 @@ export default function MainLayout({
         setShowWalletMenu(false);
         setShowNetworkMenu(false);
     }, []);
+
+    // 处理网络切换（带错误反馈）
+    const handleNetworkSwitch = useCallback(async (targetChainId: number) => {
+        // Anvil 本地网络需要用户手动添加
+        if (targetChainId === 31337) {
+            Alert.alert(
+                'Anvil 本地网络',
+                '刷换到 Anvil 需要在钱包中手动添加网络：\n\n' +
+                '• 网络名称: Anvil Local\n' +
+                '• RPC URL: http://127.0.0.1:8545\n' +
+                '• Chain ID: 31337\n' +
+                '• 符号: ETH\n\n' +
+                '添加后在钱包中切换到该网络即可。',
+                [
+                    { text: '我知道了', style: 'default' },
+                    {
+                        text: '尝试自动添加',
+                        onPress: () => switchNetwork(targetChainId)
+                    }
+                ]
+            );
+        } else {
+            // 其他网络直接切换
+            switchNetwork(targetChainId);
+        }
+        setShowNetworkMenu(false);
+    }, [switchNetwork]);
 
     // 响应式布局判断
     const isDesktop = width >= BREAKPOINT_DESKTOP;
@@ -197,10 +225,7 @@ export default function MainLayout({
                                                     styles.networkMenuItem,
                                                     chainId === network.chainId && { backgroundColor: colors.primary[500] + '20' }
                                                 ]}
-                                                onPress={() => {
-                                                    switchNetwork(network.chainId);
-                                                    setShowNetworkMenu(false);
-                                                }}
+                                                onPress={() => handleNetworkSwitch(network.chainId)}
                                             >
                                                 <Text style={[
                                                     styles.networkMenuText,
