@@ -1,16 +1,18 @@
 """
-BreakdownAgent - 任务拆解 Agent
-使用智谱 AI GLM-4.7 将大任务拆解为可执行的小步骤
+BreakdownAgent - 任务拆解 Agent (Spoon-Core Edition)
+使用 Spoon-Core 框架 (ChatBot) 进行任务拆解。
 """
-import json
 import os
-import httpx
+import json
 from typing import List, Optional
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
-load_dotenv()
+# Spoon-Core
+from spoon_ai.chat import ChatBot
+from spoon_ai.schema import Message
+from pydantic import BaseModel
 
+load_dotenv()
 
 class Subtask(BaseModel):
     """子任务结构"""
@@ -18,13 +20,11 @@ class Subtask(BaseModel):
     estimated_minutes: int
     priority: int  # 1-5, 1 为最高
 
-
 class BreakdownResult(BaseModel):
     """拆解结果"""
     original_task: str
     subtasks: List[Subtask]
     total_estimated_minutes: int
-
 
 # Agent 系统提示
 BREAKDOWN_SYSTEM_PROMPT = """你是一位专业的任务拆解专家，专门帮助 ADHD 患者和拖延症患者将大任务分解为易于执行的小步骤。
@@ -49,84 +49,45 @@ BREAKDOWN_SYSTEM_PROMPT = """你是一位专业的任务拆解专家，专门帮
 只返回 JSON，不要任何其他文字。
 """
 
-
 class BreakdownAgent:
-    """任务拆解 Agent - 使用智谱 Anthropic 兼容 API"""
+    """任务拆解 Agent - 基于 Spoon-Core"""
     
     def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
-        self.base_url = os.getenv("BASE_URL", "https://open.bigmodel.cn/api/anthropic")
-        self.model = os.getenv("LLM_MODEL", "glm-4.7")
-        
-        if not self.api_key:
-            raise ValueError("API Key 未配置，请在 .env 中设置 OPENAI_API_KEY 或 ANTHROPIC_API_KEY")
-    
-    async def _call_api(self, messages: List[dict]) -> str:
-        """直接调用智谱 Anthropic 兼容 API"""
-        url = f"{self.base_url}/v1/messages"
-        
-        headers = {
-            "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json"
-        }
-        
-        # 分离 system 和 user 消息
-        system_msg = None
-        user_messages = []
-        for msg in messages:
-            if msg["role"] == "system":
-                system_msg = msg["content"]
-            else:
-                user_messages.append(msg)
-        
-        payload = {
-            "model": self.model,
-            "max_tokens": 2000,
-            "messages": user_messages
-        }
-        if system_msg:
-            payload["system"] = system_msg
-        
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            
-            # 提取文本内容
-            if "content" in data and len(data["content"]) > 0:
-                return data["content"][0].get("text", "")
-            return ""
+        # Configure ChatBot (stateless)
+        self.bot = ChatBot(
+            llm_provider="anthropic", # Default, will be overridden by env logic if keys differ
+            base_url=os.getenv("BASE_URL", "https://open.bigmodel.cn/api/anthropic"),
+            model_name=os.getenv("LLM_MODEL", "glm-4.7"),
+            api_key=os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"),
+            enable_short_term_memory=False,
+            enable_long_term_memory=False
+        )
+        print(f"[BreakdownAgent] Initialized Spoon ChatBot with model: {self.bot.model_name}")
     
     async def breakdown(self, task_description: str) -> BreakdownResult:
         """
         将任务拆解为子任务列表
-        
-        Args:
-            task_description: 任务描述
-            
-        Returns:
-            BreakdownResult: 拆解结果
         """
         messages = [
-            {"role": "system", "content": BREAKDOWN_SYSTEM_PROMPT},
-            {"role": "user", "content": task_description}
+            Message(role="system", content=BREAKDOWN_SYSTEM_PROMPT),
+            Message(role="user", content=task_description)
         ]
         
-        response = await self._call_api(messages)
-        
-        # 清理可能的 markdown 代码块包裹
-        clean_response = response.strip()
-        if clean_response.startswith("```json"):
-            clean_response = clean_response[7:]
-        if clean_response.startswith("```"):
-            clean_response = clean_response[3:]
-        if clean_response.endswith("```"):
-            clean_response = clean_response[:-3]
-        clean_response = clean_response.strip()
-        
-        # 解析 JSON 响应
         try:
+            print(f"[BreakdownAgent] Sending request to Spoon ChatBot...")
+            response_text = await self.bot.ask(messages)
+            
+            # 清理可能的 markdown 代码块包裹
+            clean_response = response_text.strip()
+            if clean_response.startswith("```json"):
+                clean_response = clean_response[7:]
+            if clean_response.startswith("```"):
+                clean_response = clean_response[3:]
+            if clean_response.endswith("```"):
+                clean_response = clean_response[:-3]
+            clean_response = clean_response.strip()
+            
+            # 解析 JSON 响应
             result_json = json.loads(clean_response)
             subtasks = [
                 Subtask(
@@ -144,29 +105,18 @@ class BreakdownAgent:
                 subtasks=subtasks,
                 total_estimated_minutes=total_minutes
             )
-        except (json.JSONDecodeError, KeyError) as e:
-            # 如果解析失败，返回默认拆解
+            
+        except Exception as e:
+            print(f"Spoon breakdown error: {e}")
+            # Fallback
             return BreakdownResult(
                 original_task=task_description,
                 subtasks=[
-                    Subtask(title="完成任务第一步", estimated_minutes=15, priority=1),
-                    Subtask(title="完成任务第二步", estimated_minutes=15, priority=2),
+                    Subtask(title="初步准备", estimated_minutes=15, priority=1),
+                    Subtask(title="执行核心步骤", estimated_minutes=30, priority=2),
                 ],
-                total_estimated_minutes=30
+                total_estimated_minutes=45
             )
 
-
-# 测试入口
-async def main():
-    agent = BreakdownAgent()
-    result = await agent.breakdown("准备 Python 后端面试")
-    print(f"原任务: {result.original_task}")
-    print(f"预计总时长: {result.total_estimated_minutes} 分钟")
-    print("子任务:")
-    for i, task in enumerate(result.subtasks, 1):
-        print(f"  {i}. [{task.priority}] {task.title} ({task.estimated_minutes}min)")
-
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+# Global instance for api.py
+breakdown_agent = BreakdownAgent()
