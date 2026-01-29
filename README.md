@@ -124,7 +124,8 @@ graph TD
 
 #### Terminal A: 启动本地链
 ```bash
-anvil
+# 务必使用 --chain-id 1337 (保持 symbol 为 ETH)
+anvil --chain-id 1337
 ```
 
 #### Terminal B: 部署合约
