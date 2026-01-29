@@ -27,6 +27,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import FocusDragon, { FocusDragonMood } from './FocusDragon';
+import ActivityHeatmap from './ActivityHeatmap';
 import { usePet } from '../context/PetContext';
 import { useWallet } from '../context/WalletContext';
 
@@ -211,6 +212,11 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                     <Text style={[styles.idleHint, { color: colors.text.tertiary }]}>
                         {t('agent.idleHint')}
                     </Text>
+                </View>
+
+                {/* 月度任务热力图 */}
+                <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                    <ActivityHeatmap />
                 </View>
             </View>
         );
@@ -398,6 +404,12 @@ const styles = StyleSheet.create({
         fontSize: typography.fontSize.xs,
         fontWeight: typography.fontWeight.medium,
         minWidth: 45,
+    },
+    heatmapContainer: {
+        marginTop: spacing.lg,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        overflow: 'hidden',
     },
     damageNotice: {
         position: 'absolute',

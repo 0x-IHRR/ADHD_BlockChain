@@ -8,3 +8,4 @@ export { default as Spoons, SpoonsMood } from './Spoons';
 export { default as FocusDragon, FocusDragonMood } from './FocusDragon';
 export { default as HoverableView } from './HoverableView';
 export { default as VerifyModal } from './VerifyModal';
+export { default as ActivityHeatmap } from './ActivityHeatmap';
