@@ -133,8 +133,9 @@ export async function createTaskOnChain(
     const deadline = calculateDeadline(deadlineHours);
     const value = parseEth(stakeEth);
 
-    // 验证 multiplier 范围
-    const validMultiplier = Math.max(1, Math.min(3, multiplier));
+    // 验证 multiplier 是否为有效值
+    const validMultipliers = [1, 2, 3, 5, 10];
+    const validMultiplier = validMultipliers.includes(multiplier) ? multiplier : 1;
 
     console.log('Creating task on chain:', { description, deadline, value, multiplier: validMultiplier });
 
