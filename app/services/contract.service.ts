@@ -79,10 +79,17 @@ export function getSigner(): ethers.Wallet {
 }
 
 /**
- * 获取合约实例
+ * 获取合约实例 (使用默认 signer - 仅用于只读操作或本地测试)
  */
 export function getContract(): ethers.Contract {
     const signer = getSigner();
+    return new ethers.Contract(getContractAddress(), TASK_MANAGER_ABI, signer);
+}
+
+/**
+ * 获取合约实例 (使用外部 signer - 用于需要钱包签名的操作)
+ */
+export function getContractWithSigner(signer: ethers.Signer): ethers.Contract {
     return new ethers.Contract(getContractAddress(), TASK_MANAGER_ABI, signer);
 }
 
@@ -112,14 +119,17 @@ export function calculateDeadline(hoursFromNow: number): bigint {
 
 /**
  * 创建新任务 (质押 ETH)
+ * @param signer - 用户钱包 signer (必须传入，否则使用默认 signer 仅限本地测试)
  */
 export async function createTaskOnChain(
     description: string,
     deadlineHours: number,
     stakeEth: string,
-    multiplier: number = 1
+    multiplier: number = 1,
+    signer?: ethers.Signer
 ): Promise<{ taskId: number; txHash: string }> {
-    const contract = getContract();
+    // 优先使用传入的 signer，否则回退到默认 signer (本地测试)
+    const contract = signer ? getContractWithSigner(signer) : getContract();
     const deadline = calculateDeadline(deadlineHours);
     const value = parseEth(stakeEth);
 

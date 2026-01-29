@@ -15,11 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock } from 'lucide-react-native';
 import { useTasks } from '../context/AppContext';
+import { useWallet } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { breakdownTask } from '../services/ai.service';
 import { useAchievementNFT } from '../hooks/useAchievementNFT';
 import { createTaskOnChain } from '../services/contract.service';
+import { isAdminWallet } from '../config/demo';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
@@ -46,6 +48,7 @@ const PLATFORM_OPTIONS = [
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
     const { addTask, updateTaskChainId } = useTasks();
+    const { isConnected, signer, address, setShowWalletSelector } = useWallet();
     const { t } = useI18n();
     const { colors } = useTheme();
     const [description, setDescription] = useState('');
@@ -89,6 +92,20 @@ export default function CreateTaskScreen() {
             return;
         }
 
+        // 检查钱包连接 (管理员钱包可以绕过)
+        const isAdmin = isAdminWallet(address);
+        if (!isAdmin && (!isConnected || !signer)) {
+            Alert.alert(
+                '请先连接钱包',
+                '质押需要钱包签名确认，请先连接您的钱包。',
+                [
+                    { text: '取消', style: 'cancel' },
+                    { text: '连接钱包', onPress: () => setShowWalletSelector(true) }
+                ]
+            );
+            return;
+        }
+
         // 计算 deadline
         let deadlineHours = 24; // 默认 24h
         if (selectedDeadline === 'Custom') {
@@ -114,13 +131,14 @@ export default function CreateTaskScreen() {
                 subtasks: [],
             });
 
-            // 2. 调用链上创建任务
+            // 2. 调用链上创建任务 (管理员用默认 signer，普通用户用钱包签名)
             try {
                 const { taskId: chainTaskId, txHash } = await createTaskOnChain(
                     description,
                     deadlineHours,
                     stakeAmount,
-                    multiplier
+                    multiplier,
+                    isAdmin ? undefined : signer ?? undefined  // 管理员: 使用默认 signer, 普通用户: 钱包签名
                 );
 
                 // 3. 同步链上 ID 到本地任务

@@ -15,3 +15,19 @@ export const MOCK_CONFIG = {
     pet: true,          // 宠物状态 Mock
     tasks: false,       // 任务列表 (通常用真实数据)
 };
+
+// ============ 演示模式配置 ============
+
+/**
+ * 管理员钱包地址 - 拥有完整功能访问权限
+ * 在演示模式下，管理员钱包可以绕过某些限制
+ */
+export const ADMIN_WALLET = '0xad3df8c77c5d3c78de9b4c465b758804a8c7f748'.toLowerCase();
+
+/**
+ * 检查是否为管理员钱包
+ */
+export function isAdminWallet(address: string | null | undefined): boolean {
+    if (!address) return false;
+    return address.toLowerCase() === ADMIN_WALLET;
+}

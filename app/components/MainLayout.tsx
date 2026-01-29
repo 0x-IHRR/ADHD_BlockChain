@@ -21,13 +21,15 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Zap, Trophy, Wallet, Globe, Palette, LogOut, ChevronDown, Layers, Award } from 'lucide-react-native';
+import { ArrowLeft, Settings, Trophy, Globe, ChevronDown, LogOut, Medal, Zap, Award, Palette, Wallet, Layers } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useWallet, SUPPORTED_NETWORKS } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import WalletSelectorModal from './WalletSelectorModal';
 import AchievementModal from './AchievementModal';
+import { USE_MOCK_DATA, MOCK_CONFIG } from '../config/demo';
+import { MOCK_JACKPOT } from '../mocks/leaderboard';
 
 // 响应式断点
 const BREAKPOINT_TABLET = 768;
@@ -110,7 +112,7 @@ export default function MainLayout({
                                     {t('common.jackpot')}
                                 </Text>
                                 <Text style={[styles.jackpotValue, { color: colors.primary[400] }]}>
-                                    {jackpotAmount} ETH
+                                    {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.current : jackpotAmount} ETH
                                 </Text>
                             </TouchableOpacity>
 
