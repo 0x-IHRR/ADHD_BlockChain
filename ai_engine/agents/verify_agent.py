@@ -5,6 +5,8 @@ VerifyAgent - 任务验证 Agent
 import json
 import os
 import httpx
+import base64
+import mimetypes
 from typing import Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -88,9 +90,29 @@ class VerifyAgent:
             
             # 提取文本内容
             if "content" in data and len(data["content"]) > 0:
-                return data["content"][0].get("text", "")
+                # content 可能是一个列表，包含 text 或 image
+                content = data["content"]
+                if isinstance(content, list):
+                    text_parts = [item.get("text", "") for item in content if item.get("type") == "text"]
+                    return "".join(text_parts)
+                return str(content)
             return ""
     
+    def _encode_image(self, image_path: str) -> tuple[str, str]:
+        """读取并 Base64 编码图片"""
+        if image_path.startswith("file://"):
+            image_path = image_path[7:]
+            
+        if not os.path.exists(image_path):
+            raise FileNotFoundError(f"Image not found: {image_path}")
+            
+        mime_type, _ = mimetypes.guess_type(image_path)
+        if not mime_type:
+            mime_type = "image/jpeg"
+            
+        with open(image_path, "rb") as image_file:
+            return mime_type, base64.b64encode(image_file.read()).decode('utf-8')
+
     async def verify(
         self,
         task_description: str,
@@ -99,27 +121,55 @@ class VerifyAgent:
     ) -> VerifyResult:
         """
         验证任务完成状态
-        
-        Args:
-            task_description: 原任务描述
-            proof: 用户提交的证明 (文字)
-            image_url: 可选的图片证明 URL
-            
-        Returns:
-            VerifyResult: 验证结果
         """
-        user_prompt = f"""请验证以下任务完成情况:
+        content_block = []
+        
+        # 1. 添加任务文本信息
+        text_prompt = f"""请验证以下任务完成情况:
 
 任务描述: {task_description}
 
 用户提交的证明: {proof}
 """
+        content_block.append({
+            "type": "text", 
+            "text": text_prompt
+        })
+        
+        # 2. 如果有图片，处理图片
         if image_url:
-            user_prompt += f"\n[用户还提交了图片证明，URL: {image_url}]"
+            try:
+                # 处理本地文件 file://
+                if image_url.startswith("file://") or os.path.exists(image_url):
+                    mime_type, base64_data = self._encode_image(image_url)
+                    content_block.append({
+                        "type": "text", 
+                        "text": "\n[用户提交了以下图片证明]:"
+                    })
+                    content_block.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": mime_type,
+                            "data": base64_data
+                        }
+                    })
+                # 处理网络 URL (如果模型支持)
+                elif image_url.startswith("http"):
+                    content_block.append({
+                        "type": "text",
+                        "text": f"\n[用户图片 URL: {image_url}]"
+                    })
+            except Exception as e:
+                print(f"Error processing image: {e}")
+                content_block.append({
+                    "type": "text", 
+                    "text": f"\n[图片处理失败: {str(e)}]"
+                })
         
         messages = [
             {"role": "system", "content": VERIFY_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": content_block}
         ]
         
         response = await self._call_api(messages)

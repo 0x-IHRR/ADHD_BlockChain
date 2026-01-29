@@ -174,11 +174,24 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/verify-with-image", response_model=VerifyAndSubmitResponse)
 async def verify_with_image(
-    task_id: int = Form(...),
+    task_id: str = Form(...),
     task_description: str = Form(...),
     proof: str = Form(...),
     image: Optional[UploadFile] = File(None)
 ):
+    """
+    验证任务 (支持图片上传) - 法官模式
+    """
+    print(f"[DEBUG] verify_with_image called: id={task_id}, desc={task_description[:20]}, has_image={image is not None}")
+    if image:
+        print(f"[DEBUG] Image: filename={image.filename}, content_type={image.content_type}")
+
+    # Convert task_id back to int
+    try:
+        task_id_int = int(task_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="task_id must be an integer")
+
     """
     验证任务 (支持图片上传) - 法官模式
     
@@ -221,7 +234,7 @@ async def verify_with_image(
         
         # 调用验证 Agent
         result = await verify_agent.verify_and_submit(
-            task_id=task_id,
+            task_id=task_id_int,
             task_description=task_description,
             proof=proof,
             image_url=image_url

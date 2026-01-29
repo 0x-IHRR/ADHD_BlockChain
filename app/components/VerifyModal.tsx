@@ -54,11 +54,50 @@ export default function VerifyModal({
     const [result, setResult] = useState<VerifyAndSubmitResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // 每次打开模态框时重置状态
+    React.useEffect(() => {
+        if (visible) {
+            setProof('');
+            setImageUri(null);
+            setState('input');
+            setResult(null);
+            setError(null);
+        }
+    }, [visible]);
+
+    // 监听 Web 粘贴事件
+    React.useEffect(() => {
+        if (Platform.OS === 'web' && visible) {
+            const handlePaste = (e: any) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            if (event.target?.result) {
+                                setImageUri(event.target.result as string);
+                            }
+                        };
+                        reader.readAsDataURL(blob);
+                        e.preventDefault();
+                        break;
+                    }
+                }
+            };
+
+            window.addEventListener('paste', handlePaste);
+            return () => window.removeEventListener('paste', handlePaste);
+        }
+    }, [visible]);
+
     // 图片选择 - 相册
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please grant photo library access.');
+            Alert.alert(t('verify.permissionRequired'), t('verify.photoPermission'));
             return;
         }
 
@@ -77,7 +116,7 @@ export default function VerifyModal({
     const takePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please grant camera access.');
+            Alert.alert(t('verify.permissionRequired'), t('verify.cameraPermission'));
             return;
         }
 
@@ -92,7 +131,7 @@ export default function VerifyModal({
     };
 
     const handleSubmit = async () => {
-        if (!proof.trim()) return;
+        if (!proof.trim() && !imageUri) return;
 
         setState('verifying');
         setError(null);
@@ -108,7 +147,8 @@ export default function VerifyModal({
             const verifyResult = await verifyAndSubmit(
                 taskIdForChain,
                 taskDescription,
-                proof.trim()
+                proof.trim(),
+                imageUri || undefined
             );
 
             setResult(verifyResult);
@@ -187,7 +227,7 @@ export default function VerifyModal({
                                         borderColor: colors.border.default,
                                         color: colors.text.primary
                                     }]}
-                                    placeholder="Describe how you completed the task, paste Tx hash, or provide other proof..."
+                                    placeholder={t('verify.placeholder')}
                                     placeholderTextColor={colors.text.muted}
                                     multiline
                                     numberOfLines={4}
@@ -199,7 +239,7 @@ export default function VerifyModal({
                                 {/* 图片上传区域 */}
                                 <View style={styles.imageSection}>
                                     <Text style={[styles.label, { color: colors.text.muted }]}>
-                                        Add Screenshot/Photo (Optional)
+                                        {t('verify.addScreenshot')}
                                     </Text>
 
                                     {imageUri ? (
@@ -224,7 +264,7 @@ export default function VerifyModal({
                                             >
                                                 <ImagePlus size={20} color={colors.text.secondary} />
                                                 <Text style={[styles.imagePickerText, { color: colors.text.secondary }]}>
-                                                    Gallery
+                                                    {t('verify.gallery')}
                                                 </Text>
                                             </TouchableOpacity>
                                             <TouchableOpacity
@@ -233,7 +273,7 @@ export default function VerifyModal({
                                             >
                                                 <Camera size={20} color={colors.text.secondary} />
                                                 <Text style={[styles.imagePickerText, { color: colors.text.secondary }]}>
-                                                    Camera
+                                                    {t('verify.camera')}
                                                 </Text>
                                             </TouchableOpacity>
                                         </View>
@@ -243,11 +283,11 @@ export default function VerifyModal({
                                 <TouchableOpacity
                                     style={[styles.submitButton, { backgroundColor: colors.primary[500] }]}
                                     onPress={handleSubmit}
-                                    disabled={!proof.trim()}
+                                    disabled={!proof.trim() && !imageUri}
                                 >
                                     <Send size={18} color="#000" />
                                     <Text style={styles.submitButtonText}>
-                                        Submit for Verification
+                                        {t('verify.submit')}
                                     </Text>
                                 </TouchableOpacity>
                             </>
@@ -258,7 +298,7 @@ export default function VerifyModal({
                             <View style={styles.statusContainer}>
                                 <ActivityIndicator size="large" color={colors.primary[500]} />
                                 <Text style={[styles.statusText, { color: colors.text.secondary }]}>
-                                    AI Agent is verifying your proof...
+                                    {t('verify.verifying')}
                                 </Text>
                             </View>
                         )}
@@ -295,14 +335,20 @@ export default function VerifyModal({
                                     {t('agent.failed')}
                                 </Text>
                                 <Text style={[styles.statusText, { color: colors.text.secondary }]}>
-                                    {result?.reason || error || 'Verification failed'}
+                                    {(() => {
+                                        const errorMsg = result?.reason || error || 'Verification failed';
+                                        if (errorMsg.includes('Unprocessable Content')) return t('verify.error.uploadFailed');
+                                        if (errorMsg.includes('Network request failed')) return t('verify.error.network');
+                                        if (errorMsg.includes('timeout')) return t('verify.error.timeout');
+                                        return errorMsg;
+                                    })()}
                                 </Text>
                                 <TouchableOpacity
                                     style={[styles.retryButton, { borderColor: colors.semantic.error }]}
                                     onPress={() => setState('input')}
                                 >
                                     <Text style={[styles.retryButtonText, { color: colors.semantic.error }]}>
-                                        Try Again
+                                        {t('verify.tryAgain')}
                                     </Text>
                                 </TouchableOpacity>
                             </View>

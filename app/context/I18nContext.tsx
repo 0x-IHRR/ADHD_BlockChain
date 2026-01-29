@@ -118,6 +118,18 @@ const translations: Record<Language, Record<string, string>> = {
         'wallet.multiWalletHint': 'Supports MetaMask, OKX, Rabby and more',
         'wallet.disconnect': 'Disconnect',
         'wallet.connected': 'Connected',
+
+        // Verify Modal
+        'verify.addScreenshot': 'Add Screenshot/Photo (Optional)',
+        'verify.gallery': 'Gallery',
+        'verify.camera': 'Camera',
+        'verify.placeholder': 'Describe how you completed the task, paste Tx hash, or provide other proof...',
+        'verify.verifying': 'AI Agent is verifying your proof...',
+        'verify.submit': 'Submit for Verification',
+        'verify.tryAgain': 'Try Again',
+        'verify.permissionRequired': 'Permission Required',
+        'verify.photoPermission': 'Please grant photo library access.',
+        'verify.cameraPermission': 'Please grant camera access.',
     },
     zh: {
         // Brand
@@ -218,6 +230,18 @@ const translations: Record<Language, Record<string, string>> = {
         'wallet.multiWalletHint': '支持 MetaMask、OKX、Rabby 等钱包',
         'wallet.disconnect': '断开连接',
         'wallet.connected': '已连接',
+
+        // Verify Modal
+        'verify.addScreenshot': '添加截图/照片 (可选)',
+        'verify.gallery': '相册',
+        'verify.camera': '相机',
+        'verify.placeholder': '描述你是如何完成任务的，或粘贴交易哈希、或其他证明...',
+        'verify.verifying': 'AI 正在验证您的证明...',
+        'verify.submit': '提交验证',
+        'verify.tryAgain': '重试',
+        'verify.permissionRequired': '需要权限',
+        'verify.photoPermission': '请授予相册访问权限。',
+        'verify.cameraPermission': '请授予相机访问权限。',
     },
 };
 

@@ -48,7 +48,7 @@ export function getContractAddress(): string {
     const address = process.env.EXPO_PUBLIC_CONTRACT_ADDRESS;
     if (!address) {
         // 开发环境默认地址 (Anvil 本地链部署)
-        return '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+        return '0x5fc8d32690cc91d4c39d9d3abcbd16989f875707';
     }
     return address;
 }
@@ -56,7 +56,7 @@ export function getContractAddress(): string {
 export function getAchievementNFTAddress(): string {
     const address = process.env.EXPO_PUBLIC_ACHIEVEMENT_NFT_ADDRESS;
     if (!address) {
-        return '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';
+        return '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9';
     }
     return address;
 }
@@ -290,6 +290,60 @@ export async function getAllTasksFromChain(): Promise<OnChainTask[]> {
         return results.filter((t): t is OnChainTask => t !== null);
     } catch (error) {
         console.error('Failed to get all tasks:', error);
+        return [];
+    }
+}
+
+/**
+ * 获取用户的链上任务列表
+ */
+export async function fetchUserTasksOnChain(
+    userAddress: string,
+    signer?: ethers.Signer
+): Promise<OnChainTask[]> {
+    const contract = signer ? getContractWithSigner(signer) : getContract();
+
+    try {
+        console.log(`Fetching tasks for user: ${userAddress}`);
+        // 1. 获取任务 ID 列表
+        const taskIds: bigint[] = await contract.getUserTasks(userAddress);
+
+        if (!taskIds || taskIds.length === 0) {
+            console.log('No tasks found on chain.');
+            return [];
+        }
+
+        console.log(`Found ${taskIds.length} tasks on chain. Fetching details...`);
+
+        // 2. 并行获取每个任务详情
+        const tasks = await Promise.all(
+            taskIds.map(async (taskId) => {
+                try {
+                    const rawTask = await contract.getTask(taskId);
+                    // rawTask 是 Proxy/Result 对象，包含命名属性
+                    return {
+                        id: rawTask.id,
+                        owner: rawTask.owner,
+                        description: rawTask.description,
+                        stakeAmount: rawTask.stakeAmount,
+                        deadline: rawTask.deadline,
+                        status: Number(rawTask.status),
+                        createdAt: rawTask.createdAt,
+                        multiplier: Number(rawTask.multiplier)
+                    } as OnChainTask;
+                } catch (e) {
+                    console.error(`Failed to fetch task ${taskId}`, e);
+                    return null;
+                }
+            })
+        );
+
+        // 过滤掉失败的，并按创建时间倒序 (新的在前)
+        const validTasks = tasks.filter((t): t is OnChainTask => t !== null);
+        return validTasks.sort((a, b) => Number(b.createdAt - a.createdAt));
+
+    } catch (error) {
+        console.error("Failed to fetch user tasks:", error);
         return [];
     }
 }

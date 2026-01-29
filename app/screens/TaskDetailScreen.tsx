@@ -227,7 +227,7 @@ export default function TaskDetailScreen() {
                         </FadeInView>
                     </ScrollView>
 
-                    {/* Action Button */}
+                    {/* Action Button: Verify (Pending) */}
                     {task.status === 'pending' && !isTimedOut && (
                         <FadeInView delay={250}>
                             <View style={styles.footer}>
@@ -242,6 +242,23 @@ export default function TaskDetailScreen() {
                                         </Text>
                                     </TouchableOpacity>
                                 </PulseGlow>
+                            </View>
+                        </FadeInView>
+                    )}
+
+                    {/* Action Button: Retry (Failed) */}
+                    {task.status === 'failed' && !isTimedOut && (
+                        <FadeInView delay={250}>
+                            <View style={styles.footer}>
+                                <TouchableOpacity
+                                    style={[styles.actionButton, { backgroundColor: colors.primary[500] }]}
+                                    onPress={handleVerify}
+                                >
+                                    <CheckCircle size={20} color="#000" />
+                                    <Text style={styles.actionButtonText}>
+                                        {t('verify.tryAgain')}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
                         </FadeInView>
                     )}

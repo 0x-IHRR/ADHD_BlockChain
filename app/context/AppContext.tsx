@@ -4,10 +4,12 @@
  */
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Subtask } from '../services/ai.service';
-import { getJackpotBalance } from '../services/contract.service';
+import { getJackpotBalance, fetchUserTasksOnChain, formatEth, TaskStatus as ChainTaskStatus } from '../services/contract.service';
 
 // 任务状态类型
 export type TaskStatus = 'pending' | 'verified' | 'failed' | 'settled';
+
+import { useWallet as useRealWallet } from './WalletContext';
 
 // 任务类型
 export interface Task {
@@ -55,44 +57,23 @@ interface AppContextType {
     isLoading: boolean;
 }
 
-// 初始值
-const initialWallet: WalletState = {
-    isConnected: false,
-    address: null,
-    balance: null,
-};
+// 初始值 removed
 
-// 模拟初始任务数据
-const initialTasks: Task[] = [
-    {
-        id: 1,
-        description: 'Complete Solidity tutorial',
-        stakeAmount: '0.1 ETH',
-        deadline: new Date(Date.now() + 86400000),
-        status: 'pending',
-        subtasks: [
-            { title: 'Set up development environment', estimated_minutes: 15, priority: 1 },
-            { title: 'Learn basic syntax', estimated_minutes: 30, priority: 2 },
-            { title: 'Write first smart contract', estimated_minutes: 45, priority: 3 },
-        ],
-        createdAt: new Date(Date.now() - 3600000),
-    },
-    {
-        id: 2,
-        description: 'Review smart contract',
-        stakeAmount: '0.05 ETH',
-        deadline: new Date(Date.now() + 3600000),
-        status: 'verified',
-        subtasks: [],
-        createdAt: new Date(Date.now() - 7200000),
-    },
-];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
-    const [wallet, setWallet] = useState<WalletState>(initialWallet);
+    const [tasks, setTasks] = useState<Task[]>([]);
+    // 使用真实的 WalletContext
+    const { isConnected, address, balance, connect, disconnect, signer } = useRealWallet();
+
+    // 构建兼容的 wallet 对象
+    const wallet = {
+        isConnected,
+        address,
+        balance
+    };
+
     const [isLoading, setIsLoading] = useState(false);
     const [jackpotAmount, setJackpotAmount] = useState('0.0000');
 
@@ -101,6 +82,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const amount = await getJackpotBalance();
         setJackpotAmount(amount.replace(' ETH', '')); // 保持纯数字格式或根据 UI 需求调整
     }, []);
+
+    // 从链上获取任务
+    const fetchTasksFromChain = useCallback(async () => {
+        if (!wallet.isConnected || !wallet.address) {
+            setTasks([]);
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            const chainTasks = await fetchUserTasksOnChain(wallet.address);
+
+            const mappedTasks: Task[] = chainTasks.map(ct => {
+                // 状态映射
+                let status: TaskStatus = 'pending';
+                switch (ct.status) {
+                    case ChainTaskStatus.Verified: status = 'verified'; break;
+                    case ChainTaskStatus.Failed: status = 'failed'; break;
+                    case ChainTaskStatus.Settled: status = 'settled'; break;
+                    default: status = 'pending';
+                }
+
+                return {
+                    id: Number(ct.id),
+                    chainTaskId: Number(ct.id),
+                    description: ct.description,
+                    stakeAmount: formatEth(ct.stakeAmount), // e.g., "0.1 ETH"
+                    deadline: new Date(Number(ct.deadline) * 1000),
+                    status: status,
+                    subtasks: [], // 链上不存储子任务，暂为空
+                    createdAt: new Date(Number(ct.createdAt) * 1000),
+                    multiplier: ct.multiplier,
+                    txHash: undefined // 读取时暂无 hash
+                };
+            });
+
+            setTasks(mappedTasks);
+        } catch (error) {
+            console.error('Failed to fetch tasks from chain:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isConnected, address, signer]);
+
+    // 监听钱包变化加载任务
+    useEffect(() => {
+        fetchTasksFromChain();
+    }, [fetchTasksFromChain]);
 
     // 定时刷新奖金池
     useEffect(() => {
@@ -151,23 +180,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return tasks.find(task => task.chainTaskId === chainTaskId);
     }, [tasks]);
 
-    // 连接钱包 (模拟实现)
-    const connectWalletHandler = useCallback(async () => {
-        setIsLoading(true);
-        // 模拟连接延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setWallet({
-            isConnected: true,
-            address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00',
-            balance: '10.0 ETH',
-        });
-        setIsLoading(false);
-    }, []);
+    // Mock handlers removed
 
-    // 断开钱包
-    const disconnectWalletHandler = useCallback(() => {
-        setWallet(initialWallet);
-    }, []);
 
     return (
         <AppContext.Provider value={{
@@ -179,8 +193,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             getTaskById,
             getTaskByChainId,
             wallet,
-            connectWallet: connectWalletHandler,
-            disconnectWallet: disconnectWalletHandler,
+            connectWallet: connect,
+            disconnectWallet: disconnect,
             isLoading,
             jackpotAmount,
             fetchJackpot,
@@ -205,7 +219,5 @@ export function useTasks() {
     return { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot };
 }
 
-export function useWallet() {
-    const { wallet, connectWallet, disconnectWallet, isLoading } = useApp();
-    return { wallet, connectWallet, disconnectWallet, isLoading };
-}
+// export function useWallet is REMOVED to avoid conflict with real WalletContext
+// MainLayout uses the real one. Internal components using useApp().wallet will still work.

@@ -101,18 +101,56 @@ export async function verifyAndSubmit(
     proof: string,
     imageUrl?: string
 ): Promise<VerifyAndSubmitResult> {
-    const response = await fetch(`${AI_ENGINE_BASE_URL}/verify-and-submit`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            task_id: taskId,
-            task_description: taskDescription,
-            proof,
-            image_url: imageUrl,
-        }),
-    });
+    let response;
+
+    if (imageUrl) {
+        // 如果有图片，使用 multipart/form-data 上传到 /verify-with-image
+        const formData = new FormData();
+        formData.append('task_id', taskId.toString());
+        formData.append('task_description', taskDescription);
+        formData.append('proof', proof);
+
+        // Fetch image blob
+        const imgResponse = await fetch(imageUrl);
+        const blob = await imgResponse.blob();
+
+        // Append file
+        // 注意: React Native 和 Web 处理 FormData 文件略有不同
+        // 但 fetch blob 并在 web 上 appending 通常可以工作
+        // 在 React Native 上可能需要 { uri, name, type } 对象
+        if ((blob as any).data) { // React Native specific check? Not standard Blob
+            // Fallback for RN if needed, usually just append blob works on modern RN?
+            // Actually, for RN usually we append object: { uri, type: 'image/jpeg', name: 'upload.jpg' }
+            formData.append('image', {
+                uri: imageUrl,
+                name: 'upload.jpg',
+                type: 'image/jpeg'
+            } as any);
+        } else {
+            // Web
+            formData.append('image', blob, 'upload.jpg');
+        }
+
+        response = await fetch(`${AI_ENGINE_BASE_URL}/verify-with-image`, {
+            method: 'POST',
+            body: formData,
+            // Header Content-Type auto set by browser/fetch for FormData
+        });
+
+    } else {
+        // 无图片，使用 JSON
+        response = await fetch(`${AI_ENGINE_BASE_URL}/verify-and-submit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                task_id: taskId,
+                task_description: taskDescription,
+                proof,
+            }),
+        });
+    }
 
     if (!response.ok) {
         throw new Error(`Oracle verification failed: ${response.statusText}`);
