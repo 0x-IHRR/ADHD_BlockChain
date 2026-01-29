@@ -203,6 +203,11 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                     </Text>
                 </View>
 
+                {/* 月度任务热力图 - 放在顶部 */}
+                <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                    <ActivityHeatmap />
+                </View>
+
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
                     <FocusDragon mood="neutral" size={100} />
@@ -212,11 +217,6 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                     <Text style={[styles.idleHint, { color: colors.text.tertiary }]}>
                         {t('agent.idleHint')}
                     </Text>
-                </View>
-
-                {/* 月度任务热力图 */}
-                <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
-                    <ActivityHeatmap />
                 </View>
             </View>
         );
