@@ -39,7 +39,7 @@ interface NetworkConfig {
 export const SUPPORTED_NETWORKS: NetworkConfig[] = [
     { chainId: 1, name: 'Ethereum Mainnet', shortName: 'Ethereum', symbol: 'ETH', explorer: 'https://etherscan.io' },
     { chainId: 11155111, name: 'Sepolia Testnet', shortName: 'Sepolia', symbol: 'ETH', explorer: 'https://sepolia.etherscan.io' },
-    { chainId: 1337, name: 'Anvil Local', shortName: 'Anvil', symbol: 'ETH', rpcUrl: 'http://127.0.0.1:8545' },
+    { chainId: 31337, name: 'Anvil Local', shortName: 'Anvil', symbol: 'ETH', rpcUrl: 'http://127.0.0.1:8545' },
 ];
 
 // ============ 钱包状态类型定义 ============

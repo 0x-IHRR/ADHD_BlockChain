@@ -33,7 +33,7 @@ export async function connectWallet(): Promise<WalletState> {
             walletState = {
                 isConnected: true,
                 address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00',
-                chainId: 1337, // Anvil 本地链 (Localhost)
+                chainId: 31337, // Anvil 本地链 (Localhost)
                 balance: '10.0 ETH',
             };
             resolve(walletState);
