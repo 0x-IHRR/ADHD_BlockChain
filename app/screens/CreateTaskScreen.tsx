@@ -21,7 +21,6 @@ import { useTheme } from '../context/ThemeContext';
 import { breakdownTask } from '../services/ai.service';
 import { useAchievementNFT } from '../hooks/useAchievementNFT';
 import { createTaskOnChain } from '../services/contract.service';
-import { isAdminWallet } from '../config/demo';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
@@ -92,9 +91,8 @@ export default function CreateTaskScreen() {
             return;
         }
 
-        // 检查钱包连接 (管理员钱包可以绕过)
-        const isAdmin = isAdminWallet(address);
-        if (!isAdmin && (!isConnected || !signer)) {
+        // 检查钱包连接
+        if (!isConnected || !signer) {
             Alert.alert(
                 '请先连接钱包',
                 '质押需要钱包签名确认，请先连接您的钱包。',
@@ -138,7 +136,7 @@ export default function CreateTaskScreen() {
                     deadlineHours,
                     stakeAmount,
                     multiplier,
-                    isAdmin ? undefined : signer ?? undefined  // 管理员: 使用默认 signer, 普通用户: 钱包签名
+                    signer ?? undefined  // 传入用户钱包 signer
                 );
 
                 // 3. 同步链上 ID 到本地任务

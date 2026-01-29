@@ -1,11 +1,7 @@
-/**
- * useAchievementNFT - 成就徽章 NFT Hook
- * 
- * 查询用户徽章状态、折扣、投票权等
- */
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useWallet } from '../context/WalletContext';
+import { isAdminWallet } from '../config/demo';
 
 // Badge 类型枚举
 export enum BadgeType {
@@ -56,6 +52,16 @@ export const BADGES: BadgeInfo[] = [
     },
 ];
 
+// 管理员钱包的 Mock NFT 状态 (用于演示)
+const ADMIN_MOCK_STATE: UserBadgeState = {
+    completedCount: 100,
+    hasBadges: [true, true, true],  // 拥有所有徽章
+    canClaimBadges: [false, false, false],  // 已领取
+    discount: 30,  // 最高折扣
+    canUseHighMultiplier: true,  // 可用 5x/10x
+    votingPower: 14,  // 1 + 3 + 10
+};
+
 // ABI (简化版)
 const ACHIEVEMENT_NFT_ABI = [
     "function hasClaimed(address, uint8) view returns (bool)",
@@ -97,7 +103,18 @@ export function useAchievementNFT(contractAddress?: string): UseAchievementNFTRe
 
     // 获取用户状态
     const refresh = useCallback(async () => {
-        if (!address || !contractAddress || !provider) {
+        if (!address) {
+            setState(null);
+            return;
+        }
+
+        // 管理员钱包: 返回 Mock 状态 (拥有所有成就)
+        if (isAdminWallet(address)) {
+            setState(ADMIN_MOCK_STATE);
+            return;
+        }
+
+        if (!contractAddress || !provider) {
             setState(null);
             return;
         }
