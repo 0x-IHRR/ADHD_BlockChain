@@ -17,7 +17,7 @@ import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { FadeInView, PulseGlow } from '../styles/animations';
-import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView } from '../components';
+import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView, UserProfileCard } from '../components';
 import { getAchievementNFTAddress } from '../services/contract.service';
 
 // 状态标签
@@ -152,6 +152,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             <View style={styles.content}>
+                {/* AI 用户画像 */}
+                <FadeInView delay={0}>
+                    <UserProfileCard />
+                </FadeInView>
+
                 {/* Stats Row */}
                 <FadeInView delay={50}>
                     <View style={styles.statsContainer}>
