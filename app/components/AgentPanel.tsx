@@ -213,7 +213,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                         </Text>
                     </View>
                     <View style={styles.idleState}>
-                        <FocusDragon mood="dead" size={100} />
+                        <FocusDragon mood="dead" size={140} />
                         <Text style={[styles.idleText, { color: colors.semantic.error }]}>
                             Spoons has fainted!
                         </Text>
@@ -248,7 +248,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
-                    <FocusDragon mood="neutral" size={100} />
+                    <FocusDragon mood="neutral" size={140} />
                     <Text style={[styles.idleText, { color: colors.text.muted }]}>
                         {t('agent.idle')}
                     </Text>
@@ -264,7 +264,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
         <View style={styles.container}>
             {/* Focus Dragon 吉祥物 - 工作状态 */}
             <Animated.View style={[styles.spoonsContainer, { transform: [{ translateX: shakeAnim }] }]}>
-                <FocusDragon mood={getFocusDragonMood()} size={80} />
+                <FocusDragon mood={getFocusDragonMood()} size={120} />
 
                 {/* HP 血条 */}
                 {pet && (

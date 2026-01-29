@@ -63,101 +63,89 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
     };
 
     return (
-        <View style={[styles.container, {
-            backgroundColor: colors.glass.background,
-            borderColor: colors.glass.border,
-        }]}>
+        <View style={styles.container}>
             {/* 标题行 */}
             <View style={styles.header}>
                 <View style={styles.titleRow}>
-                    <Brain size={16} color={colors.primary[400]} />
+                    <Brain size={18} color={colors.primary[400]} />
                     <Text style={[styles.title, { color: colors.text.primary }]}>
                         {texts.title}
                     </Text>
                 </View>
             </View>
 
-            {/* 核心指标 */}
-            <View style={styles.metricsRow}>
-                {/* Focus Score */}
-                <View style={styles.metricItem}>
-                    <View style={[styles.scoreCircle, { borderColor: getScoreColor(profile.focusScore) }]}>
-                        <Text style={[styles.scoreValue, { color: getScoreColor(profile.focusScore) }]}>
-                            {profile.focusScore}
-                        </Text>
-                    </View>
-                    <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
-                        {texts.focusScore}
+            {/* Focus Score - 大圆圈 */}
+            <View style={[styles.scoreSection, { backgroundColor: colors.glass.backgroundLight }]}>
+                <View style={[styles.scoreCircle, { borderColor: getScoreColor(profile.focusScore) }]}>
+                    <Text style={[styles.scoreValue, { color: getScoreColor(profile.focusScore) }]}>
+                        {profile.focusScore}
                     </Text>
                 </View>
+                <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
+                    {texts.focusScore}
+                </Text>
+            </View>
 
-                {/* Streak */}
-                <View style={styles.metricItem}>
-                    <View style={[styles.streakBadge, { backgroundColor: colors.semantic.warning + '20' }]}>
-                        <Text style={[styles.streakValue, { color: colors.semantic.warning }]}>
-                            🔥 {profile.streak}
-                        </Text>
-                    </View>
-                    <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
-                        {texts.streak}
-                    </Text>
-                </View>
+            {/* Streak 连续天数 */}
+            <View style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]}>
+                <Text style={[styles.streakValue, { color: colors.semantic.warning }]}>
+                    🔥 {profile.streak}
+                </Text>
+                <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
+                    {texts.streak}
+                </Text>
+            </View>
 
-                {/* Weekly Progress */}
-                <View style={styles.metricItem}>
-                    <View style={styles.progressContainer}>
-                        <View style={[styles.progressBg, { backgroundColor: colors.background.tertiary }]}>
-                            <View
-                                style={[
-                                    styles.progressFill,
-                                    {
-                                        backgroundColor: colors.primary[500],
-                                        width: `${Math.min(progress, 100)}%`
-                                    }
-                                ]}
-                            />
-                        </View>
-                        <Text style={[styles.progressText, { color: colors.text.secondary }]}>
-                            {profile.weeklyGoal.completed}/{profile.weeklyGoal.target}
-                        </Text>
-                    </View>
-                    <Text style={[styles.metricLabel, { color: colors.text.muted }]}>
-                        {texts.weeklyGoal}
-                    </Text>
+            {/* Weekly Goal 本周目标 */}
+            <View style={[styles.metricCard, { backgroundColor: colors.glass.backgroundLight }]}>
+                <Text style={[styles.metricCardLabel, { color: colors.text.muted }]}>
+                    {texts.weeklyGoal}
+                </Text>
+                <View style={[styles.progressBg, { backgroundColor: colors.background.tertiary }]}>
+                    <View
+                        style={[
+                            styles.progressFill,
+                            {
+                                backgroundColor: colors.primary[500],
+                                width: `${Math.min(progress, 100)}%`
+                            }
+                        ]}
+                    />
                 </View>
+                <Text style={[styles.progressText, { color: colors.text.secondary }]}>
+                    {profile.weeklyGoal.completed}/{profile.weeklyGoal.target}
+                </Text>
             </View>
 
             {/* 优势标签 */}
-            {!compact && (
-                <View style={styles.tagsSection}>
-                    <Text style={[styles.sectionLabel, { color: colors.text.muted }]}>
-                        {texts.strengths}
-                    </Text>
-                    <View style={styles.tagsRow}>
-                        {profile.strengths.map((s, i) => (
-                            <View
-                                key={i}
-                                style={[styles.tag, { backgroundColor: colors.semantic.success + '20' }]}
-                            >
-                                {s.icon === 'zap' ? (
-                                    <Zap size={12} color={colors.semantic.success} />
-                                ) : (
-                                    <Award size={12} color={colors.semantic.success} />
-                                )}
-                                <Text style={[styles.tagText, { color: colors.semantic.success }]}>
-                                    {texts[s.key as keyof typeof texts] || s.key}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
+            <View style={styles.tagsSection}>
+                <Text style={[styles.sectionLabel, { color: colors.text.muted }]}>
+                    {texts.strengths}
+                </Text>
+                <View style={styles.tagsColumn}>
+                    {profile.strengths.map((s, i) => (
+                        <View
+                            key={i}
+                            style={[styles.tag, { backgroundColor: colors.semantic.success + '20' }]}
+                        >
+                            {s.icon === 'zap' ? (
+                                <Zap size={14} color={colors.semantic.success} />
+                            ) : (
+                                <Award size={14} color={colors.semantic.success} />
+                            )}
+                            <Text style={[styles.tagText, { color: colors.semantic.success }]}>
+                                {texts[s.key as keyof typeof texts] || s.key}
+                            </Text>
+                        </View>
+                    ))}
                 </View>
-            )}
+            </View>
 
             {/* 改进建议 */}
-            {!compact && profile.improvements.length > 0 && (
+            {profile.improvements.length > 0 && (
                 <View style={styles.improvementSection}>
-                    <View style={[styles.improvementCard, { backgroundColor: colors.semantic.warning + '10' }]}>
-                        <AlertTriangle size={14} color={colors.semantic.warning} />
+                    <View style={[styles.improvementCard, { backgroundColor: colors.semantic.warning + '15' }]}>
+                        <AlertTriangle size={16} color={colors.semantic.warning} />
                         <Text style={[styles.improvementText, { color: colors.text.secondary }]}>
                             {texts[profile.improvements[0].key as keyof typeof texts] || profile.improvements[0].key}
                         </Text>
@@ -170,16 +158,13 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: borderRadius.lg,
-        borderWidth: 1,
-        padding: spacing.md,
-        marginBottom: spacing.md,
+        // 不设背景，由 sidePanel 容器处理
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.md,
+        marginBottom: spacing.lg,
     },
     titleRow: {
         flexDirection: 'row',
@@ -187,101 +172,97 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     title: {
-        fontSize: typography.fontSize.sm,
-        fontWeight: '600',
-    },
-    metricsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: spacing.md,
-    },
-    metricItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    scoreCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        borderWidth: 3,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: spacing.xs,
-    },
-    scoreValue: {
-        fontSize: typography.fontSize.lg,
-        fontWeight: '700',
-    },
-    streakBadge: {
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.md,
-        marginBottom: spacing.xs,
-    },
-    streakValue: {
         fontSize: typography.fontSize.base,
         fontWeight: '600',
     },
-    metricLabel: {
-        fontSize: typography.fontSize.xs,
-    },
-    progressContainer: {
-        width: '100%',
+    scoreSection: {
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.md,
         alignItems: 'center',
-        marginBottom: spacing.xs,
+    },
+    scoreCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        borderWidth: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: spacing.sm,
+    },
+    scoreValue: {
+        fontSize: typography.fontSize.xl,
+        fontWeight: '700',
+    },
+    metricCard: {
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.md,
+        alignItems: 'center',
+    },
+    metricCardLabel: {
+        fontSize: typography.fontSize.xs,
+        marginBottom: spacing.sm,
+    },
+    metricLabel: {
+        fontSize: typography.fontSize.sm,
+    },
+    streakValue: {
+        fontSize: typography.fontSize.lg,
+        fontWeight: '700',
     },
     progressBg: {
-        width: '80%',
-        height: 8,
-        borderRadius: 4,
+        width: '100%',
+        height: 10,
+        borderRadius: 5,
         overflow: 'hidden',
-        marginBottom: 4,
+        marginBottom: spacing.xs,
     },
     progressFill: {
         height: '100%',
-        borderRadius: 4,
+        borderRadius: 5,
     },
     progressText: {
-        fontSize: typography.fontSize.xs,
-        fontWeight: '500',
+        fontSize: typography.fontSize.sm,
+        fontWeight: '600',
     },
     tagsSection: {
-        marginBottom: spacing.sm,
+        marginBottom: spacing.lg,
     },
     sectionLabel: {
         fontSize: typography.fontSize.xs,
-        marginBottom: spacing.xs,
+        marginBottom: spacing.sm,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    tagsRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.xs,
+    tagsColumn: {
+        flexDirection: 'column',
+        gap: spacing.sm,
     },
     tag: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.full,
+        gap: spacing.xs,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.lg,
     },
     tagText: {
-        fontSize: typography.fontSize.xs,
+        fontSize: typography.fontSize.sm,
         fontWeight: '500',
     },
     improvementSection: {
-        marginTop: spacing.xs,
+        marginTop: spacing.sm,
     },
     improvementCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.xs,
-        padding: spacing.sm,
-        borderRadius: borderRadius.md,
+        gap: spacing.sm,
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
     },
     improvementText: {
-        fontSize: typography.fontSize.xs,
+        fontSize: typography.fontSize.sm,
         flex: 1,
     },
 });
