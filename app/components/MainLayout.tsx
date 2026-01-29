@@ -38,6 +38,7 @@ const BREAKPOINT_DESKTOP = 1024;
 
 interface MainLayoutProps {
     children: ReactNode;
+    leftPanel?: ReactNode;        // 左侧面板 (AI 用户画像)
     rightPanel?: ReactNode;
     jackpotAmount?: string;
     onJackpotPress?: () => void;
@@ -46,6 +47,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({
     children,
+    leftPanel,
     rightPanel,
     jackpotAmount = '0.00',
     onJackpotPress,
@@ -317,10 +319,21 @@ export default function MainLayout({
 
                 {/* Main Content Area */}
                 <View style={styles.mainContent}>
-                    {/* Left Panel: Main Content */}
+                    {/* Left Sidebar: AI User Profile (Desktop only) */}
+                    {leftPanel && !isMobile && (
+                        <View style={[styles.sidePanel, {
+                            backgroundColor: colors.background.secondary,
+                            borderRightColor: colors.border.subtle
+                        }]}>
+                            {leftPanel}
+                        </View>
+                    )}
+
+                    {/* Center Panel: Main Content */}
                     <View style={[
-                        styles.leftPanel,
-                        showRightPanel ? styles.leftPanelWithRight : undefined
+                        styles.centerPanel,
+                        showRightPanel ? styles.centerPanelWithRight : undefined,
+                        leftPanel && !isMobile ? styles.centerPanelWithLeft : undefined
                     ]}>
                         {children}
                     </View>
@@ -566,6 +579,20 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         flexDirection: 'row',
+    },
+    sidePanel: {
+        width: 220,
+        borderRightWidth: 1,
+        padding: spacing.md,
+    },
+    centerPanel: {
+        flex: 1,
+    },
+    centerPanelWithRight: {
+        flex: 3, // 中间占更大比例
+    },
+    centerPanelWithLeft: {
+        // 有左侧面板时不需要额外样式
     },
     leftPanel: {
         flex: 1,

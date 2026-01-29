@@ -138,8 +138,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // 右侧 Agent 面板
     const rightPanel = <AgentPanel state={agentState} />;
 
+
     return (
         <MainLayout
+            leftPanel={<UserProfileCard />}
             rightPanel={rightPanel}
             jackpotAmount={jackpotAmount}
             onJackpotPress={() => setLeaderboardVisible(true)}
@@ -152,11 +154,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             <View style={styles.content}>
-                {/* AI 用户画像 */}
-                <FadeInView delay={0}>
-                    <UserProfileCard />
-                </FadeInView>
-
                 {/* Stats Row */}
                 <FadeInView delay={50}>
                     <View style={styles.statsContainer}>
