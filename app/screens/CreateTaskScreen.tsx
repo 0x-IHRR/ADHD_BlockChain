@@ -46,7 +46,7 @@ const PLATFORM_OPTIONS = [
 
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
-    const { addTask, updateTaskChainId } = useTasks();
+    const { addTask, removeTask, updateTaskChainId } = useTasks();
     const { isConnected, signer, address, setShowWalletSelector } = useWallet();
     const { t } = useI18n();
     const { colors } = useTheme();
@@ -143,12 +143,14 @@ export default function CreateTaskScreen() {
                 updateTaskChainId(newTask.id, chainTaskId, txHash);
                 console.log('任务创建成功:', { localId: newTask.id, chainTaskId, txHash });
             } catch (chainError) {
-                // 链上调用失败，但本地任务已创建（可稍后重试）
-                console.warn('链上创建失败，任务仅保存在本地:', chainError);
+                // 链上调用失败，回滚本地任务
+                console.warn('链上创建失败，回滚本地任务:', chainError);
+                removeTask(newTask.id);  // 删除本地任务
                 Alert.alert(
-                    t('common.warning') || '警告',
-                    '任务已保存到本地，但链上创建失败。请稍后重试上链。'
+                    t('common.error') || '错误',
+                    '质押交易失败或已取消，任务未创建。'
                 );
+                return;  // 不继续 goBack
             }
 
             navigation.goBack();

@@ -151,6 +151,7 @@ export function useAchievementNFT(contractAddress?: string): UseAchievementNFTRe
         } catch (e: any) {
             console.error('Failed to fetch achievement data:', e);
             setError(e.message || 'Failed to fetch');
+            setState(null);  // 清空旧状态，防止显示其他钱包的数据
         } finally {
             setLoading(false);
         }

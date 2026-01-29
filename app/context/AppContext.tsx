@@ -36,6 +36,7 @@ interface AppContextType {
     // 任务状态
     tasks: Task[];
     addTask: (task: Omit<Task, 'id' | 'createdAt'> & { chainTaskId?: number }) => Task;
+    removeTask: (taskId: number) => void;  // 回滚/删除任务
     updateTaskStatus: (taskId: number, status: TaskStatus) => void;
     updateTaskChainId: (localId: number, chainTaskId: number, txHash?: string) => void;
     getTaskById: (taskId: number) => Task | undefined;
@@ -119,6 +120,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return newTask;
     }, []);
 
+    // 删除/回滚任务 (链上创建失败时使用)
+    const removeTask = useCallback((taskId: number) => {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+    }, []);
+
     // 更新任务的链上 ID (创建任务后从事件获取)
     const updateTaskChainId = useCallback((localId: number, chainTaskId: number, txHash?: string) => {
         setTasks(prev => prev.map(task =>
@@ -167,6 +173,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         <AppContext.Provider value={{
             tasks,
             addTask,
+            removeTask,
             updateTaskStatus,
             updateTaskChainId,
             getTaskById,
@@ -194,8 +201,8 @@ export function useApp() {
 
 // 便捷 Hooks
 export function useTasks() {
-    const { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot } = useApp();
-    return { tasks, addTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot };
+    const { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot } = useApp();
+    return { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot };
 }
 
 export function useWallet() {
