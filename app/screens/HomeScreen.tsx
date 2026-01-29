@@ -242,12 +242,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
     content: {
         flex: 1,
-        paddingTop: spacing.lg,
+        // No paddingTop - align with side panels
     },
 
     // Stats
     statsContainer: {
-        paddingHorizontal: spacing.xl,
+        paddingHorizontal: spacing.md,  // Match sidePanel padding
+        paddingTop: spacing.md,  // Same as sidePanel
         marginBottom: spacing.xl,
     },
     statsRow: {

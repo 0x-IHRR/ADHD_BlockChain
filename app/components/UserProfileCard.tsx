@@ -64,17 +64,7 @@ export default function UserProfileCard({ compact = false }: UserProfileCardProp
 
     return (
         <View style={styles.container}>
-            {/* 标题行 */}
-            <View style={styles.header}>
-                <View style={styles.titleRow}>
-                    <Brain size={18} color={colors.primary[400]} />
-                    <Text style={[styles.title, { color: colors.text.primary }]}>
-                        {texts.title}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Focus Score - 大圆圈 */}
+            {/* Focus Score - 大圆圈 (直接从这里开始，无标题) */}
             <View style={[styles.scoreSection, { backgroundColor: colors.glass.backgroundLight }]}>
                 <View style={[styles.scoreCircle, { borderColor: getScoreColor(profile.focusScore) }]}>
                     <Text style={[styles.scoreValue, { color: getScoreColor(profile.focusScore) }]}>

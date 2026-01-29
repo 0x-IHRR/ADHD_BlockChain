@@ -25,13 +25,16 @@ export interface VerifyResult {
 /**
  * 调用 AI 任务拆解服务
  */
-export async function breakdownTask(taskDescription: string): Promise<BreakdownResult> {
+export async function breakdownTask(taskDescription: string, customPrompt?: string): Promise<BreakdownResult> {
     const response = await fetch(`${AI_ENGINE_BASE_URL}/breakdown`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ task: taskDescription }),
+        body: JSON.stringify({
+            task: taskDescription,
+            custom_prompt: customPrompt,
+        }),
     });
 
     if (!response.ok) {

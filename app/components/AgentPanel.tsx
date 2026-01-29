@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
         minWidth: 45,
     },
     heatmapContainer: {
-        marginTop: spacing.lg,
+        // No marginTop - align with left panel's first element
         borderRadius: borderRadius.lg,
         borderWidth: 1,
         overflow: 'hidden',

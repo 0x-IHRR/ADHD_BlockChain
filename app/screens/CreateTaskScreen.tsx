@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock, Timer, BarChart2, Target } from 'lucide-react-native';
 import { useTasks } from '../context/AppContext';
 import { useWallet } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
@@ -61,7 +61,12 @@ export default function CreateTaskScreen() {
     const [isCreating, setIsCreating] = useState(false); // 创建任务加载状态
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
-    // AI Analysis
+    // 新增: 自定义 Prompt 和 AI 思考过程
+    const [customPrompt, setCustomPrompt] = useState('');
+    const [aiThinkingSteps, setAiThinkingSteps] = useState<string[]>([]);
+
+
+    // AI Analysis with thinking process
     const handleAIAnalyze = async () => {
         if (!description.trim()) {
             Alert.alert(t('common.error'), t('createTask.errorDescription'));
@@ -69,9 +74,27 @@ export default function CreateTaskScreen() {
         }
 
         setIsAnalyzing(true);
+        setAiThinkingSteps([]);
+
+        // 模拟思考过程步骤
+        const thinkingSteps = [
+            '🔍 分析任务描述...',
+            '🧠 理解任务目标...',
+            customPrompt ? `📝 应用自定义策略: "${customPrompt}"` : '📝 选择最佳拆解策略...',
+            '✂️ 拆分为可执行步骤...',
+            '⏱️ 估算每步时间...',
+            '✅ 生成最终方案...',
+        ];
+
+        // 逐步展示思考过程
+        for (let i = 0; i < thinkingSteps.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            setAiThinkingSteps(prev => [...prev, thinkingSteps[i]]);
+        }
+
         try {
             // Try to call real AI engine
-            const result = await breakdownTask(description);
+            const result = await breakdownTask(description, customPrompt || undefined);
             const formattedSuggestion = result.subtasks
                 .map((step, index) => `${index + 1}. ${step.title} (${step.estimated_minutes}m)`)
                 .join('\n');
@@ -171,245 +194,348 @@ export default function CreateTaskScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
-                    <View style={styles.centeredWrapper}>
-                        {/* Header */}
-                        <FadeInView delay={0}>
-                            <View style={styles.header}>
-                                <TouchableOpacity
-                                    onPress={() => navigation.goBack()}
-                                    style={styles.backButton}
-                                    activeOpacity={0.7}
-                                >
-                                    <ArrowLeft size={20} color={colors.text.primary} />
-                                </TouchableOpacity>
-                                <Text style={styles.headerTitle}>{t('createTask.title')}</Text>
-                                <View style={{ width: 40 }} />
-                            </View>
-                        </FadeInView>
+                    {/* Three Column Layout */}
+                    <View style={styles.threeColumnLayout}>
+                        {/* Left Panel: Custom Prompt - Aligned with center card */}
+                        <View style={styles.sidePanel}>
+                            {/* Prompt area aligned with center card (sidePanel paddingTop handles alignment) */}
+                            <View style={styles.promptArea}>
+                                {/* Input with centered placeholder */}
+                                <TextInput
+                                    style={[styles.promptInputLarge, {
+                                        backgroundColor: 'transparent',
+                                        borderColor: customPrompt ? colors.primary[500] : colors.border.subtle,
+                                        color: colors.text.primary,
+                                        textAlign: 'center',
+                                    }]}
+                                    placeholder={t('createTask.promptPlaceholder')}
+                                    placeholderTextColor={colors.text.muted}
+                                    value={customPrompt}
+                                    onChangeText={setCustomPrompt}
+                                    multiline
+                                    textAlignVertical="center"
+                                />
 
-                        <ScrollView
-                            contentContainerStyle={styles.scrollContent}
-                            showsVerticalScrollIndicator={false}
-                        >
-                            {/* Main Input Card */}
-                            <FadeInView delay={50}>
-                                <View style={styles.card}>
-                                    <Text style={styles.label}>{t('createTask.goalLabel')}</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder={t('createTask.goalPlaceholder')}
-                                        placeholderTextColor={colors.text.muted}
-                                        value={description}
-                                        onChangeText={setDescription}
-                                        multiline
-                                        numberOfLines={3}
-                                    />
-
+                                {/* Icon-based template buttons */}
+                                <View style={styles.templateButtonsRow}>
                                     <TouchableOpacity
-                                        style={styles.aiButton}
-                                        onPress={handleAIAnalyze}
-                                        disabled={isAnalyzing}
-                                        activeOpacity={0.7}
+                                        style={[styles.iconTemplateButton, { backgroundColor: colors.glass.backgroundLight }]}
+                                        onPress={() => setCustomPrompt(prev => prev ? `${prev}, ${t('createTask.templatePomodoro')}` : t('createTask.templatePomodoro'))}
                                     >
-                                        {isAnalyzing ? (
-                                            <ActivityIndicator size="small" color={colors.primary[500]} />
-                                        ) : (
-                                            <>
-                                                <Sparkles size={16} color={colors.primary[500]} />
-                                                <Text style={styles.aiButtonText}>{t('createTask.aiButton')}</Text>
-                                            </>
-                                        )}
+                                        <Timer size={16} color={colors.primary[500]} />
+                                        <Text style={[styles.iconTemplateText, { color: colors.text.secondary }]}>
+                                            {t('createTask.templatePomodoro')}
+                                        </Text>
                                     </TouchableOpacity>
 
-                                    {aiSuggestion && (
-                                        <FadeInView delay={0}>
-                                            <View style={styles.suggestionBox}>
-                                                <View style={styles.suggestionHeader}>
-                                                    <Sparkles size={14} color={colors.primary[500]} />
-                                                    <Text style={styles.suggestionTitle}>{t('createTask.aiSuggestionTitle')}</Text>
-                                                </View>
-                                                <Text style={styles.suggestionText}>{aiSuggestion}</Text>
-                                            </View>
-                                        </FadeInView>
-                                    )}
+                                    <TouchableOpacity
+                                        style={[styles.iconTemplateButton, { backgroundColor: colors.glass.backgroundLight }]}
+                                        onPress={() => setCustomPrompt(prev => prev ? `${prev}, ${t('createTask.template15min')}` : t('createTask.template15min'))}
+                                    >
+                                        <Clock size={16} color={colors.primary[500]} />
+                                        <Text style={[styles.iconTemplateText, { color: colors.text.secondary }]}>
+                                            {t('createTask.template15min')}
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[styles.iconTemplateButton, { backgroundColor: colors.glass.backgroundLight }]}
+                                        onPress={() => setCustomPrompt(prev => prev ? `${prev}, ${t('createTask.templatePriority')}` : t('createTask.templatePriority'))}
+                                    >
+                                        <BarChart2 size={16} color={colors.primary[500]} />
+                                        <Text style={[styles.iconTemplateText, { color: colors.text.secondary }]}>
+                                            {t('createTask.templatePriority')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Center Panel: Original Form */}
+                        <View style={styles.centerPanel}>
+                            {/* Header */}
+                            <FadeInView delay={0}>
+                                <View style={styles.header}>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.goBack()}
+                                        style={styles.backButton}
+                                        activeOpacity={0.7}
+                                    >
+                                        <ArrowLeft size={20} color={colors.text.primary} />
+                                    </TouchableOpacity>
+                                    <Text style={styles.headerTitle}>{t('createTask.title')}</Text>
+                                    <View style={{ width: 40 }} />
                                 </View>
                             </FadeInView>
 
-                            {/* Settings Card */}
-                            <FadeInView delay={100}>
-                                <View style={styles.card}>
-                                    {/* 验证渠道选择 */}
-                                    <View style={styles.settingRow}>
-                                        <View style={styles.settingInfo}>
-                                            <Text style={styles.settingLabel}>{t('createTask.platformLabel')}</Text>
-                                            <Text style={styles.settingSubtext}>{t('createTask.platformSubtext')}</Text>
-                                        </View>
-                                        <View style={styles.platformRow}>
-                                            {PLATFORM_OPTIONS.map((p) => (
-                                                <TouchableOpacity
-                                                    key={p.id}
-                                                    style={[
-                                                        styles.platformButton,
-                                                        selectedPlatform === p.id && styles.platformButtonActive
-                                                    ]}
-                                                    onPress={() => setSelectedPlatform(p.id)}
-                                                >
-                                                    <Text style={[
-                                                        styles.platformButtonText,
-                                                        selectedPlatform === p.id && styles.platformButtonTextActive
-                                                    ]}>{p.icon}</Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
+                            <ScrollView
+                                contentContainerStyle={styles.scrollContent}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {/* Main Input Card */}
+                                <FadeInView delay={50}>
+                                    <View style={styles.card}>
+                                        <Text style={styles.label}>{t('createTask.goalLabel')}</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder={t('createTask.goalPlaceholder')}
+                                            placeholderTextColor={colors.text.muted}
+                                            value={description}
+                                            onChangeText={setDescription}
+                                            multiline
+                                            numberOfLines={3}
+                                        />
+
+                                        <TouchableOpacity
+                                            style={styles.aiButton}
+                                            onPress={handleAIAnalyze}
+                                            disabled={isAnalyzing}
+                                            activeOpacity={0.7}
+                                        >
+                                            {isAnalyzing ? (
+                                                <ActivityIndicator size="small" color={colors.primary[500]} />
+                                            ) : (
+                                                <>
+                                                    <Sparkles size={16} color={colors.primary[500]} />
+                                                    <Text style={styles.aiButtonText}>{t('createTask.aiButton')}</Text>
+                                                </>
+                                            )}
+                                        </TouchableOpacity>
+
+                                        {aiSuggestion && (
+                                            <FadeInView delay={0}>
+                                                <View style={styles.suggestionBox}>
+                                                    <View style={styles.suggestionHeader}>
+                                                        <Sparkles size={14} color={colors.primary[500]} />
+                                                        <Text style={styles.suggestionTitle}>{t('createTask.aiSuggestionTitle')}</Text>
+                                                    </View>
+                                                    <Text style={styles.suggestionText}>{aiSuggestion}</Text>
+                                                </View>
+                                            </FadeInView>
+                                        )}
                                     </View>
+                                </FadeInView>
 
-                                    <View style={styles.divider} />
-
-                                    <View style={styles.settingRow}>
-                                        <View style={styles.settingInfo}>
-                                            <Text style={styles.settingLabel}>{t('createTask.stakeLabel')}</Text>
-                                            <Text style={styles.settingSubtext}>{t('createTask.stakeSubtext')}</Text>
+                                {/* Settings Card */}
+                                <FadeInView delay={100}>
+                                    <View style={styles.card}>
+                                        {/* 验证渠道选择 */}
+                                        <View style={styles.settingRow}>
+                                            <View style={styles.settingInfo}>
+                                                <Text style={styles.settingLabel}>{t('createTask.platformLabel')}</Text>
+                                                <Text style={styles.settingSubtext}>{t('createTask.platformSubtext')}</Text>
+                                            </View>
+                                            <View style={styles.platformRow}>
+                                                {PLATFORM_OPTIONS.map((p) => (
+                                                    <TouchableOpacity
+                                                        key={p.id}
+                                                        style={[
+                                                            styles.platformButton,
+                                                            selectedPlatform === p.id && styles.platformButtonActive
+                                                        ]}
+                                                        onPress={() => setSelectedPlatform(p.id)}
+                                                    >
+                                                        <Text style={[
+                                                            styles.platformButtonText,
+                                                            selectedPlatform === p.id && styles.platformButtonTextActive
+                                                        ]}>{p.icon}</Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
                                         </View>
-                                        <View style={styles.stakeInputContainer}>
-                                            <TextInput
-                                                style={styles.stakeInput}
-                                                value={stakeAmount}
-                                                onChangeText={setStakeAmount}
-                                                keyboardType="numeric"
-                                            />
-                                            <Text style={styles.currencyText}>ETH</Text>
-                                        </View>
-                                    </View>
 
-                                    <View style={styles.divider} />
+                                        <View style={styles.divider} />
 
-                                    {/* Multiplier Selector */}
-                                    <View style={styles.settingRow}>
-                                        <View style={styles.settingInfo}>
-                                            <Text style={styles.settingLabel}>{t('createTask.multiplierLabel')}</Text>
-                                            <Text style={styles.settingSubtext}>{t('createTask.multiplierSubtext')}</Text>
+                                        <View style={styles.settingRow}>
+                                            <View style={styles.settingInfo}>
+                                                <Text style={styles.settingLabel}>{t('createTask.stakeLabel')}</Text>
+                                                <Text style={styles.settingSubtext}>{t('createTask.stakeSubtext')}</Text>
+                                            </View>
+                                            <View style={styles.stakeInputContainer}>
+                                                <TextInput
+                                                    style={styles.stakeInput}
+                                                    value={stakeAmount}
+                                                    onChangeText={setStakeAmount}
+                                                    keyboardType="numeric"
+                                                />
+                                                <Text style={styles.currencyText}>ETH</Text>
+                                            </View>
                                         </View>
-                                        <View style={styles.multiplierRow}>
-                                            {([1, 2, 3] as const).map((m) => (
-                                                <TouchableOpacity
-                                                    key={m}
-                                                    style={[
-                                                        styles.multiplierButton,
-                                                        multiplier === m && styles.multiplierButtonActive,
-                                                        m === 3 && styles.multiplierButtonDanger,
-                                                        m === 3 && multiplier === m && styles.multiplierButtonDangerActive
-                                                    ]}
-                                                    onPress={() => setMultiplier(m)}
-                                                >
-                                                    <Text style={[
-                                                        styles.multiplierButtonText,
-                                                        multiplier === m && styles.multiplierButtonTextActive,
-                                                        m === 3 && multiplier === m && styles.multiplierButtonTextDanger
-                                                    ]}>{m}x</Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                            {/* 5x/10x 高倍率 - 需要 Flow Keeper 徽章 */}
-                                            {([5, 10] as const).map((m) => {
-                                                const isLocked = !achievementState?.canUseHighMultiplier;
-                                                return (
+
+                                        <View style={styles.divider} />
+
+                                        {/* Multiplier Selector */}
+                                        <View style={styles.settingRow}>
+                                            <View style={styles.settingInfo}>
+                                                <Text style={styles.settingLabel}>{t('createTask.multiplierLabel')}</Text>
+                                                <Text style={styles.settingSubtext}>{t('createTask.multiplierSubtext')}</Text>
+                                            </View>
+                                            <View style={styles.multiplierRow}>
+                                                {([1, 2, 3] as const).map((m) => (
                                                     <TouchableOpacity
                                                         key={m}
                                                         style={[
                                                             styles.multiplierButton,
-                                                            styles.multiplierButtonPremium,
-                                                            multiplier === m && styles.multiplierButtonPremiumActive,
-                                                            isLocked && styles.multiplierButtonLocked
+                                                            multiplier === m && styles.multiplierButtonActive,
+                                                            m === 3 && styles.multiplierButtonDanger,
+                                                            m === 3 && multiplier === m && styles.multiplierButtonDangerActive
                                                         ]}
-                                                        onPress={() => !isLocked && setMultiplier(m)}
-                                                        disabled={isLocked}
+                                                        onPress={() => setMultiplier(m)}
                                                     >
-                                                        <View style={styles.multiplierButtonContent}>
-                                                            {isLocked && <Lock size={12} color="#888" style={{ marginRight: 4 }} />}
-                                                            <Text style={[
-                                                                styles.multiplierButtonText,
-                                                                multiplier === m && styles.multiplierButtonTextPremium,
-                                                                isLocked && styles.multiplierButtonTextLocked
-                                                            ]}>{m}x</Text>
-                                                        </View>
+                                                        <Text style={[
+                                                            styles.multiplierButtonText,
+                                                            multiplier === m && styles.multiplierButtonTextActive,
+                                                            m === 3 && multiplier === m && styles.multiplierButtonTextDanger
+                                                        ]}>{m}x</Text>
                                                     </TouchableOpacity>
-                                                );
-                                            })}
+                                                ))}
+                                                {/* 5x/10x 高倍率 - 需要 Flow Keeper 徽章 */}
+                                                {([5, 10] as const).map((m) => {
+                                                    const isLocked = !achievementState?.canUseHighMultiplier;
+                                                    return (
+                                                        <TouchableOpacity
+                                                            key={m}
+                                                            style={[
+                                                                styles.multiplierButton,
+                                                                styles.multiplierButtonPremium,
+                                                                multiplier === m && styles.multiplierButtonPremiumActive,
+                                                                isLocked && styles.multiplierButtonLocked
+                                                            ]}
+                                                            onPress={() => !isLocked && setMultiplier(m)}
+                                                            disabled={isLocked}
+                                                        >
+                                                            <View style={styles.multiplierButtonContent}>
+                                                                {isLocked && <Lock size={12} color="#888" style={{ marginRight: 4 }} />}
+                                                                <Text style={[
+                                                                    styles.multiplierButtonText,
+                                                                    multiplier === m && styles.multiplierButtonTextPremium,
+                                                                    isLocked && styles.multiplierButtonTextLocked
+                                                                ]}>{m}x</Text>
+                                                            </View>
+                                                        </TouchableOpacity>
+                                                    );
+                                                })}
+                                            </View>
                                         </View>
-                                    </View>
 
-                                    <View style={styles.divider} />
+                                        <View style={styles.divider} />
 
-                                    {/* Deadline 时间选择 */}
-                                    <View style={styles.settingRow}>
-                                        <View style={styles.settingInfo}>
-                                            <Text style={styles.settingLabel}>{t('createTask.deadlineLabel')}</Text>
-                                            <Text style={styles.settingSubtext}>{t('createTask.deadlineSubtext')}</Text>
+                                        {/* Deadline 时间选择 */}
+                                        <View style={styles.settingRow}>
+                                            <View style={styles.settingInfo}>
+                                                <Text style={styles.settingLabel}>{t('createTask.deadlineLabel')}</Text>
+                                                <Text style={styles.settingSubtext}>{t('createTask.deadlineSubtext')}</Text>
+                                            </View>
                                         </View>
+                                        <View style={styles.deadlineRow}>
+                                            {DEADLINE_OPTIONS.map((option) => (
+                                                <TouchableOpacity
+                                                    key={option.label}
+                                                    style={[
+                                                        styles.deadlineButton,
+                                                        selectedDeadline === option.label && styles.deadlineButtonActive
+                                                    ]}
+                                                    onPress={() => setSelectedDeadline(option.label)}
+                                                >
+                                                    <Text style={[
+                                                        styles.deadlineButtonText,
+                                                        selectedDeadline === option.label && styles.deadlineButtonTextActive
+                                                    ]}>{option.label}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                        {selectedDeadline === 'Custom' && (
+                                            <View style={styles.customTimeRow}>
+                                                <TextInput
+                                                    style={styles.customTimeInput}
+                                                    value={customHours}
+                                                    onChangeText={setCustomHours}
+                                                    keyboardType="numeric"
+                                                    placeholder="12"
+                                                    placeholderTextColor={colors.text.muted}
+                                                />
+                                                <Text style={styles.customTimeLabel}>hours</Text>
+                                            </View>
+                                        )}
                                     </View>
-                                    <View style={styles.deadlineRow}>
-                                        {DEADLINE_OPTIONS.map((option) => (
+                                </FadeInView>
+
+                                {/* Warning */}
+                                <FadeInView delay={150}>
+                                    <View style={styles.warningContainer}>
+                                        <AlertCircle size={16} color={colors.semantic.warning} />
+                                        <Text style={styles.warningText}>
+                                            {t('createTask.warning')}
+                                        </Text>
+                                    </View>
+                                </FadeInView>
+                                {/* Footer */}
+                                <FadeInView delay={200}>
+                                    <View style={styles.footer}>
+                                        <PulseGlow color={colors.primary[500]}>
                                             <TouchableOpacity
-                                                key={option.label}
-                                                style={[
-                                                    styles.deadlineButton,
-                                                    selectedDeadline === option.label && styles.deadlineButtonActive
-                                                ]}
-                                                onPress={() => setSelectedDeadline(option.label)}
+                                                style={styles.createButton}
+                                                onPress={handleCreateTask}
+                                                activeOpacity={0.8}
                                             >
-                                                <Text style={[
-                                                    styles.deadlineButtonText,
-                                                    selectedDeadline === option.label && styles.deadlineButtonTextActive
-                                                ]}>{option.label}</Text>
+                                                <Zap size={18} color="#000" fill="#000" />
+                                                <Text style={styles.createButtonText}>{t('createTask.confirmButton')}</Text>
                                             </TouchableOpacity>
-                                        ))}
+                                        </PulseGlow>
+                                        <Text style={styles.disclaimerText}>{t('createTask.disclaimer')}</Text>
                                     </View>
-                                    {selectedDeadline === 'Custom' && (
-                                        <View style={styles.customTimeRow}>
-                                            <TextInput
-                                                style={styles.customTimeInput}
-                                                value={customHours}
-                                                onChangeText={setCustomHours}
-                                                keyboardType="numeric"
-                                                placeholder="12"
-                                                placeholderTextColor={colors.text.muted}
-                                            />
-                                            <Text style={styles.customTimeLabel}>hours</Text>
-                                        </View>
-                                    )}
-                                </View>
-                            </FadeInView>
+                                </FadeInView>
+                            </ScrollView>
+                        </View>
 
-                            {/* Warning */}
-                            <FadeInView delay={150}>
-                                <View style={styles.warningContainer}>
-                                    <AlertCircle size={16} color={colors.semantic.warning} />
-                                    <Text style={styles.warningText}>
-                                        {t('createTask.warning')}
-                                    </Text>
-                                </View>
-                            </FadeInView>
-                        </ScrollView>
+                        {/* Right Panel: AI Thinking Process - Transparent, No Title */}
+                        <View style={styles.sidePanel}>
+                            {/* 思考步骤展示 */}
+                            <View style={styles.thinkingSteps}>
+                                {aiThinkingSteps.length === 0 ? (
+                                    <View style={styles.emptyThinking}>
+                                        <Sparkles size={24} color={colors.text.muted} style={{ opacity: 0.5 }} />
+                                        <Text style={[styles.emptyThinkingText, { color: colors.text.muted }]}>
+                                            {t('createTask.thinkingEmpty')}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    aiThinkingSteps.map((step, index) => (
+                                        <FadeInView key={index} delay={0}>
+                                            <View style={[styles.thinkingStep, { backgroundColor: colors.glass.backgroundLight }]}>
+                                                <Text style={[styles.thinkingStepText, { color: colors.text.secondary }]}>
+                                                    {step}
+                                                </Text>
+                                            </View>
+                                        </FadeInView>
+                                    ))
+                                )}
 
-                        {/* Footer */}
-                        <FadeInView delay={200}>
-                            <View style={styles.footer}>
-                                <PulseGlow color={colors.primary[500]}>
-                                    <TouchableOpacity
-                                        style={styles.createButton}
-                                        onPress={handleCreateTask}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Zap size={18} color="#000" fill="#000" />
-                                        <Text style={styles.createButtonText}>{t('createTask.confirmButton')}</Text>
-                                    </TouchableOpacity>
-                                </PulseGlow>
-                                <Text style={styles.disclaimerText}>{t('createTask.disclaimer')}</Text>
+                                {isAnalyzing && (
+                                    <View style={styles.thinkingLoader}>
+                                        <ActivityIndicator size="small" color={colors.primary[500]} />
+                                    </View>
+                                )}
                             </View>
-                        </FadeInView>
+
+                            {/* AI 结果摘要 */}
+                            {aiSuggestion && (
+                                <FadeInView delay={0}>
+                                    <View style={[styles.resultSummary, { backgroundColor: colors.semantic.success + '15' }]}>
+                                        <Text style={[styles.resultSummaryTitle, { color: colors.semantic.success }]}>
+                                            ✅ {t('createTask.analysisComplete')}
+                                        </Text>
+                                        <Text style={[styles.resultSummaryText, { color: colors.text.secondary }]}>
+                                            {t('createTask.stepsGenerated').replace('{count}', String(aiSuggestion.split('\n').length))}
+                                        </Text>
+                                    </View>
+                                </FadeInView>
+                            )}
+                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </SafeAreaView>
-        </View>
+        </View >
     );
 }
 
@@ -424,6 +550,166 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     keyboardView: {
         flex: 1,
     },
+
+    // Three Column Layout
+    threeColumnLayout: {
+        flex: 1,
+        flexDirection: 'row',
+        gap: spacing.lg, // Gap between panels
+    },
+    sidePanel: {
+        flex: 1,
+        minWidth: 180,
+        // No background or border - transparent
+        paddingTop: 68,  // Align with center card "What's your goal?"
+        paddingBottom: spacing.md,
+        paddingHorizontal: spacing.sm,
+        justifyContent: 'flex-start',
+    },
+    // Left panel prompt area - top aligned with center panel
+    promptArea: {
+        flex: 1,
+        justifyContent: 'flex-start',  // Align to top
+        alignItems: 'stretch',  // Full width
+    },
+    emptyPromptHint: {
+        alignItems: 'center',
+        marginBottom: spacing.lg,
+        opacity: 0.7,
+    },
+    emptyPromptText: {
+        fontSize: typography.fontSize.sm,
+        textAlign: 'center',
+        marginTop: spacing.sm,
+        maxWidth: 200,
+        lineHeight: 20,
+    },
+    promptInputLarge: {
+        width: '100%',
+        borderWidth: 1,
+        borderRadius: borderRadius.lg,
+        padding: spacing.lg,
+        fontSize: typography.fontSize.sm,
+        minHeight: 180,  // Match center card height approximately
+    },
+    templateButtonsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.sm,
+        marginTop: spacing.lg,
+        justifyContent: 'center',
+    },
+    iconTemplateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderRadius: borderRadius.full,
+    },
+    iconTemplateText: {
+        fontSize: typography.fontSize.xs,
+    },
+    sidePanelHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        marginBottom: spacing.xs,
+    },
+    sidePanelTitle: {
+        fontSize: typography.fontSize.base,
+        fontWeight: '600',
+    },
+    sidePanelSubtext: {
+        fontSize: typography.fontSize.xs,
+        marginBottom: spacing.md,
+    },
+    promptInput: {
+        borderWidth: 1,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        fontSize: typography.fontSize.sm,
+        minHeight: 100,
+        textAlignVertical: 'top',
+        marginBottom: spacing.md,
+    },
+    templateLabel: {
+        fontSize: typography.fontSize.xs,
+        marginBottom: spacing.xs,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    templateButtons: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.xs,
+    },
+    templateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        borderRadius: borderRadius.md,
+    },
+    templateEmoji: {
+        fontSize: 16,
+    },
+    templateText: {
+        fontSize: typography.fontSize.sm,
+    },
+    centerPanel: {
+        flex: 2,
+        minWidth: 380,
+        maxWidth: 520,
+    },
+
+    // AI Thinking styles
+    thinkingSteps: {
+        flex: 1,
+        marginTop: spacing.sm,
+    },
+    emptyThinking: {
+        flex: 1,
+        padding: spacing.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyThinkingText: {
+        fontSize: typography.fontSize.sm,
+        textAlign: 'center',
+    },
+    thinkingStep: {
+        padding: spacing.sm,
+        marginBottom: spacing.xs,
+        borderRadius: borderRadius.md,
+    },
+    thinkingStepText: {
+        fontSize: typography.fontSize.sm,
+    },
+    thinkingLoader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        padding: spacing.sm,
+    },
+    thinkingLoaderText: {
+        fontSize: typography.fontSize.sm,
+    },
+    resultSummary: {
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+        marginTop: spacing.md,
+    },
+    resultSummaryTitle: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: '600',
+        marginBottom: spacing.xs,
+    },
+    resultSummaryText: {
+        fontSize: typography.fontSize.xs,
+    },
+
     centeredWrapper: {
         flex: 1,
         width: '100%',
