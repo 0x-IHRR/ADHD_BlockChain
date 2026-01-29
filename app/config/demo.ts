@@ -14,6 +14,7 @@ export const MOCK_CONFIG = {
     jackpot: true,      // 奖金池 Mock
     pet: true,          // 宠物状态 Mock
     tasks: false,       // 任务列表 (通常用真实数据)
+    heatmap: true,      // 热力图 Mock (开发阶段使用)
 };
 
 // ============ 演示模式配置 ============

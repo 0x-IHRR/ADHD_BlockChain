@@ -25,7 +25,9 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
+import { useApp } from '../context/AppContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
+import { MOCK_CONFIG } from '../config/demo';
 import FocusDragon, { FocusDragonMood } from './FocusDragon';
 import ActivityHeatmap from './ActivityHeatmap';
 import { usePet } from '../context/PetContext';
@@ -108,6 +110,49 @@ export default function AgentPanel({ state }: AgentPanelProps) {
     const { t } = useI18n();
     const { pet, isDead, isDying, revivePet, loading: petLoading } = usePet();
     const { isConnected: walletActive } = useWallet();
+    const { tasks } = useApp();
+
+    // 计算热力图数据 (如果不使用 Mock)
+    const heatmapData = React.useMemo(() => {
+        if (MOCK_CONFIG.heatmap) return undefined; // 使用 Mock 数据
+
+        const weeks = 26;
+        const totalDays = weeks * 7;
+        const today = new Date();
+        const data: { date: Date; count: number; intensity: 0 | 1 | 2 | 3 | 4 }[] = [];
+
+        // 获取已完成的任务
+        const completedTasks = tasks.filter(t =>
+            t.status === 'verified' || t.status === 'settled'
+        );
+
+        // 为过去每一天统计任务数
+        for (let i = totalDays - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            // 统计当天完成的任务
+            const count = completedTasks.filter(task => {
+                const taskDate = new Date(task.createdAt);
+                return taskDate >= date && taskDate < nextDay;
+            }).length;
+
+            // 计算强度
+            let intensity: 0 | 1 | 2 | 3 | 4 = 0;
+            if (count >= 5) intensity = 4;
+            else if (count >= 4) intensity = 3;
+            else if (count >= 2) intensity = 2;
+            else if (count >= 1) intensity = 1;
+
+            data.push({ date, count, intensity });
+        }
+
+        return data;
+    }, [tasks]);
 
     // 抖动动画
     const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -196,16 +241,9 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <Brain size={20} color={colors.text.muted} />
-                    <Text style={[styles.headerTitle, { color: colors.text.muted }]}>
-                        {t('agent.title')}
-                    </Text>
-                </View>
-
                 {/* 月度任务热力图 - 放在顶部 */}
                 <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
-                    <ActivityHeatmap />
+                    <ActivityHeatmap data={heatmapData} />
                 </View>
 
                 <View style={styles.idleState}>
