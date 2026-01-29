@@ -72,22 +72,31 @@ export default function MainLayout({
     const handleNetworkSwitch = useCallback(async (targetChainId: number) => {
         // Anvil 本地网络需要用户手动添加
         if (targetChainId === 31337) {
-            Alert.alert(
-                'Anvil 本地网络',
-                '刷换到 Anvil 需要在钱包中手动添加网络：\n\n' +
+            const message =
+                '切换到 Anvil 需要在钱包中手动添加网络：\n\n' +
                 '• 网络名称: Anvil Local\n' +
                 '• RPC URL: http://127.0.0.1:8545\n' +
                 '• Chain ID: 31337\n' +
                 '• 符号: ETH\n\n' +
-                '添加后在钱包中切换到该网络即可。',
-                [
-                    { text: '我知道了', style: 'default' },
-                    {
-                        text: '尝试自动添加',
-                        onPress: () => switchNetwork(targetChainId)
-                    }
-                ]
-            );
+                '添加后在钱包中切换到该网络即可。\n\n' +
+                '点击"确定"尝试自动添加。';
+
+            // Web 平台使用 window.confirm, 移动端使用 Alert
+            if (Platform.OS === 'web') {
+                const shouldTry = window.confirm(message);
+                if (shouldTry) {
+                    switchNetwork(targetChainId);
+                }
+            } else {
+                Alert.alert(
+                    'Anvil 本地网络',
+                    message,
+                    [
+                        { text: '取消', style: 'cancel' },
+                        { text: '尝试自动添加', onPress: () => switchNetwork(targetChainId) }
+                    ]
+                );
+            }
         } else {
             // 其他网络直接切换
             switchNetwork(targetChainId);
