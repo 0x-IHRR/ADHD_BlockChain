@@ -74,12 +74,12 @@ export default function MainLayout({
     // 处理网络切换（带错误反馈）
     const handleNetworkSwitch = useCallback(async (targetChainId: number) => {
         // Anvil 本地网络需要用户手动添加
-        if (targetChainId === 31337) {
+        if (targetChainId === 1337) {
             const message =
                 '切换到 Anvil 需要在钱包中手动添加网络：\n\n' +
                 '• 网络名称: Anvil Local\n' +
                 '• RPC URL: http://127.0.0.1:8545\n' +
-                '• Chain ID: 31337\n' +
+                '• Chain ID: 1337\n' +
                 '• 符号: ETH\n\n' +
                 '添加后在钱包中切换到该网络即可。\n\n' +
                 '点击"确定"尝试自动添加。';
