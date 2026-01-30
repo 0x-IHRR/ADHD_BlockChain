@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from spoon_ai.chat import ChatBot
 from spoon_ai.schema import Message
 from pydantic import BaseModel
+import requests  # Added for direct raw request fallback
+
+# ... imports ...
 
 load_dotenv()
 
@@ -55,7 +58,7 @@ class BreakdownAgent:
     def __init__(self):
         # Configure ChatBot (stateless)
         self.bot = ChatBot(
-            llm_provider="anthropic", # Default, will be overridden by env logic if keys differ
+            llm_provider=os.getenv("LLM_PROVIDER", "anthropic"), # Updated to load from env
             base_url=os.getenv("BASE_URL", "https://open.bigmodel.cn/api/anthropic"),
             model_name=os.getenv("LLM_MODEL", "glm-4.7"),
             api_key=os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"),
@@ -75,7 +78,44 @@ class BreakdownAgent:
         
         try:
             print(f"[BreakdownAgent] Sending request to Spoon ChatBot...")
-            response_text = await self.bot.ask(messages)
+            
+            # Special handling for Zhipu via Anthropic endpoint (Raw Request bypass)
+            if "bigmodel.cn" in (os.getenv("BASE_URL") or "") and "anthropic" in (os.getenv("BASE_URL") or ""):
+                print(f"[BreakdownAgent] Detecting Zhipu Anthropic Endpoint. Using Raw Request...")
+                api_key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENAI_API_KEY")
+                url = "https://open.bigmodel.cn/api/anthropic/v1/messages"
+                headers = {
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json"
+                }
+                # extract system prompt for Anthropic API
+                system_prompt = None
+                filtered_messages = []
+                for m in messages:
+                    if m.role == "system":
+                        system_prompt = m.content
+                    else:
+                        filtered_messages.append({"role": m.role, "content": m.content})
+
+                payload = {
+                    "model": os.getenv("LLM_MODEL", "glm-4.7"),
+                    "max_tokens": 2048,
+                    "messages": filtered_messages
+                }
+                if system_prompt:
+                    payload["system"] = system_prompt
+                
+                # Use sync requests for simplicity in this patch (blocking but verified working)
+                raw_res = requests.post(url, headers=headers, json=payload)
+                if raw_res.status_code == 200:
+                    response_text = raw_res.json()["content"][0]["text"]
+                else:
+                    print(f"Raw request failed: {raw_res.status_code} {raw_res.text}")
+                    # Fallback to standard SDK if raw fails or 429
+                    response_text = await self.bot.ask(messages)
+            else:
+                response_text = await self.bot.ask(messages)
             
             # 清理可能的 markdown 代码块包裹
             clean_response = response_text.strip()

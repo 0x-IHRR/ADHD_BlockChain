@@ -57,7 +57,7 @@ class VerifyRequest(BaseModel):
 
 class VerifyResponse(BaseModel):
     verified: bool
-    confidence: float
+    score: int
     reason: str
 
 
@@ -111,7 +111,7 @@ async def verify_task(request: VerifyRequest):
         )
         return VerifyResponse(
             verified=result.verified,
-            confidence=result.confidence,
+            score=result.score,
             reason=result.reason
         )
     except Exception as e:
@@ -127,7 +127,7 @@ class VerifyAndSubmitRequest(BaseModel):
 
 class VerifyAndSubmitResponse(BaseModel):
     verified: bool
-    confidence: float
+    score: int
     reason: str
     submitted_to_chain: bool
     tx_hash: Optional[str] = None
@@ -174,17 +174,23 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/verify-with-image", response_model=VerifyAndSubmitResponse)
 async def verify_with_image(
-    task_id: str = Form(...),
-    task_description: str = Form(...),
-    proof: str = Form(...),
+    task_id: Optional[str] = Form(None),
+    task_description: Optional[str] = Form(None),
+    proof: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None)
 ):
     """
     验证任务 (支持图片上传) - 法官模式
     """
-    print(f"[DEBUG] verify_with_image called: id={task_id}, desc={task_description[:20]}, has_image={image is not None}")
-    if image:
-        print(f"[DEBUG] Image: filename={image.filename}, content_type={image.content_type}")
+    print(f"[DEBUG] verify_with_image raw args: task_id={task_id}, has_desc={bool(task_description)}, has_proof={bool(proof)}, has_image={image is not None}")
+    
+    if not task_id:
+        raise HTTPException(status_code=400, detail="Missing task_id")
+    if not task_description:
+        raise HTTPException(status_code=400, detail="Missing task_description")
+    if not proof:
+        proof = "" # Allow empty proof if image is present?
+
 
     # Convert task_id back to int
     try:
@@ -244,6 +250,78 @@ async def verify_with_image(
         
     except HTTPException:
         raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"[API] CRITICAL 500 ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============ Quiz API ============
+
+class QuizGenerateRequest(BaseModel):
+    task_description: str
+
+# Internal model (with answers, for grading)
+class QuizQuestionInternal(BaseModel):
+    id: int
+    question: str
+    options: list[str]
+    correct_answer: str
+
+# Public model (without answers, sent to frontend)
+class QuizQuestionPublic(BaseModel):
+    id: int
+    question: str
+    options: list[str]
+
+class QuizGenerateResponse(BaseModel):
+    questions: list[QuizQuestionPublic]
+
+class QuizGradeRequest(BaseModel):
+    quiz_data: list[dict] # Full question objects
+    user_answers: dict # { "1": "A", ... }
+
+class QuizGradeResponse(BaseModel):
+    score: int
+    passed: bool
+    feedback: str
+
+# 存储完整题目用于评分 (内存缓存，生产环境应用 Redis)
+_quiz_cache: dict = {}
+
+@app.post("/quiz/generate", response_model=QuizGenerateResponse)
+async def generate_quiz(request: QuizGenerateRequest):
+    """生成测验"""
+    try:
+        result = await verify_agent.generate_quiz(request.task_description)
+        print(f"[API] Quiz Gen Result: {result}")
+        
+        # 存储完整题目到缓存 (用于后续评分)
+        questions_full = result.get("questions", [])
+        cache_key = hash(request.task_description)
+        _quiz_cache[cache_key] = questions_full
+        
+        # 过滤掉答案后返回给前端 (BUG-004 fix)
+        public_questions = [
+            {"id": q["id"], "question": q["question"], "options": q["options"]}
+            for q in questions_full
+        ]
+        
+        return {"questions": public_questions}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"[API] Quiz Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Quiz Generation Error: {str(e)}")
+
+@app.post("/quiz/grade", response_model=QuizGradeResponse)
+async def grade_quiz(request: QuizGradeRequest):
+    """测验评分"""
+    try:
+        result = await verify_agent.grade_quiz(request.quiz_data, request.user_answers)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

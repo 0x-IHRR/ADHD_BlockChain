@@ -125,15 +125,51 @@ const translations: Record<Language, Record<string, string>> = {
         'verify.camera': 'Camera',
         'verify.placeholder': 'Describe how you completed the task, paste Tx hash, or provide other proof...',
         'verify.verifying': 'AI Agent is verifying your proof...',
+        'verify.writingToChain': 'Writing proof to blockchain...',
         'verify.submit': 'Submit for Verification',
         'verify.tryAgain': 'Try Again',
+        'verify.txHashCopied': 'Transaction Hash copied to clipboard',
         'verify.permissionRequired': 'Permission Required',
         'verify.photoPermission': 'Please grant photo library access.',
         'verify.cameraPermission': 'Please grant camera access.',
+        'verify.error.uploadFailed': 'Image upload failed',
+        'verify.error.network': 'Network error',
+        'verify.error.timeout': 'Request timed out',
+
+        // Quiz
+        'quiz.mode': 'Quiz',
+        'quiz.proofMode': 'Proof',
+        'quiz.intro': 'Ready to challenge yourself? AI will generate 3 questions based on your task.',
+        'quiz.start': 'Start Quiz',
+        'quiz.generating': 'Generating Quiz...',
+        'quiz.questionProgress': 'Question {current} / {total}',
+        'quiz.next': 'Next',
+        'quiz.submit': 'Submit',
+        'quiz.grading': 'Grading...',
+
+        // Common
+        'common.copied': 'Copied',
+
+        // Transaction Status
+        'createTask.tx.signing': 'Waiting for Wallet...',
+        'createTask.tx.broadcasting': 'Broadcasting...',
+        'createTask.tx.mining': 'Confirming on Chain...',
+        'createTask.tx.syncing': 'Syncing Data...',
+        'createTask.successTitle': 'Task Created!',
+        'createTask.successDesc': 'Your commitment is staked. Time to flow!',
     },
     zh: {
         // Brand
         'brand.name': 'FocusFlow',
+        // ... (existing keys) ...
+        'createTask.successTitle': '任务创建成功！',
+        'createTask.successDesc': '质押金已锁定。开始专注吧！',
+        'createTask.tx.signing': '正在等待钱包签名...',
+        'createTask.tx.broadcasting': '正在广播交易...',
+        'createTask.tx.mining': '正在链上确认...',
+        'createTask.tx.syncing': '正在同步数据...',
+
+
 
         // Common
         'common.connect': '连接钱包',
@@ -211,6 +247,7 @@ const translations: Record<Language, Record<string, string>> = {
         'taskDetail.agentVerification': '智能体验证',
         'taskDetail.method': '验证方式',
         'taskDetail.proof': '链上证明',
+        'taskDetail.onChainStatus': '链上状态',
         'taskDetail.verifyButton': '验证任务',
         'taskDetail.claimRefund': '领取退款',
         'taskDetail.settleTask': '结算（已超时）',
@@ -233,16 +270,35 @@ const translations: Record<Language, Record<string, string>> = {
 
         // Verify Modal
         'verify.addScreenshot': '添加截图/照片 (可选)',
-        'verify.gallery': '相册',
-        'verify.camera': '相机',
-        'verify.placeholder': '描述你是如何完成任务的，或粘贴交易哈希、或其他证明...',
-        'verify.verifying': 'AI 正在验证您的证明...',
+        'verify.gallery': '从相册选择',
+        'verify.camera': '拍照',
+        'verify.placeholder': '描述你是如何完成任务的，或提供其他证明...',
+        'verify.verifying': 'AI 智能体正在核验您的证明...',
+        'verify.writingToChain': '正在写入区块链...',
         'verify.submit': '提交验证',
         'verify.tryAgain': '重试',
+        'verify.txHashCopied': '交易哈希已复制到剪贴板',
         'verify.permissionRequired': '需要权限',
-        'verify.photoPermission': '请授予相册访问权限。',
-        'verify.cameraPermission': '请授予相机访问权限。',
-    },
+        'verify.photoPermission': '请授予访问相册权限。',
+        'verify.cameraPermission': '请授予访问相机权限。',
+        'verify.error.uploadFailed': '图片上传失败，请重试',
+        'verify.error.network': '网络请求失败，请检查网络',
+        'verify.error.timeout': '请求超时，请稍后重试',
+
+        // Quiz
+        'quiz.mode': 'AI 考卷',
+        'quiz.proofMode': '上传证明',
+        'quiz.intro': '准备好接受挑战了吗？AI 将基于你的任务生成 3 道选择题。',
+        'quiz.start': '开始测验',
+        'quiz.generating': '正在出题...',
+        'quiz.questionProgress': '第 {current} 题 / 共 {total} 题',
+        'quiz.next': '下一题',
+        'quiz.submit': '提交试卷',
+        'quiz.grading': '正在阅卷...',
+
+        // Common
+        'common.copied': '已复制',
+    }
 };
 
 // ============ Context ============

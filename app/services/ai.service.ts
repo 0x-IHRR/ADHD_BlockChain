@@ -158,3 +158,62 @@ export async function verifyAndSubmit(
 
     return response.json();
 }
+
+/**
+ * Quiz Types
+ */
+export interface QuizQuestion {
+    id: number;
+    question: string;
+    options: string[];
+}
+
+export interface QuizGenerateResponse {
+    questions: QuizQuestion[];
+}
+
+export interface QuizGradeResponse {
+    score: number;
+    passed: boolean;
+    feedback: string;
+}
+
+/**
+ * 生成任务相关的 Quiz
+ */
+export async function generateQuiz(taskDescription: string): Promise<QuizGenerateResponse> {
+    const response = await fetch(`${AI_ENGINE_BASE_URL}/quiz/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_description: taskDescription }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Quiz generation failed: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * 提交 Quiz 答案并评分
+ */
+export async function gradeQuiz(
+    quizData: QuizQuestion[],
+    userAnswers: Record<string, string>
+): Promise<QuizGradeResponse> {
+    const response = await fetch(`${AI_ENGINE_BASE_URL}/quiz/grade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            quiz_data: quizData,
+            user_answers: userAnswers,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Quiz grading failed: ${response.statusText}`);
+    }
+
+    return response.json();
+}

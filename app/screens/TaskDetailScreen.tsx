@@ -28,8 +28,8 @@ type DetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetail'>;
 export default function TaskDetailScreen() {
     const navigation = useNavigation();
     const route = useRoute<DetailsScreenRouteProp>();
-    const { tasks, updateTaskStatus } = useTasks();
-    const { address } = useWallet();
+    const { tasks, updateTaskStatus, fetchTasksFromChain } = useTasks();
+    const { address, signer } = useWallet();
     const { t } = useI18n();
     const { colors } = useTheme();
     const task = tasks.find(t => t.id === route.params.taskId);
@@ -58,10 +58,17 @@ export default function TaskDetailScreen() {
         setVerifyModalVisible(true);
     };
 
-    const handleVerificationComplete = (result: any) => {
-        // 更新任务状态
+    const handleVerificationComplete = async (result: any) => {
+        // 更新任务状态 (UI 立即反馈)
         updateTaskStatus(task.id, result.verified ? 'verified' : 'failed');
         setVerifyModalVisible(false);
+
+        // 强制刷新链上数据以确保同步
+        try {
+            await fetchTasksFromChain();
+        } catch (e) {
+            console.error('Failed to sync chain state after verify:', e);
+        }
     };
 
     // 领取退款
@@ -70,7 +77,7 @@ export default function TaskDetailScreen() {
         setActionLoading(true);
         setActionError(null);
         try {
-            await claimRefundOnChain(task.chainTaskId);
+            await claimRefundOnChain(task.chainTaskId, signer || undefined);
             updateTaskStatus(task.id, 'settled');
         } catch (e: any) {
             setActionError(e.message || 'Failed to claim refund');
@@ -85,7 +92,7 @@ export default function TaskDetailScreen() {
         setActionLoading(true);
         setActionError(null);
         try {
-            await settleTaskOnChain(task.chainTaskId);
+            await settleTaskOnChain(task.chainTaskId, signer || undefined);
             updateTaskStatus(task.id, 'settled');
         } catch (e: any) {
             setActionError(e.message || 'Failed to settle task');
@@ -184,13 +191,15 @@ export default function TaskDetailScreen() {
                                 <View style={styles.divider} />
                                 <View style={styles.verificationRow}>
                                     <Text style={styles.verificationLabel}>{t('taskDetail.method')}</Text>
-                                    <Text style={styles.verificationValue}>AI Agent (Gemini)</Text>
+                                    <Text style={styles.verificationValue}>AI 验证专员 (FocusFlow)</Text>
                                 </View>
                                 <View style={styles.verificationRow}>
                                     <Text style={styles.verificationLabel}>{t('taskDetail.proof')}</Text>
                                     <View style={styles.linkContainer}>
-                                        <Text style={styles.linkText}>On-Chain Proof</Text>
-                                        <ExternalLink size={12} color={colors.primary[500]} />
+                                        <Text style={[styles.linkText, { color: colors.text.muted }]}>
+                                            {t('taskDetail.onChainStatus')}
+                                        </Text>
+                                        <ExternalLink size={12} color={colors.text.muted} />
                                     </View>
                                 </View>
                             </View>

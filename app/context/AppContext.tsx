@@ -55,6 +55,7 @@ interface AppContextType {
 
     // 加载状态
     isLoading: boolean;
+    fetchTasksFromChain: () => Promise<void>;
 }
 
 // 初始值 removed
@@ -131,12 +132,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchTasksFromChain();
     }, [fetchTasksFromChain]);
 
-    // 定时刷新奖金池
+    // 定时刷新奖金池和任务列表 (保持与链上同步)
     useEffect(() => {
         fetchJackpot();
-        const interval = setInterval(fetchJackpot, 30000); // 30s 刷新一次
+        if (wallet.isConnected) fetchTasksFromChain(); // 立即同步一次
+
+        const interval = setInterval(() => {
+            fetchJackpot();
+            if (wallet.isConnected) fetchTasksFromChain();
+        }, 10000); // 提高频率到 10s 刷新一次，确保用户感知的实时性
         return () => clearInterval(interval);
-    }, [fetchJackpot]);
+    }, [fetchJackpot, fetchTasksFromChain, wallet.isConnected]);
 
     // 添加任务 (返回新任务对象，支持链上 ID)
     const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt'> & { chainTaskId?: number }): Task => {
@@ -198,6 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             isLoading,
             jackpotAmount,
             fetchJackpot,
+            fetchTasksFromChain,
         }}>
             {children}
         </AppContext.Provider>
@@ -215,8 +222,8 @@ export function useApp() {
 
 // 便捷 Hooks
 export function useTasks() {
-    const { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot } = useApp();
-    return { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot };
+    const { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot, fetchTasksFromChain } = useApp();
+    return { tasks, addTask, removeTask, updateTaskStatus, updateTaskChainId, getTaskById, getTaskByChainId, jackpotAmount, fetchJackpot, fetchTasksFromChain };
 }
 
 // export function useWallet is REMOVED to avoid conflict with real WalletContext

@@ -29,7 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // 状态类型 (增加 dying 和 dead)
-export type SpoonsMood = 'neutral' | 'thinking' | 'happy' | 'shaking' | 'dying' | 'dead';
+export type SpoonsMood = 'neutral' | 'thinking' | 'happy' | 'shaking' | 'dying' | 'dead' | 'muscle';
 
 interface SpoonsProps {
     mood?: SpoonsMood;
@@ -73,6 +73,23 @@ export default function Spoons({ mood = 'neutral', size = 180 }: SpoonsProps) {
                         withTiming(-8, { duration: 400, easing: Easing.inOut(Easing.ease) }),
                         withTiming(8, { duration: 400, easing: Easing.inOut(Easing.ease) })
                     ),
+                    -1,
+                    true
+                );
+                break;
+
+            case 'muscle':
+                // Flexing / Strong
+                bounce.value = withRepeat(
+                    withSequence(
+                        withTiming(-5, { duration: 500 }),
+                        withTiming(0, { duration: 500 })
+                    ),
+                    -1,
+                    true
+                );
+                glowOpacity.value = withRepeat(
+                    withTiming(0.8, { duration: 1000 }),
                     -1,
                     true
                 );
@@ -137,6 +154,8 @@ export default function Spoons({ mood = 'neutral', size = 180 }: SpoonsProps) {
                 return { body: '#FFA500', glow: '#FF8C00' }; // 橙色警告 (虚弱)
             case 'dead':
                 return { body: '#4A4A4A', glow: '#2A2A2A' }; // 灰色死亡
+            case 'muscle':
+                return { body: '#FFD700', glow: '#FFA500' }; // 金色/橙色 (Mining/Work)
             default:
                 return { body: '#C0C0C0', glow: '#FFFFFF' }; // 银色中立
         }
@@ -248,6 +267,15 @@ export default function Spoons({ mood = 'neutral', size = 180 }: SpoonsProps) {
                         fill="none"
                         stroke="#1A1A22"
                         strokeWidth="2"
+                        strokeLinecap="round"
+                    />
+                ) : mood === 'muscle' ? (
+                    // 努力奋斗的嘴 (一字抿嘴)
+                    <Path
+                        d="M 45 52 L 55 52"
+                        fill="none"
+                        stroke="#1A1A22"
+                        strokeWidth="2.5"
                         strokeLinecap="round"
                     />
                 ) : (

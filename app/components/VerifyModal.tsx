@@ -2,7 +2,7 @@
  * VerifyModal - 任务验证提交模态框
  * 
  * 允许用户输入证明文本，调用 AI 验证并提交到链上
- * 支持图片上传 (法官模式)
+ * 支持图片上传 (法官模式) 和 AI 问答验证 (Quiz Mode)
  */
 import React, { useState } from 'react';
 import {
@@ -18,12 +18,15 @@ import {
     Image,
     Alert,
 } from 'react-native';
-import { X, Send, CheckCircle, XCircle, ExternalLink, Camera, ImagePlus, Trash2 } from 'lucide-react-native';
+import { X, Send, CheckCircle, XCircle, Camera, ImagePlus, Trash2, Copy } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
+import { usePet } from '../context/PetContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
-import { verifyAndSubmit, VerifyAndSubmitResult } from '../services/ai.service';
+import { verifyAndSubmit, VerifyAndSubmitResult, generateQuiz, gradeQuiz } from '../services/ai.service';
+import { submitProofOnChain } from '../services/contract.service';
 import Spoons from './Spoons';
 
 interface VerifyModalProps {
@@ -35,7 +38,7 @@ interface VerifyModalProps {
     onVerificationComplete: (result: VerifyAndSubmitResult) => void;
 }
 
-type ModalState = 'input' | 'verifying' | 'success' | 'failed';
+type ModalState = 'input' | 'quiz_loading' | 'quiz_active' | 'verifying' | 'submitting' | 'success' | 'failed';
 
 export default function VerifyModal({
     visible,
@@ -46,10 +49,22 @@ export default function VerifyModal({
     onVerificationComplete,
 }: VerifyModalProps) {
     const { colors } = useTheme();
+    const { refreshPet } = usePet();
     const { t } = useI18n();
 
+    // Mode: 'proof' | 'quiz'
+    const [verificationMethod, setVerificationMethod] = useState<'proof' | 'quiz'>('proof');
+
+    // Proof Mode State
     const [proof, setProof] = useState('');
     const [imageUri, setImageUri] = useState<string | null>(null);
+
+    // Quiz Mode State
+    const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+    const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+    // Common State
     const [state, setState] = useState<ModalState>('input');
     const [result, setResult] = useState<VerifyAndSubmitResult | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -62,12 +77,16 @@ export default function VerifyModal({
             setState('input');
             setResult(null);
             setError(null);
+            setVerificationMethod('proof'); // Default to proof
+            setQuizQuestions([]);
+            setUserAnswers({});
+            setCurrentQuestionIndex(0);
         }
     }, [visible]);
 
     // 监听 Web 粘贴事件
     React.useEffect(() => {
-        if (Platform.OS === 'web' && visible) {
+        if (Platform.OS === 'web' && visible && state === 'input' && verificationMethod === 'proof') {
             const handlePaste = (e: any) => {
                 const items = e.clipboardData?.items;
                 if (!items) return;
@@ -91,7 +110,7 @@ export default function VerifyModal({
             window.addEventListener('paste', handlePaste);
             return () => window.removeEventListener('paste', handlePaste);
         }
-    }, [visible]);
+    }, [visible, state, verificationMethod]);
 
     // 图片选择 - 相册
     const pickImage = async () => {
@@ -130,20 +149,114 @@ export default function VerifyModal({
         }
     };
 
-    const handleSubmit = async () => {
-        if (!proof.trim() && !imageUri) return;
+    // --- Quiz Logic ---
+    const startQuiz = async () => {
+        setState('quiz_loading');
+        setError(null);
+        try {
+            const data = await generateQuiz(taskDescription);
+            setQuizQuestions(data.questions);
+            setUserAnswers({});
+            setCurrentQuestionIndex(0);
+            setState('quiz_active');
+        } catch (err: any) {
+            setError(err.message || 'Failed to generate quiz');
+            setState('failed');
+        }
+    };
 
+    const handleQuizAnswer = (option: string) => {
+        const question = quizQuestions[currentQuestionIndex];
+        setUserAnswers(prev => ({ ...prev, [question.id]: option }));
+    };
+
+    const nextQuestion = () => {
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+            submitQuiz();
+        }
+    };
+
+    const submitQuiz = async () => {
+        setState('verifying'); // Re-use verifying state for grading
+        try {
+            const gradeResult = await gradeQuiz(quizQuestions, userAnswers);
+
+            if (gradeResult.passed) {
+                // Quiz Passed -> Submit to Chain
+                await submitToChain({
+                    verified: true,
+                    confidence: 100,
+                    reason: gradeResult.feedback,
+                    submitted_to_chain: false // Will be set in submitToChain
+                });
+            } else {
+                // Quiz Failed
+                setResult({
+                    verified: false,
+                    confidence: 0,
+                    reason: gradeResult.feedback,
+                    submitted_to_chain: false
+                });
+                setState('failed');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Grading failed');
+            setState('failed');
+        }
+    };
+
+    // --- Common Submission Logic ---
+    const submitToChain = async (aiResult: VerifyAndSubmitResult) => {
+        setState('submitting');
+        try {
+            if (!chainTaskId) console.warn('Using local ID, chain interaction might fail if not synced.');
+
+            let realTxHash = null;
+            if (chainTaskId) {
+                try {
+                    realTxHash = await submitProofOnChain(chainTaskId, true);
+                    console.log('Proof submitted on chain:', realTxHash);
+                } catch (chainError: any) {
+                    console.error('Chain submission failed:', chainError);
+                    throw new Error('Verification Passed, but Chain Transaction Failed: ' + (chainError.reason || chainError.message));
+                }
+            }
+
+            const finalResult = {
+                ...aiResult,
+                tx_hash: realTxHash || aiResult.tx_hash,
+                submitted_to_chain: !!realTxHash
+            };
+
+            setResult(finalResult);
+            setState('success');
+
+            // 刷新宠物状态 (BUG-002 fix)
+            try {
+                await refreshPet();
+            } catch (petError) {
+                console.warn('Pet refresh failed:', petError);
+            }
+
+            setTimeout(() => {
+                onVerificationComplete(finalResult);
+            }, 3000);
+
+        } catch (err: any) {
+            setError(err.message || 'Chain submission failed');
+            setState('failed');
+        }
+    };
+
+    const handleSubmitProof = async () => {
+        if (!proof.trim() && !imageUri) return;
         setState('verifying');
         setError(null);
 
         try {
-            // 使用 chainTaskId 进行链上验证，如果没有则使用本地 ID (仅测试用)
             const taskIdForChain = chainTaskId ?? localTaskId;
-
-            if (!chainTaskId) {
-                console.warn('警告: 使用本地 ID 进行验证，可能与链上不匹配');
-            }
-
             const verifyResult = await verifyAndSubmit(
                 taskIdForChain,
                 taskDescription,
@@ -151,13 +264,14 @@ export default function VerifyModal({
                 imageUri || undefined
             );
 
-            setResult(verifyResult);
-            setState(verifyResult.verified ? 'success' : 'failed');
+            if (!verifyResult.verified) {
+                setResult(verifyResult);
+                setState('failed');
+                return;
+            }
 
-            // 通知父组件验证完成
-            setTimeout(() => {
-                onVerificationComplete(verifyResult);
-            }, 2000);
+            await submitToChain(verifyResult);
+
         } catch (err: any) {
             setError(err.message || 'Verification failed');
             setState('failed');
@@ -176,7 +290,10 @@ export default function VerifyModal({
 
     const getSpoonsState = () => {
         switch (state) {
+            case 'quiz_loading': return 'thinking';
+            case 'quiz_active': return 'neutral';
             case 'verifying': return 'thinking';
+            case 'submitting': return 'muscle'; // Use muscle/flex for working hard
             case 'success': return 'happy';
             case 'failed': return 'shaking';
             default: return 'neutral';
@@ -210,13 +327,31 @@ export default function VerifyModal({
 
                     {/* Content */}
                     <View style={styles.content}>
-                        {/* Spoons 状态显示 */}
+                        {/* Spoons */}
                         <View style={styles.spoonsContainer}>
                             <Spoons mood={getSpoonsState()} size={100} />
                         </View>
 
-                        {/* 输入状态 */}
+                        {/* Mode Selection (Only in 'input' state) */}
                         {state === 'input' && (
+                            <View style={{ flexDirection: 'row', marginBottom: 20, backgroundColor: colors.background.secondary, borderRadius: 12, padding: 4 }}>
+                                <TouchableOpacity
+                                    style={{ flex: 1, padding: 10, alignItems: 'center', borderRadius: 10, backgroundColor: verificationMethod === 'proof' ? colors.background.primary : 'transparent' }}
+                                    onPress={() => setVerificationMethod('proof')}
+                                >
+                                    <Text style={{ color: verificationMethod === 'proof' ? colors.primary[500] : colors.text.muted, fontWeight: 'bold' }}>Proof</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, padding: 10, alignItems: 'center', borderRadius: 10, backgroundColor: verificationMethod === 'quiz' ? colors.background.primary : 'transparent' }}
+                                    onPress={() => setVerificationMethod('quiz')}
+                                >
+                                    <Text style={{ color: verificationMethod === 'quiz' ? colors.primary[500] : colors.text.muted, fontWeight: 'bold' }}>Quiz</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Logic Switch */}
+                        {state === 'input' && verificationMethod === 'proof' && (
                             <>
                                 <Text style={[styles.label, { color: colors.text.muted }]}>
                                     {t('taskDetail.proof')}
@@ -236,7 +371,6 @@ export default function VerifyModal({
                                     textAlignVertical="top"
                                 />
 
-                                {/* 图片上传区域 */}
                                 <View style={styles.imageSection}>
                                     <Text style={[styles.label, { color: colors.text.muted }]}>
                                         {t('verify.addScreenshot')}
@@ -282,7 +416,7 @@ export default function VerifyModal({
 
                                 <TouchableOpacity
                                     style={[styles.submitButton, { backgroundColor: colors.primary[500] }]}
-                                    onPress={handleSubmit}
+                                    onPress={handleSubmitProof}
                                     disabled={!proof.trim() && !imageUri}
                                 >
                                     <Send size={18} color="#000" />
@@ -293,17 +427,89 @@ export default function VerifyModal({
                             </>
                         )}
 
-                        {/* 验证中 */}
+                        {state === 'input' && verificationMethod === 'quiz' && (
+                            <View style={{ alignItems: 'center', padding: 20 }}>
+                                <Text style={{ color: colors.text.primary, fontSize: 16, textAlign: 'center', marginBottom: 20 }}>
+                                    {t('quiz.intro')}
+                                </Text>
+                                <TouchableOpacity
+                                    style={[styles.submitButton, { backgroundColor: colors.primary[500], width: '100%' }]}
+                                    onPress={startQuiz}
+                                >
+                                    <Text style={styles.submitButtonText}>{t('quiz.start')}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Quiz Active State */}
+                        {state === 'quiz_active' && quizQuestions.length > 0 && (
+                            <View>
+                                <Text style={{ color: colors.text.muted, marginBottom: 10 }}>
+                                    {t('quiz.questionProgress').replace('{current}', String(currentQuestionIndex + 1)).replace('{total}', String(quizQuestions.length))}
+                                </Text>
+                                <Text style={{ color: colors.text.primary, fontSize: 18, fontWeight: 'bold', marginBottom: 20 }}>
+                                    {quizQuestions[currentQuestionIndex].question}
+                                </Text>
+                                {quizQuestions[currentQuestionIndex].options.map((opt: string, idx: number) => (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        style={{
+                                            padding: 16,
+                                            borderRadius: 12,
+                                            backgroundColor: userAnswers[quizQuestions[currentQuestionIndex].id] === opt[0] ? colors.primary[500] + '20' : colors.background.secondary,
+                                            borderColor: userAnswers[quizQuestions[currentQuestionIndex].id] === opt[0] ? colors.primary[500] : colors.border.default,
+                                            borderWidth: 1,
+                                            marginBottom: 10,
+                                        }}
+                                        onPress={() => handleQuizAnswer(opt[0])}
+                                    >
+                                        <Text style={{ color: colors.text.primary }}>{opt}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                                <TouchableOpacity
+                                    style={[styles.submitButton, { backgroundColor: colors.primary[500], marginTop: 20 }]}
+                                    onPress={nextQuestion}
+                                    disabled={!userAnswers[quizQuestions[currentQuestionIndex].id]}
+                                >
+                                    <Text style={styles.submitButtonText}>
+                                        {currentQuestionIndex === quizQuestions.length - 1 ? t('quiz.submit') : t('quiz.next')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Loading States */}
+                        {state === 'quiz_loading' && (
+                            <View style={styles.statusContainer}>
+                                <ActivityIndicator size="large" color={colors.primary[500]} />
+                                <Text style={[styles.statusText, { color: colors.text.secondary }]}>{t('quiz.generating')}</Text>
+                            </View>
+                        )}
+
+                        {/* Verifying */}
                         {state === 'verifying' && (
                             <View style={styles.statusContainer}>
                                 <ActivityIndicator size="large" color={colors.primary[500]} />
                                 <Text style={[styles.statusText, { color: colors.text.secondary }]}>
-                                    {t('verify.verifying')}
+                                    {verificationMethod === 'quiz' ? t('quiz.grading') : t('verify.verifying')}
                                 </Text>
                             </View>
                         )}
 
-                        {/* 成功 */}
+                        {/* Submitting */}
+                        {state === 'submitting' && (
+                            <View style={styles.statusContainer}>
+                                <ActivityIndicator size="large" color={colors.semantic.warning} />
+                                <Text style={[styles.statusText, { color: colors.text.secondary, marginTop: 16 }]}>
+                                    {t('createTask.tx.mining')}
+                                </Text>
+                                <Text style={{ color: colors.text.muted, fontSize: 12, marginTop: 8 }}>
+                                    {t('verify.writingToChain')}
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* Success */}
                         {state === 'success' && result && (
                             <View style={styles.statusContainer}>
                                 <CheckCircle size={48} color={colors.semantic.success} />
@@ -313,21 +519,34 @@ export default function VerifyModal({
                                 <Text style={[styles.statusText, { color: colors.text.secondary }]}>
                                     {result.reason}
                                 </Text>
-                                {result.tx_hash && (
-                                    <View style={[styles.txBox, { backgroundColor: colors.glass.backgroundLight }]}>
+                                <View style={[styles.txBox, { backgroundColor: colors.glass.backgroundLight }]}>
+                                    <TouchableOpacity
+                                        style={[styles.txRow, { padding: 10 }]} // Increase hit area
+                                        onPress={async () => {
+                                            try {
+                                                if (result.tx_hash) {
+                                                    await Clipboard.setStringAsync(result.tx_hash);
+                                                    Alert.alert(t('common.copied'), t('verify.txHashCopied'));
+                                                }
+                                            } catch (e) {
+                                                console.error('Copy failed', e);
+                                                Alert.alert('Error', 'Failed to copy to clipboard');
+                                            }
+                                        }}
+                                    >
                                         <Text style={[styles.txLabel, { color: colors.text.muted }]}>
-                                            Tx Hash:
+                                            Tx:
                                         </Text>
                                         <Text style={[styles.txHash, { color: colors.primary[500] }]}>
-                                            {result.tx_hash.slice(0, 10)}...{result.tx_hash.slice(-8)}
+                                            {result.tx_hash ? `${result.tx_hash.slice(0, 6)}...${result.tx_hash.slice(-4)}` : ''}
                                         </Text>
-                                        <ExternalLink size={14} color={colors.primary[500]} />
-                                    </View>
-                                )}
+                                        <Copy size={16} color={colors.primary[500]} />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         )}
 
-                        {/* 失败 */}
+                        {/* Failed */}
                         {state === 'failed' && (
                             <View style={styles.statusContainer}>
                                 <XCircle size={48} color={colors.semantic.error} />
@@ -497,5 +716,11 @@ const styles = StyleSheet.create({
         right: spacing.sm,
         borderRadius: borderRadius.full,
         padding: spacing.sm,
+    },
+    txRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        flex: 1,
     },
 });

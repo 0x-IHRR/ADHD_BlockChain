@@ -1,19 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, KeyboardAvoidingView, Platform, Alert, ScrollView, Animated, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock, Timer, BarChart2, Target } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, AlertCircle, Clock, Zap, Lock, Timer, BarChart2, Target, CheckCircle2 } from 'lucide-react-native';
 import { useTasks } from '../context/AppContext';
 import { useWallet } from '../context/WalletContext';
 import { useI18n } from '../context/I18nContext';
@@ -46,7 +35,7 @@ const PLATFORM_OPTIONS = [
 
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
-    const { addTask, removeTask, updateTaskChainId } = useTasks();
+    const { addTask, removeTask, updateTaskChainId, fetchTasksFromChain } = useTasks();
     const { isConnected, signer, address, setShowWalletSelector } = useWallet();
     const { t } = useI18n();
     const { colors } = useTheme();
@@ -59,6 +48,10 @@ export default function CreateTaskScreen() {
     const [customHours, setCustomHours] = useState(''); // 自定义时间输入
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isCreating, setIsCreating] = useState(false); // 创建任务加载状态
+    // Transaction Progress State
+    const [txStage, setTxStage] = useState<'idle' | 'signing' | 'broadcasting' | 'mining' | 'syncing'>('idle');
+    const [showSuccessModal, setShowSuccessModal] = useState(false); // 成功弹窗状态
+    const [createdTxHash, setCreatedTxHash] = useState<string | null>(null);
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
     // 新增: 自定义 Prompt 和 AI 思考过程
@@ -141,6 +134,21 @@ export default function CreateTaskScreen() {
         setIsCreating(true);
 
         try {
+            // 0. 网络检查 (关键修复)
+            if (signer?.provider) {
+                const network = await signer.provider.getNetwork();
+                const chainId = BigInt(network.chainId);
+                // 允许 1337 (Anvil default) 或 31337 (Hardhat default)
+                if (chainId !== 1337n && chainId !== 31337n) {
+                    setIsCreating(false);
+                    Alert.alert(
+                        'Wrong Network / 网络错误',
+                        `请切换到 Localhost:8545 (Chain ID: 1337)。\n当前连接: Chain ID ${chainId}`,
+                        [{ text: 'OK' }]
+                    );
+                    return;
+                }
+            }
             // 1. 先添加本地任务 (立即显示在 UI)
             const newTask = addTask({
                 description,
@@ -152,36 +160,57 @@ export default function CreateTaskScreen() {
                 subtasks: [],
             });
 
-            // 2. 调用链上创建任务 (管理员用默认 signer，普通用户用钱包签名)
+
+
+            // 2. 调用链上创建任务
             try {
+                setTxStage('signing'); // Step 1: Wallet Signature
+
                 const { taskId: chainTaskId, txHash } = await createTaskOnChain(
                     description,
                     deadlineHours,
                     stakeAmount,
                     multiplier,
-                    signer ?? undefined  // 传入用户钱包 signer
+                    signer ?? undefined
                 );
+
+                setTxStage('mining'); // Step 2: Mining (createTaskOnChain waits for receipts, so this actually happens inside mostly, but we set it for clarity)
 
                 // 3. 同步链上 ID 到本地任务
                 updateTaskChainId(newTask.id, chainTaskId, txHash);
+                setCreatedTxHash(txHash); // Store for modal
                 console.log('任务创建成功:', { localId: newTask.id, chainTaskId, txHash });
-            } catch (chainError) {
-                // 链上调用失败，回滚本地任务
+
+                // 4. 强制同步
+                setTxStage('syncing');
+                await fetchTasksFromChain();
+
+                // 5. 完成
+                setTxStage('idle');
+                setIsCreating(false);
+                setShowSuccessModal(true);
+            } catch (chainError: any) {
+                setTxStage('idle');
+                setIsCreating(false);
+                // ... (error handling)
                 console.warn('链上创建失败，回滚本地任务:', chainError);
-                removeTask(newTask.id);  // 删除本地任务
+                removeTask(newTask.id);
+
+                let errorMsg = '质押交易失败或已取消，任务未创建。';
+                if (chainError?.reason) errorMsg += `\n原因: ${chainError.reason}`;
+                else if (chainError?.message) errorMsg += `\n详细: ${chainError.message.slice(0, 100)}...`;
+
                 Alert.alert(
                     t('common.error') || '错误',
-                    '质押交易失败或已取消，任务未创建。'
+                    errorMsg
                 );
-                return;  // 不继续 goBack
+                return;
             }
-
-            navigation.goBack();
         } catch (error) {
+            setTxStage('idle');
+            setIsCreating(false);
             console.error('任务创建失败:', error);
             Alert.alert(t('common.error'), '创建任务失败，请重试');
-        } finally {
-            setIsCreating(false);
         }
     };
 
@@ -194,6 +223,72 @@ export default function CreateTaskScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
+                    {/* Transaction Progress Modal */}
+                    <Modal
+                        visible={isCreating && txStage !== 'idle'}
+                        transparent={true}
+                        animationType="fade"
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={[styles.successModal, { backgroundColor: colors.background.surface, borderColor: colors.primary[500], padding: 32 }]}>
+                                <ActivityIndicator size="large" color={colors.primary[500]} />
+                                <Text style={[styles.successTitle, { color: colors.text.primary, marginTop: 16, fontSize: 20 }]}>
+                                    {txStage === 'signing' && t('createTask.tx.signing')}
+                                    {txStage === 'broadcasting' && t('createTask.tx.broadcasting')}
+                                    {txStage === 'mining' && t('createTask.tx.mining')}
+                                    {txStage === 'syncing' && t('createTask.tx.syncing')}
+                                </Text>
+                                <Text style={[styles.successDesc, { color: colors.text.secondary, marginTop: 8 }]}>
+                                    {txStage === 'signing' && t('createTask.tx.signing')}
+                                    {txStage === 'mining' && t('createTask.tx.mining')}
+                                    {txStage === 'syncing' && t('createTask.tx.syncing')}
+                                </Text>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* Success Modal */}
+                    <Modal
+                        visible={showSuccessModal}
+                        transparent={true}
+                        animationType="fade"
+                        onRequestClose={() => navigation.goBack()}
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={[styles.successModal, { backgroundColor: colors.background.surface, borderColor: colors.semantic.success }]}>
+                                <View style={styles.successIconBubble}>
+                                    <CheckCircle2 size={48} color={colors.semantic.success} />
+                                </View>
+                                <Text style={[styles.successTitle, { color: colors.text.primary }]}>
+                                    {t('createTask.successTitle')}
+                                </Text>
+                                <Text style={[styles.successDesc, { color: colors.text.secondary }]}>
+                                    {t('createTask.successDesc')}
+                                </Text>
+                                {createdTxHash && (
+                                    <View style={{ marginTop: 12, padding: 8, backgroundColor: colors.background.surface, borderRadius: 8 }}>
+                                        <Text style={{ color: colors.text.secondary, fontSize: 12, fontFamily: typography.fontFamily.mono }}>
+                                            TX: {createdTxHash.slice(0, 10)}...{createdTxHash.slice(-8)}
+                                        </Text>
+                                    </View>
+                                )}
+                                <View style={styles.successStats}>
+                                    <Text style={[styles.successStatText, { color: colors.text.secondary }]}>
+                                        Staked: <Text style={{ color: colors.primary[500], fontWeight: 'bold' }}>{stakeAmount} ETH</Text>
+                                    </Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={[styles.successButton, { backgroundColor: colors.semantic.success }]}
+                                    onPress={() => {
+                                        setShowSuccessModal(false);
+                                        navigation.goBack();
+                                    }}
+                                >
+                                    <Text style={styles.successButtonText}>Let's Go</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
                     {/* Three Column Layout */}
                     <View style={styles.threeColumnLayout}>
                         {/* Left Panel: Custom Prompt - Aligned with center card */}
@@ -538,6 +633,61 @@ export default function CreateTaskScreen() {
 }
 
 const getStyles = (colors: ThemeColors) => StyleSheet.create({
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    successModal: {
+        width: 320,
+        borderRadius: borderRadius['2xl'],
+        padding: spacing.xl,
+        alignItems: 'center',
+        borderWidth: 1,
+    },
+    successIconBubble: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: spacing.lg,
+    },
+    successTitle: {
+        fontSize: typography.fontSize.xl,
+        fontWeight: typography.fontWeight.bold,
+        marginBottom: spacing.sm,
+    },
+    successDesc: {
+        fontSize: typography.fontSize.sm,
+        textAlign: 'center',
+        marginBottom: spacing.lg,
+        lineHeight: 20,
+    },
+    successStats: {
+        marginBottom: spacing.xl,
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    successStatText: {
+        fontSize: typography.fontSize.base,
+    },
+    successButton: {
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing['2xl'],
+        borderRadius: borderRadius.full,
+        width: '100%',
+        alignItems: 'center',
+    },
+    successButtonText: {
+        color: '#FFFFFF',
+        fontWeight: typography.fontWeight.bold,
+        fontSize: typography.fontSize.base,
+    },
+
     container: {
         flex: 1,
         backgroundColor: colors.background.primary,

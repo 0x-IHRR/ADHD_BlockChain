@@ -98,7 +98,7 @@ export type AgentState = {
     steps: AgentStep[];
     result?: {
         verified: boolean;
-        confidence: number;
+        score: number;
         reason: string;
     };
 };
@@ -425,7 +425,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
                             {t('agent.confidence')}
                         </Text>
                         <Text style={[styles.confidenceValue, { color: colors.text.primary }]}>
-                            {Math.round(state.result.confidence * 100)}%
+                            {state.result.score}/100
                         </Text>
                     </View>
                 </View>

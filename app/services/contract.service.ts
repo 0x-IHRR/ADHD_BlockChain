@@ -47,8 +47,8 @@ const DEFAULT_RPC_URL = 'http://localhost:8545';
 export function getContractAddress(): string {
     const address = process.env.EXPO_PUBLIC_CONTRACT_ADDRESS;
     if (!address) {
-        // 开发环境默认地址 (Anvil 本地链部署)
-        return '0x5fc8d32690cc91d4c39d9d3abcbd16989f875707';
+        // 开发环境默认地址 (Anvil 本地链部署 - Updated)
+        return '0xb7f8bc63bbcad18155201308c8f3540b07f84f5e';
     }
     return address;
 }
@@ -56,7 +56,7 @@ export function getContractAddress(): string {
 export function getAchievementNFTAddress(): string {
     const address = process.env.EXPO_PUBLIC_ACHIEVEMENT_NFT_ADDRESS;
     if (!address) {
-        return '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9';
+        return '0x610178da211fef7d417bc0e6fed39f05609ad788';
     }
     return address;
 }
@@ -128,7 +128,7 @@ export async function createTaskOnChain(
     multiplier: number = 1,
     signer?: ethers.Signer
 ): Promise<{ taskId: number; txHash: string }> {
-    // 优先使用传入的 signer，否则回退到默认 signer (本地测试)
+    // 允许测试账户降级（本地 Anvil 开发）
     const contract = signer ? getContractWithSigner(signer) : getContract();
     const deadline = calculateDeadline(deadlineHours);
     const value = parseEth(stakeEth);
@@ -140,7 +140,9 @@ export async function createTaskOnChain(
     console.log('Creating task on chain:', { description, deadline, value, multiplier: validMultiplier });
 
     const tx = await contract.createTask(description, deadline, validMultiplier, { value });
+    console.log(`Transaction sent: ${tx.hash}. Waiting for confirmation...`);
     const receipt = await tx.wait();
+    console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
 
     // 从事件中获取 taskId
     const event = receipt.logs.find((log: any) => {
@@ -177,8 +179,8 @@ export async function submitProofOnChain(
 /**
  * 领取退款 (验证成功后)
  */
-export async function claimRefundOnChain(taskId: number): Promise<string> {
-    const contract = getContract();
+export async function claimRefundOnChain(taskId: number, signer?: ethers.Signer): Promise<string> {
+    const contract = signer ? getContractWithSigner(signer) : getContract();
     const tx = await contract.claimRefund(taskId);
     const receipt = await tx.wait();
     return receipt.hash;
@@ -187,8 +189,8 @@ export async function claimRefundOnChain(taskId: number): Promise<string> {
 /**
  * 结算任务 (超时后罚没)
  */
-export async function settleTaskOnChain(taskId: number): Promise<string> {
-    const contract = getContract();
+export async function settleTaskOnChain(taskId: number, signer?: ethers.Signer): Promise<string> {
+    const contract = signer ? getContractWithSigner(signer) : getContract();
     const tx = await contract.settle(taskId);
     const receipt = await tx.wait();
     return receipt.hash;
