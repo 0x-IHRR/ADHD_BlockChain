@@ -17,7 +17,7 @@ import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { FadeInView, PulseGlow } from '../styles/animations';
-import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView, UserProfileCard } from '../components';
+import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView, UserProfileCard, ActivityHeatmap } from '../components';
 import { getAchievementNFTAddress } from '../services/contract.service';
 
 // 状态标签
@@ -135,13 +135,21 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // const jackpotAmount = '12.45'; (已替换为真实数据)
     const [isLeaderboardVisible, setLeaderboardVisible] = useState(false);
 
-    // 右侧 Agent 面板
-    const rightPanel = <AgentPanel state={agentState} />;
+    // 左侧面板：热力图 + 用户资料
+    const leftPanel = (
+        <View style={{ gap: spacing.md, flex: 1 }}>
+            {/* 紧凑型热力图 (只显示最近8周) */}
+            <ActivityHeatmap weeks={8} />
+            <UserProfileCard />
+        </View>
+    );
 
+    // 右侧 Agent 面板 (隐藏热力图，因为已移至左侧)
+    const rightPanel = <AgentPanel state={agentState} showHeatmap={false} />;
 
     return (
         <MainLayout
-            leftPanel={null}
+            leftPanel={leftPanel}
             rightPanel={rightPanel}
             jackpotAmount={jackpotAmount}
             onJackpotPress={() => setLeaderboardVisible(true)}

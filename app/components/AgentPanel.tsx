@@ -105,6 +105,7 @@ export type AgentState = {
 
 interface AgentPanelProps {
     state: AgentState;
+    showHeatmap?: boolean;
 }
 
 // 步骤图标
@@ -157,7 +158,7 @@ const WorkflowStep = ({ step, isLast }: { step: AgentStep; isLast: boolean }) =>
     );
 };
 
-export default function AgentPanel({ state }: AgentPanelProps) {
+export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProps) {
     const { colors } = useTheme();
     const { t } = useI18n();
     const { pet, isDead, isDying, revivePet, loading: petLoading } = usePet();
@@ -295,10 +296,12 @@ export default function AgentPanel({ state }: AgentPanelProps) {
 
         return (
             <View style={styles.container}>
-                {/* 月度任务热力图 - 放在顶部 */}
-                <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
-                    <ActivityHeatmap data={heatmapData} />
-                </View>
+                {/* 月度任务热力图 - 放在顶部 (条件渲染) */}
+                {showHeatmap && (
+                    <View style={[styles.heatmapContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                        <ActivityHeatmap data={heatmapData} />
+                    </View>
+                )}
 
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
