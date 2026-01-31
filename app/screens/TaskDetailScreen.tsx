@@ -63,12 +63,9 @@ export default function TaskDetailScreen() {
         updateTaskStatus(task.id, result.verified ? 'verified' : 'failed');
         setVerifyModalVisible(false);
 
-        // 强制刷新链上数据以确保同步
-        try {
-            await fetchTasksFromChain();
-        } catch (e) {
-            console.error('Failed to sync chain state after verify:', e);
-        }
+        // 注意：不要立即调用 fetchTasksFromChain()！
+        // 因为链上状态可能还没更新完成，会覆盖刚刚设置的本地状态
+        // 10s 定时器会自动同步链上状态
     };
 
     // 领取退款
