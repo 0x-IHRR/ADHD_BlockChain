@@ -191,9 +191,10 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
     // 根据 mood 和主题决定颜色
     const getColors = () => {
         // 使用主题色作为默认颜色（与用户选择的主题同步）
-        const primaryBody = themeColors.primary[400];
-        const primaryAccent = themeColors.primary[600] || themeColors.primary[500];
-        const primaryGlow = themeColors.primary[400];
+        // 直接使用 primary[500]，这是所有主题都保证存在的颜色
+        const primaryBody = themeColors.primary[500];
+        const primaryAccent = themeColors.primary[700] || themeColors.primary[500];
+        const primaryGlow = themeColors.primary[500];
 
         switch (mood) {
             case 'thinking':
