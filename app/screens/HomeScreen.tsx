@@ -136,8 +136,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // const jackpotAmount = '12.45'; (已替换为真实数据)
     const [isLeaderboardVisible, setLeaderboardVisible] = useState(false);
 
-    // 左侧面板：不显示
-    const leftPanel = null;
+    // 左侧面板：不显示内容，但保留占位，以保持中间内容居中
+    const leftPanel = <View style={{ flex: 1 }} />;
 
     // 右侧 Agent 面板 (隐藏热力图，因为已移至左侧)
     const rightPanel = <AgentPanel state={agentState} showHeatmap={false} />;
