@@ -160,7 +160,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 marginTop: spacing.xl, // Align with AgentPanel top padding
                 overflow: 'hidden',
                 borderRadius: borderRadius['2xl'],
-                backgroundColor: 'rgba(255,255,255,0.02)', // 更通透的玻璃底色
+                backgroundColor: 'transparent',
                 borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.08)',
             }]}>
@@ -176,8 +176,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <FadeInView delay={50}>
                     <View style={styles.statsContainer}>
                         <View style={[styles.statsRow, {
-                            backgroundColor: colors.glass.background,
-                            borderColor: colors.glass.border
+                            backgroundColor: 'rgba(255,255,255,0.03)', // Light tint instead of dark glass
+                            borderColor: 'rgba(255,255,255,0.08)'
                         }]}>
                             <StatCard value={activeCount} label={t('home.active')} color={colors.semantic.warning} />
                             <View style={[styles.statsDivider, { backgroundColor: colors.border.default }]} />
