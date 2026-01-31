@@ -220,14 +220,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                                 <Text style={[styles.emptySubtitle, { color: colors.text.muted }]}>
                                     {t('home.noTasksSubtitle')}
                                 </Text>
-                                <TouchableOpacity
-                                    style={[styles.emptyButton, { backgroundColor: colors.primary[500] }]}
-                                    onPress={() => navigation.navigate('CreateTask')}
-                                    activeOpacity={0.85}
-                                >
-                                    <Plus size={18} color="#000" />
-                                    <Text style={styles.emptyButtonText}>{t('home.createTask')}</Text>
-                                </TouchableOpacity>
                             </View>
                         </FadeInView>
                     }
