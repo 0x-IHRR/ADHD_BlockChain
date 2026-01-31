@@ -92,15 +92,7 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <MessageCircle size={14} color={colors.text.muted} />
-                <Text style={[styles.headerText, { color: colors.text.muted }]}>
-                    Focus Dragon 说
-                </Text>
-            </View>
-
-            {/* Messages */}
+            {/* Messages - Clean, no header */}
             <ScrollView
                 ref={scrollViewRef}
                 style={styles.messagesContainer}
@@ -122,12 +114,7 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
 
                         return (
                             <View key={message.id} style={styles.messageWrapper}>
-                                {/* Emotion indicator */}
-                                <View style={[styles.emotionBadge, { backgroundColor: emotionColor + '20' }]}>
-                                    <Icon size={12} color={emotionColor} />
-                                </View>
-
-                                {/* Message content */}
+                                {/* Message content - Clean bubble only */}
                                 <View style={[styles.messageBubble, {
                                     backgroundColor: colors.glass.backgroundLight,
                                     borderColor: colors.border.default
@@ -145,11 +132,6 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
                                         </Text>
                                     )}
                                 </View>
-
-                                {/* Timestamp */}
-                                <Text style={[styles.timestamp, { color: colors.text.tertiary }]}>
-                                    {formatTime(message.timestamp)}
-                                </Text>
                             </View>
                         );
                     })
