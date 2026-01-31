@@ -1,93 +1,94 @@
 /**
- * FocusFlow Design Tokens v2
- * 参考 UniSwap / Pendle 风格
- * 特点: 居中布局、毛玻璃、紧凑按钮、大圆角
+ * Time Gamble Design Tokens v3
+ * 参考 Raycast 风格
+ * 特点: 纯黑背景、暖红点缀、极简边框、柔和阴影
  */
 
 // ============ 配色系统 ============
 
 export const colors = {
-    // UniSwap/Pendle 风格深色背景
+    // Raycast 风格纯黑背景
     background: {
-        primary: '#0D0D0F',      // 纯黑偏蓝
-        secondary: '#131318',    // 深灰
-        tertiary: '#1A1A22',     // 卡片背景
-        elevated: '#222230',     // 悬浮元素
-        surface: '#16161D',      // 表面
+        primary: '#0A0A0B',      // 纯黑
+        secondary: '#111113',    // 深灰
+        tertiary: '#18181B',     // 卡片背景
+        elevated: '#1F1F23',     // 悬浮元素
+        surface: '#141416',      // 表面
     },
 
-    // 主色调 - Pendle 风格青绿
+    // 主色调 - Raycast 暖红
     primary: {
-        50: '#E6FFF9',
-        100: '#B3FFE6',
-        200: '#80FFD4',
-        300: '#4DFFC1',
-        400: '#26FFAF',
-        500: '#1BE3C2',          // Pendle PT Green
-        600: '#15B89D',
-        700: '#0F8C78',
-        800: '#0A6053',
-        900: '#05342E',
+        50: '#FFF1F1',
+        100: '#FFE1E1',
+        200: '#FFC7C7',
+        300: '#FFA3A3',
+        400: '#FF6B6B',
+        500: '#FF6363',          // Raycast Red
+        600: '#E85555',
+        700: '#C94747',
+        800: '#A53939',
+        900: '#7A2B2B',
     },
 
-    // 次要色调 - UniSwap 粉紫
+    // 次要色调
     accent: {
-        pink: '#FF007A',         // UniSwap 粉
-        purple: '#8878C3',
-        blue: '#7AB7FF',         // Pendle YT Blue
-        cyan: '#06B6D4',
-        pendleBlue: '#6079FF',   // Pendle Blue
+        pink: '#FF6B9D',
+        purple: '#A78BFA',
+        blue: '#60A5FA',
+        cyan: '#22D3EE',
+        orange: '#FB923C',
     },
 
     // 语义色
     semantic: {
-        success: '#1BE3C2',      // Pendle 风格绿
-        successLight: 'rgba(27, 227, 194, 0.1)',
-        successBorder: 'rgba(27, 227, 194, 0.3)',
+        success: '#4ADE80',      // 柔和绿
+        successLight: 'rgba(74, 222, 128, 0.1)',
+        successBorder: 'rgba(74, 222, 128, 0.2)',
 
-        warning: '#FFB800',
-        warningLight: 'rgba(255, 184, 0, 0.1)',
-        warningBorder: 'rgba(255, 184, 0, 0.3)',
+        warning: '#FBBF24',
+        warningLight: 'rgba(251, 191, 36, 0.1)',
+        warningBorder: 'rgba(251, 191, 36, 0.2)',
 
-        error: '#FF4757',
-        errorLight: 'rgba(255, 71, 87, 0.1)',
-        errorBorder: 'rgba(255, 71, 87, 0.3)',
+        error: '#F87171',
+        errorLight: 'rgba(248, 113, 113, 0.1)',
+        errorBorder: 'rgba(248, 113, 113, 0.2)',
 
-        info: '#7AB7FF',
-        infoLight: 'rgba(122, 183, 255, 0.1)',
+        info: '#60A5FA',
+        infoLight: 'rgba(96, 165, 250, 0.1)',
     },
 
     // 文字色
     text: {
-        primary: '#FFFFFF',
-        secondary: '#E0E0E6',
+        primary: '#FAFAFA',      // 更亮的白
+        secondary: '#D4D4D8',
         tertiary: '#A1A1AA',
         muted: '#71717A',
         disabled: '#52525B',
     },
 
-    // 边框
+    // 边框 - 更隐蔽
     border: {
-        subtle: 'rgba(255, 255, 255, 0.04)',
-        default: 'rgba(255, 255, 255, 0.08)',
-        strong: 'rgba(255, 255, 255, 0.12)',
+        subtle: 'rgba(255, 255, 255, 0.03)',
+        default: 'rgba(255, 255, 255, 0.06)',
+        strong: 'rgba(255, 255, 255, 0.10)',
     },
 
-    // 毛玻璃效果 - UniSwap/Pendle 风格
+    // 毛玻璃效果 - 更透明
     glass: {
-        background: 'rgba(26, 26, 34, 0.8)',
-        backgroundLight: 'rgba(255, 255, 255, 0.05)',
-        border: 'rgba(255, 255, 255, 0.06)',
-        highlight: 'rgba(255, 255, 255, 0.08)',
+        background: 'rgba(24, 24, 27, 0.85)',
+        backgroundLight: 'rgba(255, 255, 255, 0.04)',
+        border: 'rgba(255, 255, 255, 0.05)',
+        highlight: 'rgba(255, 255, 255, 0.06)',
     },
 
     // 渐变
     gradient: {
-        primary: ['#1BE3C2', '#7AB7FF'],
-        accent: ['#FF007A', '#8878C3'],
-        surface: ['rgba(26,26,34,0.9)', 'rgba(13,13,15,0.95)'],
+        primary: ['#FF6363', '#FB923C'],
+        accent: ['#A78BFA', '#60A5FA'],
+        surface: ['rgba(24,24,27,0.95)', 'rgba(10,10,11,0.98)'],
     },
 };
+
 
 // ============ 间距系统 (更大边距) ============
 
