@@ -61,7 +61,7 @@ export const uniswapTheme: Theme = {
         },
         glass: {
             ...baseColors.glass,
-            background: 'rgba(26, 15, 20, 0.8)', // 稍微带点红
+            background: 'rgba(26, 15, 20, 0.6)', // 更透明
         },
         gradient: {
             ...baseColors.gradient,
@@ -82,7 +82,7 @@ export const aaveTheme: Theme = {
         },
         glass: {
             ...baseColors.glass,
-            background: 'rgba(20, 20, 30, 0.8)',
+            background: 'rgba(20, 20, 30, 0.6)', // 更透明
         },
         gradient: {
             ...baseColors.gradient,

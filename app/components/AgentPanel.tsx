@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     resultBox: {
         padding: spacing.lg,
         borderRadius: borderRadius.lg,
-        borderWidth: 1,
+        // borderWidth: 1, // Raycast 风格：移除边框
         marginTop: spacing.xl,
     },
     resultHeader: {

@@ -124,7 +124,8 @@ export default function MainLayout({
                 {/* Top Navigation Bar */}
                 <View style={[styles.navbar, {
                     backgroundColor: colors.background.secondary,
-                    borderBottomColor: colors.border.subtle
+                    // Raycast 风格：移除底部边框，通过颜色区分
+                    // borderBottomColor: colors.border.subtle 
                 }]}>
                     {/* Left: Logo */}
                     <View style={styles.navLeft}>
@@ -329,7 +330,7 @@ export default function MainLayout({
                     {leftPanel && !isMobile && (
                         <View style={[styles.sidePanel, {
                             backgroundColor: colors.background.secondary,
-                            borderRightColor: colors.border.subtle
+                            // borderRightColor: colors.border.subtle
                         }]}>
                             {leftPanel}
                         </View>
@@ -348,7 +349,7 @@ export default function MainLayout({
                     {showRightPanel && (
                         <View style={[styles.rightPanel, {
                             backgroundColor: colors.background.secondary,
-                            borderLeftColor: colors.border.subtle
+                            // borderLeftColor: colors.border.subtle
                         }]}>
                             {rightPanel}
                         </View>
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: spacing.xl,
         paddingVertical: spacing.md,
-        borderBottomWidth: 1,
+        // borderBottomWidth: 1,
         zIndex: 100,
     },
     navLeft: {
@@ -588,7 +589,7 @@ const styles = StyleSheet.create({
     },
     sidePanel: {
         width: 220,
-        borderRightWidth: 1,
+        // borderRightWidth: 1,
         padding: spacing.md,
     },
     centerPanel: {
@@ -608,6 +609,6 @@ const styles = StyleSheet.create({
     },
     rightPanel: {
         flex: 2, // 右侧占 40%
-        borderLeftWidth: 1,
+        // borderLeftWidth: 1,
     },
 });

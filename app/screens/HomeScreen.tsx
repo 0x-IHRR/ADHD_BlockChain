@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.xl,
         paddingVertical: spacing.lg,
         paddingHorizontal: spacing.xl,
-        borderWidth: 1,
+        // borderWidth: 1, // Raycast 风格：移除边框
     },
     statCard: {
         flex: 1,
