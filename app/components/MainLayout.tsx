@@ -132,7 +132,7 @@ export default function MainLayout({
                             <Zap size={20} color={colors.primary[500]} fill={colors.primary[500]} />
                         </View>
                         <Text style={[styles.brandName, { color: colors.text.primary }]}>
-                            FocusFlow
+                            Time Gambler
                         </Text>
                     </View>
 

@@ -21,7 +21,7 @@ interface I18nContextType {
 const translations: Record<Language, Record<string, string>> = {
     en: {
         // Brand
-        'brand.name': 'FocusFlow',
+        'brand.name': 'Time Gambler',
 
         // Common
         'common.connect': 'Connect',
@@ -160,7 +160,7 @@ const translations: Record<Language, Record<string, string>> = {
     },
     zh: {
         // Brand
-        'brand.name': 'FocusFlow',
+        'brand.name': 'Time Gambler',
         // ... (existing keys) ...
         'createTask.successTitle': '任务创建成功！',
         'createTask.successDesc': '质押金已锁定。开始专注吧！',

@@ -141,7 +141,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
     return (
         <MainLayout
-            leftPanel={<UserProfileCard />}
+            leftPanel={null}
             rightPanel={rightPanel}
             jackpotAmount={jackpotAmount}
             onJackpotPress={() => setLeaderboardVisible(true)}

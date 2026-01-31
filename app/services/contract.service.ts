@@ -128,39 +128,57 @@ export async function createTaskOnChain(
     multiplier: number = 1,
     signer?: ethers.Signer
 ): Promise<{ taskId: number; txHash: string }> {
+    console.log('[createTaskOnChain] ====== 开始创建任务 ======');
+    console.log('[createTaskOnChain] 参数:', { description, deadlineHours, stakeEth, multiplier });
+    console.log('[createTaskOnChain] Signer 存在:', !!signer);
+
     // 允许测试账户降级（本地 Anvil 开发）
     const contract = signer ? getContractWithSigner(signer) : getContract();
+    console.log('[createTaskOnChain] 合约地址:', getContractAddress());
+
     const deadline = calculateDeadline(deadlineHours);
     const value = parseEth(stakeEth);
+    console.log('[createTaskOnChain] 计算后:', { deadline: deadline.toString(), value: value.toString() });
 
     // 验证 multiplier 是否为有效值
     const validMultipliers = [1, 2, 3, 5, 10];
     const validMultiplier = validMultipliers.includes(multiplier) ? multiplier : 1;
 
-    console.log('Creating task on chain:', { description, deadline, value, multiplier: validMultiplier });
+    console.log('[createTaskOnChain] 准备发送交易...弹出钱包签名');
 
-    const tx = await contract.createTask(description, deadline, validMultiplier, { value });
-    console.log(`Transaction sent: ${tx.hash}. Waiting for confirmation...`);
-    const receipt = await tx.wait();
-    console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
+    try {
+        const tx = await contract.createTask(description, deadline, validMultiplier, { value });
+        console.log(`[createTaskOnChain] 交易已发送: ${tx.hash}`);
+        console.log('[createTaskOnChain] 等待确认...');
 
-    // 从事件中获取 taskId
-    const event = receipt.logs.find((log: any) => {
-        try {
-            const parsed = contract.interface.parseLog(log);
-            return parsed?.name === 'TaskCreated';
-        } catch {
-            return false;
+        const receipt = await tx.wait();
+        console.log(`[createTaskOnChain] 交易已确认，区块: ${receipt.blockNumber}`);
+
+        // 从事件中获取 taskId
+        const event = receipt.logs.find((log: any) => {
+            try {
+                const parsed = contract.interface.parseLog(log);
+                return parsed?.name === 'TaskCreated';
+            } catch {
+                return false;
+            }
+        });
+
+        let taskId = 1;
+        if (event) {
+            const parsed = contract.interface.parseLog(event);
+            taskId = Number(parsed?.args?.taskId || 1);
         }
-    });
 
-    let taskId = 1;
-    if (event) {
-        const parsed = contract.interface.parseLog(event);
-        taskId = Number(parsed?.args?.taskId || 1);
+        console.log('[createTaskOnChain] ====== 任务创建成功 ======', { taskId, txHash: receipt.hash });
+        return { taskId, txHash: receipt.hash };
+    } catch (error: any) {
+        console.error('[createTaskOnChain] ====== 交易失败 ======');
+        console.error('[createTaskOnChain] 错误类型:', error?.code);
+        console.error('[createTaskOnChain] 错误信息:', error?.message);
+        console.error('[createTaskOnChain] 完整错误:', error);
+        throw error;
     }
-
-    return { taskId, txHash: receipt.hash };
 }
 
 /**
