@@ -790,8 +790,8 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         textAlign: 'center',
     },
     thinkingStep: {
-        padding: spacing.sm,
-        marginBottom: spacing.xs,
+        padding: spacing.md,
+        marginBottom: spacing.sm,  // 增加步骤间距
         borderRadius: borderRadius.md,
     },
     thinkingStepText: {
@@ -807,9 +807,10 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         fontSize: typography.fontSize.sm,
     },
     resultSummary: {
-        padding: spacing.md,
+        padding: spacing.lg,
         borderRadius: borderRadius.lg,
-        marginTop: spacing.md,
+        marginTop: spacing.lg,  // 增加与上方内容的间距
+        marginBottom: spacing.md,
     },
     resultSummaryTitle: {
         fontSize: typography.fontSize.sm,
@@ -919,7 +920,7 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     suggestionText: {
         color: colors.text.secondary,
         fontSize: typography.fontSize.sm,
-        lineHeight: typography.fontSize.sm * 1.5,
+        lineHeight: typography.fontSize.sm * 2.2,  // 增加行高，减少密集感
     },
 
     // Settings
