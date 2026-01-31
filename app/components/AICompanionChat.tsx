@@ -116,17 +116,17 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
 
                         return (
                             <View key={message.id} style={styles.messageWrapper}>
-                                {/* Message content - 无背景，文字从虚空中浮现 */}
+                                {/* Message content - 无背景，文字从虚空浮现 */}
                                 <View style={styles.messageBubble}>
                                     {isCurrentlyTyping && !isAlreadyTyped ? (
                                         <TypewriterText
                                             text={message.text}
                                             speed={35}
-                                            style={{ ...styles.messageText, color: colors.text.primary }}
+                                            style={{ ...styles.messageText, color: colors.text.secondary }}
                                             onComplete={() => handleTypingComplete(message.id)}
                                         />
                                     ) : (
-                                        <Text style={[styles.messageText, { color: colors.text.primary }]}>
+                                        <Text style={[styles.messageText, { color: colors.text.secondary }]}>
                                             {message.text}
                                         </Text>
                                     )}
@@ -252,9 +252,9 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     messageBubble: {
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
-        // 无背景无边框，文字从虚空中浮现
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.sm,
+        // 无背景、无边框，文字从背景虚空浮现
     },
     messageText: {
         fontSize: typography.fontSize.sm,
