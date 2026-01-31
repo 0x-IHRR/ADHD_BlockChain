@@ -8,10 +8,10 @@ import {
     View,
     Text,
     StyleSheet,
+    Platform,
     ScrollView,
     Animated,
     TouchableOpacity,
-    Platform,
 } from 'react-native';
 import {
     Brain,
@@ -24,17 +24,17 @@ import {
     Heart,
     AlertTriangle
 } from 'lucide-react-native';
-import Svg, { Defs, RadialGradient, Rect, Stop, Circle } from 'react-native-svg';
+import AnimatedRN, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, withRepeat, Easing, runOnJS } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { useApp } from '../context/AppContext';
+import { MeshGradientBackground } from './MeshGradientBackground';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { MOCK_CONFIG } from '../config/demo';
 import FocusDragon, { FocusDragonMood } from './FocusDragon';
-import ActivityHeatmap from './ActivityHeatmap';
 import { usePet } from '../context/PetContext';
+import ActivityHeatmap from './ActivityHeatmap';
 import { useWallet } from '../context/WalletContext';
-import AnimatedRN, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 
 // Dragon Hover Glow Wrapper - Thin skin-hugging glow
 const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
@@ -82,29 +82,6 @@ const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
         <View style={{ alignItems: 'center', justifyContent: 'center' }} {...hoverProps}>
             <AnimatedRN.View style={glowStyle} />
             {children}
-        </View>
-    );
-};
-
-// Mesh Gradient Background (Raycast Style)
-const MeshGradientBackground = () => {
-    const { colors } = useTheme();
-    return (
-        <View style={StyleSheet.absoluteFill}>
-            <Svg height="100%" width="100%">
-                <Defs>
-                    <RadialGradient id="grad1" cx="50%" cy="0%" rx="80%" ry="50%" fx="50%" fy="0%" gradientUnits="userSpaceOnUse">
-                        <Stop offset="0%" stopColor={colors.primary[500]} stopOpacity="0.15" />
-                        <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
-                    </RadialGradient>
-                    <RadialGradient id="grad2" cx="80%" cy="20%" rx="40%" ry="40%" fx="80%" fy="20%" gradientUnits="userSpaceOnUse">
-                        <Stop offset="0%" stopColor={colors.semantic.error} stopOpacity="0.1" />
-                        <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
-                    </RadialGradient>
-                </Defs>
-                <Rect x="0" y="0" width="100%" height="100%" fill="url(#grad1)" />
-                <Rect x="0" y="0" width="100%" height="100%" fill="url(#grad2)" />
-            </Svg>
         </View>
     );
 };
@@ -330,7 +307,10 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                 {/* AI Output Area (Placeholder) - 透明区域，占据上方空间 */}
                 <View style={styles.aiOutputArea}>
                     {/* 背景光晕层 */}
-                    <MeshGradientBackground />
+                    <MeshGradientBackground
+                        primaryColor={colors.primary[500]}
+                        secondaryColor={colors.semantic.error}
+                    />
 
                     {/* 玻璃质感边框容器 */}
                     <View style={styles.glassContainerInner}>

@@ -10,3 +10,4 @@ export { default as HoverableView } from './HoverableView';
 export { default as VerifyModal } from './VerifyModal';
 export { default as ActivityHeatmap } from './ActivityHeatmap';
 export { default as UserProfileCard } from './UserProfileCard';
+export { MeshGradientBackground } from './MeshGradientBackground';
