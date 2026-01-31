@@ -17,7 +17,7 @@ import { useI18n } from '../context/I18nContext';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, typography, borderRadius } from '../styles/tokens';
 import { FadeInView, PulseGlow } from '../styles/animations';
-import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView, UserProfileCard, ActivityHeatmap } from '../components';
+import { MainLayout, AgentPanel, AgentState, LeaderboardModal, HoverableView } from '../components';
 import { MeshGradientBackground } from '../components/MeshGradientBackground';
 import { getAchievementNFTAddress } from '../services/contract.service';
 
@@ -136,30 +136,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // const jackpotAmount = '12.45'; (已替换为真实数据)
     const [isLeaderboardVisible, setLeaderboardVisible] = useState(false);
 
-    // 左侧面板：热力图 + 用户资料 (Glassmorphism 风格)
-    const leftPanel = (
-        <View style={{ flex: 1, overflow: 'hidden', borderRadius: borderRadius['2xl'] }}>
-            {/* Background Layer: Green/Teal Gradient for Tasks */}
-            <MeshGradientBackground
-                primaryColor={colors.semantic.success}
-                secondaryColor={colors.primary[500]}
-                opacity={0.3}
-            />
-
-            {/* Glass Container Style */}
-            <View style={{
-                flex: 1,
-                padding: spacing.md,
-                gap: spacing.md,
-                backgroundColor: 'rgba(255, 255, 255, 0.02)', // Glass tint
-                borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.06)',
-            }}>
-                <ActivityHeatmap weeks={8} />
-                <UserProfileCard />
-            </View>
-        </View>
-    );
+    // 左侧面板：不显示
+    const leftPanel = null;
 
     // 右侧 Agent 面板 (隐藏热力图，因为已移至左侧)
     const rightPanel = <AgentPanel state={agentState} showHeatmap={false} />;
