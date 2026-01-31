@@ -116,17 +116,20 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
 
                         return (
                             <View key={message.id} style={styles.messageWrapper}>
-                                {/* Message content - 无背景，文字从虚空浮现 */}
-                                <View style={styles.messageBubble}>
+                                {/* Message content - Clean bubble only */}
+                                <View style={[styles.messageBubble, {
+                                    backgroundColor: colors.glass.backgroundLight,
+                                    borderColor: colors.border.default
+                                }]}>
                                     {isCurrentlyTyping && !isAlreadyTyped ? (
                                         <TypewriterText
                                             text={message.text}
                                             speed={35}
-                                            style={{ ...styles.messageText, color: colors.text.secondary }}
+                                            style={{ ...styles.messageText, color: colors.text.primary }}
                                             onComplete={() => handleTypingComplete(message.id)}
                                         />
                                     ) : (
-                                        <Text style={[styles.messageText, { color: colors.text.secondary }]}>
+                                        <Text style={[styles.messageText, { color: colors.text.primary }]}>
                                             {message.text}
                                         </Text>
                                     )}
@@ -252,9 +255,9 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     messageBubble: {
-        paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.sm,
-        // 无背景、无边框，文字从背景虚空浮现
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+        borderWidth: 1,
     },
     messageText: {
         fontSize: typography.fontSize.sm,

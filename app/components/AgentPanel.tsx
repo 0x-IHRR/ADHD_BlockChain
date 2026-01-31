@@ -594,10 +594,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xl,
         borderRadius: borderRadius['2xl'],
         overflow: 'hidden',
-        // 极简玻璃质感
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.06)',
+        // 无背景、无边框，AI 消息从虚空浮现
     },
     glassContainerInner: {
         flex: 1,
