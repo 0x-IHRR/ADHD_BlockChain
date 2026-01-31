@@ -339,6 +339,7 @@ export default function MainLayout({
                     {/* Center Panel: Main Content */}
                     <View style={[
                         styles.centerPanel,
+                        { backgroundColor: colors.background.secondary }, // Match Right Panel base color
                         showRightPanel ? styles.centerPanelWithRight : undefined,
                         leftPanel && !isMobile ? styles.centerPanelWithLeft : undefined
                     ]}>
