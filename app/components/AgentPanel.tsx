@@ -303,6 +303,11 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                     </View>
                 )}
 
+                {/* AI Output Area (Placeholder) - 透明区域，占据上方空间 */}
+                <View style={styles.aiOutputArea}>
+                    {/* 将来这里会放 AI 输出内容 */}
+                </View>
+
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
                     <DragonHoverGlow>
@@ -550,11 +555,17 @@ const styles = StyleSheet.create({
         fontWeight: typography.fontWeight.bold,
     },
 
+    // AI Output Area
+    aiOutputArea: {
+        flex: 1, // 占据上方剩余空间
+        marginBottom: spacing.xl,
+    },
+
     // Idle State
     idleState: {
-        flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: spacing['4xl'], // 底部留白
     },
     idleIcon: {
         width: 80,
