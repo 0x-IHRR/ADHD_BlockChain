@@ -71,7 +71,7 @@ export default function SponsorLogos({ size = 64 }: SponsorLogosProps) {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'column',
-        alignItems: 'flex-start',
+        alignItems: 'center', // 居中对齐
         justifyContent: 'center',
         gap: spacing['2xl'], // 更大的间距
         paddingVertical: spacing.xl,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
         fontSize: typography.fontSize.lg, // 更大的字体
         fontWeight: '700', // 更粗的字体
         letterSpacing: 1.5, // 更大的字间距，更酷
-        textTransform: 'uppercase', // 全大写，更大气
+        // 保持原始品牌名称大小写
     },
 });
 
