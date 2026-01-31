@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: spacing.xl, // 字母之间的间距 (更大)
+        gap: spacing['2xl'], // 字母之间的间距 (更大)
     },
     letter: {
         fontSize: 48, // 更大的字体
