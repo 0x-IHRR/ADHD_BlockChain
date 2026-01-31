@@ -167,8 +167,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 {/* Background Layer: Subtle Focus Gradient */}
                 <MeshGradientBackground
                     primaryColor={colors.primary[500]}
-                    secondaryColor="transparent" // Remove dark background mix
-                    opacity={0.5}
+                    secondaryColor={colors.primary[600]} // Use a visible secondary color (deep purple)
+                // opacity removed (default 1) to match right panel brightness
                 />
                 {/* Header */}
 
