@@ -36,7 +36,7 @@ interface SponsorLogosProps {
     size?: number; // Logo 尺寸
 }
 
-export default function SponsorLogos({ size = 48 }: SponsorLogosProps) {
+export default function SponsorLogos({ size = 64 }: SponsorLogosProps) {
     const { colors } = useTheme();
 
     const handlePress = (url: string) => {
@@ -58,7 +58,7 @@ export default function SponsorLogos({ size = 48 }: SponsorLogosProps) {
                             style={[styles.logo, { width: size, height: size }]}
                             resizeMode="contain"
                         />
-                        <Text style={[styles.sponsorName, { color: colors.text.secondary }]}>
+                        <Text style={[styles.sponsorName, { color: colors.text.primary }]}>
                             {sponsor.name}
                         </Text>
                     </TouchableOpacity>
@@ -71,23 +71,26 @@ export default function SponsorLogos({ size = 48 }: SponsorLogosProps) {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'column',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        gap: spacing.lg,
+        gap: spacing['2xl'], // 更大的间距
         paddingVertical: spacing.xl,
+        marginTop: spacing['3xl'], // 整体下移
     },
     sponsorItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.sm,
-        opacity: 0.85,
+        gap: spacing.md, // 图标和文字之间的间距
+        opacity: 0.9,
     },
     logo: {
         // 尺寸由 props 控制
     },
     sponsorName: {
-        fontSize: typography.fontSize.sm,
-        fontWeight: '500',
-        letterSpacing: 0.5,
+        fontSize: typography.fontSize.lg, // 更大的字体
+        fontWeight: '700', // 更粗的字体
+        letterSpacing: 1.5, // 更大的字间距，更酷
+        textTransform: 'uppercase', // 全大写，更大气
     },
 });
+
