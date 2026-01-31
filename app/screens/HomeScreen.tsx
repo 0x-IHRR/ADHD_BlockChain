@@ -178,14 +178,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 jackpotAmount={jackpotAmount}
             />
 
-            <View style={styles.content}>
-                {/* Heatmap Section - 移至中间顶部 */}
-                <FadeInView delay={0}>
-                    <View style={{ marginBottom: spacing.xl }}>
-                        {/* 宽屏热力图 (显示20周) */}
-                        <ActivityHeatmap weeks={20} />
-                    </View>
-                </FadeInView>
+            <View style={[styles.content, {
+                overflow: 'hidden',
+                borderRadius: borderRadius['2xl'],
+                backgroundColor: 'rgba(0,0,0,0.2)', // 深色半透明背景，增加对比度
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.05)',
+            }]}>
+                {/* Background Layer: Subtle Focus Gradient */}
+                <MeshGradientBackground
+                    primaryColor={colors.primary[500]}
+                    secondaryColor="transparent"
+                    opacity={0.15}
+                />
+                {/* Header */}
 
                 {/* Stats Row */}
                 <FadeInView delay={50}>
