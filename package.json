@@ -1,8 +1,8 @@
 {
-    "name": "adhd-focus-flow",
+    "name": "time-gamble",
     "version": "0.1.0",
     "private": true,
-    "description": "FocusFlow Monorepo: AI-driven, Blockchain-enforced ADHD productivity tool",
+    "description": "Time Gamble: Stake ETH, Complete Tasks, Earn Rewards - A blockchain-enforced productivity game",
     "scripts": {
         "setup": "echo '🚧 Please initialize sub-projects first (app & ai_engine) 🚧'",
         "----------- CONTRACTS -----------": "",

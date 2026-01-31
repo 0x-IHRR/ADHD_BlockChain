@@ -1,5 +1,5 @@
 /**
- * FocusDragon - FocusFlow 吉祥物组件 (SVG 版本)
+ * FocusDragon - Time Gamble 吉祥物组件 (SVG 版本)
  * 
  * 一个可爱的专注小龙拿着勺子，用于可视化 AI Agent 状态
  * 灵感来自 Spoon Theory (慢性疲劳理论)

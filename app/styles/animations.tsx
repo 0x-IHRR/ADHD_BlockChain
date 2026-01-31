@@ -1,5 +1,5 @@
 /**
- * FocusFlow Animation & Layout Components
+ * Time Gamble Animation & Layout Components
  * 提供淡入动画和居中容器
  */
 

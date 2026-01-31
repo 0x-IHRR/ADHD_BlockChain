@@ -1,5 +1,5 @@
 /**
- * FocusFlow 国际化 (i18n) 系统
+ * Time Gamble 国际化 (i18n) 系统
  * 支持中英文切换
  */
 

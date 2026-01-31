@@ -191,7 +191,7 @@ export default function TaskDetailScreen() {
                                 <View style={styles.divider} />
                                 <View style={styles.verificationRow}>
                                     <Text style={styles.verificationLabel}>{t('taskDetail.method')}</Text>
-                                    <Text style={styles.verificationValue}>AI 验证专员 (FocusFlow)</Text>
+                                    <Text style={styles.verificationValue}>AI 验证专员 (Time Gamble)</Text>
                                 </View>
                                 <View style={styles.verificationRow}>
                                     <Text style={styles.verificationLabel}>{t('taskDetail.proof')}</Text>

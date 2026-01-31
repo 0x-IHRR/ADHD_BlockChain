@@ -1,5 +1,5 @@
 /**
- * AI Service - 与 FocusFlow AI Engine 交互
+ * AI Service - 与 Time Gamble AI Engine 交互
  */
 
 const AI_ENGINE_BASE_URL = process.env.EXPO_PUBLIC_AI_ENGINE_URL || 'http://localhost:8000';
