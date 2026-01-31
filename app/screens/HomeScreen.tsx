@@ -159,15 +159,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={[styles.content, {
                 overflow: 'hidden',
                 borderRadius: borderRadius['2xl'],
-                backgroundColor: 'rgba(0,0,0,0.2)', // 深色半透明背景，增加对比度
+                backgroundColor: 'rgba(255,255,255,0.02)', // 更通透的玻璃底色
                 borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.05)',
+                borderColor: 'rgba(255,255,255,0.08)',
             }]}>
                 {/* Background Layer: Subtle Focus Gradient */}
                 <MeshGradientBackground
                     primaryColor={colors.primary[500]}
-                    secondaryColor="transparent"
-                    opacity={0.15}
+                    secondaryColor={colors.background.secondary} // Use secondary background color for subtlety
+                    opacity={0.6} // 稍微降低一点点，但不要 0.15 那么低
                 />
                 {/* Header */}
 
