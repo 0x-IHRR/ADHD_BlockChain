@@ -7,6 +7,7 @@
  */
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 import Svg, {
     Ellipse,
     Path,
@@ -39,6 +40,8 @@ interface FocusDragonProps {
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDragonProps) {
+    const { colors: themeColors } = useTheme();
+
     // 动画值
     const rotation = useSharedValue(0);
     const bounce = useSharedValue(0);
@@ -185,25 +188,31 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
         ],
     }));
 
-    // 根据 mood 决定颜色
+    // 根据 mood 和主题决定颜色
     const getColors = () => {
+        // 使用主题色作为默认颜色（与用户选择的主题同步）
+        const primaryBody = themeColors.primary[400];
+        const primaryAccent = themeColors.primary[600] || themeColors.primary[500];
+        const primaryGlow = themeColors.primary[400];
+
         switch (mood) {
             case 'thinking':
                 return { body: '#7AB7FF', accent: '#5A97DD', glow: '#7AB7FF' }; // 蓝色思考
             case 'happy':
-                return { body: '#1BE3C2', accent: '#14B89A', glow: '#1BE3C2' }; // 成功绿
+                return { body: primaryBody, accent: primaryAccent, glow: primaryGlow }; // 使用主题色
             case 'working':
-                return { body: '#FFD93D', accent: '#E6C235', glow: '#FFD93D' }; // 专注黄
+                return { body: primaryBody, accent: primaryAccent, glow: primaryGlow }; // 使用主题色
             case 'tired':
                 return { body: '#A0A0A0', accent: '#808080', glow: '#808080' }; // 疲惫灰
             case 'shaking':
-                return { body: '#FF4757', accent: '#CC3945', glow: '#FF4757' }; // 失败红
+                return { body: themeColors.semantic.error, accent: '#CC3945', glow: themeColors.semantic.error }; // 失败红
             case 'dying':
                 return { body: '#FFA502', accent: '#FF7F50', glow: '#FFA502' }; // 橙色虚弱
             case 'dead':
                 return { body: '#747D8C', accent: '#2F3542', glow: '#000000' }; // 灰色死亡
             default:
-                return { body: '#7ED7A0', accent: '#5FB580', glow: '#7ED7A0' }; // 薄荷绿中立
+                // 默认状态使用主题色
+                return { body: primaryBody, accent: primaryAccent, glow: primaryGlow };
         }
     };
 
@@ -213,9 +222,9 @@ export default function FocusDragon({ mood = 'neutral', size = 120 }: FocusDrago
         <AnimatedView style={[styles.container, { width: size, height: size * 1.2 }, animatedStyle]}>
             <Svg width={size} height={size * 1.2} viewBox="0 0 100 120">
                 <Defs>
-                    {/* 龙身体渐变 */}
+                    {/* 龙身体渐变 - 使用主题色 */}
                     <LinearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <Stop offset="0%" stopColor="#9DE8BE" />
+                        <Stop offset="0%" stopColor={colors.body} stopOpacity="0.9" />
                         <Stop offset="50%" stopColor={colors.body} />
                         <Stop offset="100%" stopColor={colors.accent} />
                     </LinearGradient>
