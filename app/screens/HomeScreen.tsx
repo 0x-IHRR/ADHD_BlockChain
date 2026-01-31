@@ -164,6 +164,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.08)',
             }]}>
+                {/* Glass Tint Overlay - Critical for brightness match */}
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.02)' }]} />
+
                 {/* Background Layer: Subtle Focus Gradient */}
                 <MeshGradientBackground
                     primaryColor={colors.primary[500]}
