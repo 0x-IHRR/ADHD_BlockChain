@@ -36,7 +36,7 @@ interface SponsorLogosProps {
     size?: number; // Logo 尺寸
 }
 
-export default function SponsorLogos({ size = 64 }: SponsorLogosProps) {
+export default function SponsorLogos({ size = 80 }: SponsorLogosProps) {
     const { colors } = useTheme();
 
     const handlePress = (url: string) => {
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'flex-start', // 左对齐，保证 Logo 垂直对齐
         justifyContent: 'center',
-        gap: spacing['2xl'], // 更大的间距
+        gap: spacing['3xl'], // Logo 之间的间距，更大
         paddingVertical: spacing.xl,
         marginTop: spacing['6xl'], // 整体再下移
         paddingLeft: 140, // 左侧内边距，整体右移 (约等于 14xl)
@@ -81,14 +81,14 @@ const styles = StyleSheet.create({
     sponsorItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.md, // 图标和文字之间的间距
+        gap: spacing.lg, // 图标和文字之间的间距，更大
         opacity: 0.9,
     },
     logo: {
         // 尺寸由 props 控制
     },
     sponsorName: {
-        fontSize: typography.fontSize.lg, // 更大的字体
+        fontSize: typography.fontSize.xl, // 更大的字体
         fontWeight: '700', // 更粗的字体
         letterSpacing: 1.5, // 更大的字间距，更酷
         // 保持原始品牌名称大小写
