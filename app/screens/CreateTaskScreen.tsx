@@ -16,7 +16,6 @@ import { FadeInView, PulseGlow } from '../styles/animations';
 
 const MAX_WIDTH = 480;
 
-// 时间选项常量
 const DEADLINE_OPTIONS = [
     { label: '30m', hours: 0.5 },
     { label: '1h', hours: 1 },
@@ -26,13 +25,6 @@ const DEADLINE_OPTIONS = [
     { label: 'Custom', hours: 0 }, // 自定义
 ];
 
-// 验证渠道选项
-const PLATFORM_OPTIONS = [
-    { id: 'x', label: 'X', icon: '𝕏' },
-    { id: 'github', label: 'GitHub', icon: '⌨' },
-    { id: 'other', label: 'Other', icon: '📝' },
-];
-
 export default function CreateTaskScreen() {
     const navigation = useNavigation();
     const { addTask, removeTask, updateTaskChainId, fetchTasksFromChain } = useTasks();
@@ -40,7 +32,6 @@ export default function CreateTaskScreen() {
     const { t } = useI18n();
     const { colors } = useTheme();
     const [description, setDescription] = useState('');
-    const [selectedPlatform, setSelectedPlatform] = useState('x');
     const [stakeAmount, setStakeAmount] = useState('0.01');
     const [multiplier, setMultiplier] = useState<1 | 2 | 3 | 5 | 10>(1);
     const { state: achievementState } = useAchievementNFT(); // NFT 成就状态
@@ -129,7 +120,6 @@ export default function CreateTaskScreen() {
             deadlineHours = option?.hours || 24;
         }
 
-        const platformLabel = PLATFORM_OPTIONS.find(p => p.id === selectedPlatform)?.label || 'X';
 
         setIsCreating(true);
 
@@ -149,10 +139,8 @@ export default function CreateTaskScreen() {
                     return;
                 }
             }
-            // 1. 先添加本地任务 (立即显示在 UI)
             const newTask = addTask({
                 description,
-                platform: platformLabel,
                 deadline: new Date(Date.now() + deadlineHours * 60 * 60 * 1000),
                 status: 'pending' as const,
                 stakeAmount: `${stakeAmount} ETH`,
@@ -404,33 +392,7 @@ export default function CreateTaskScreen() {
                                 {/* Settings Card */}
                                 <FadeInView delay={100}>
                                     <View style={styles.card}>
-                                        {/* 验证渠道选择 */}
-                                        <View style={styles.settingRow}>
-                                            <View style={styles.settingInfo}>
-                                                <Text style={styles.settingLabel}>{t('createTask.platformLabel')}</Text>
-                                                <Text style={styles.settingSubtext}>{t('createTask.platformSubtext')}</Text>
-                                            </View>
-                                            <View style={styles.platformRow}>
-                                                {PLATFORM_OPTIONS.map((p) => (
-                                                    <TouchableOpacity
-                                                        key={p.id}
-                                                        style={[
-                                                            styles.platformButton,
-                                                            selectedPlatform === p.id && styles.platformButtonActive
-                                                        ]}
-                                                        onPress={() => setSelectedPlatform(p.id)}
-                                                    >
-                                                        <Text style={[
-                                                            styles.platformButtonText,
-                                                            selectedPlatform === p.id && styles.platformButtonTextActive
-                                                        ]}>{p.icon}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                        </View>
-
-                                        <View style={styles.divider} />
-
+                                        {/* 质押金额 */}
                                         <View style={styles.settingRow}>
                                             <View style={styles.settingInfo}>
                                                 <Text style={styles.settingLabel}>{t('createTask.stakeLabel')}</Text>
@@ -1098,32 +1060,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.text.muted,
     },
 
-    // Platform selector
-    platformRow: {
-        flexDirection: 'row',
-        gap: spacing.sm,
-    },
-    platformButton: {
-        width: 44,
-        height: 44,
-        borderRadius: borderRadius.md,
-        borderWidth: 1,
-        borderColor: colors.border.default,
-        backgroundColor: colors.background.surface,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    platformButtonActive: {
-        borderColor: colors.primary[500],
-        backgroundColor: colors.primary[500] + '20',
-    },
-    platformButtonText: {
-        fontSize: 18,
-        color: colors.text.secondary,
-    },
-    platformButtonTextActive: {
-        color: colors.primary[500],
-    },
 
     // Deadline selector
     deadlineRow: {
