@@ -266,15 +266,12 @@ export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProp
                 </Text>
             </View>
 
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                <View style={styles.gridWrapper}>
-                    {/* 月份标签行 */}
-                    <View style={styles.monthRow}>
-                        <View style={styles.weekdayLabelSpace} />
+            {/* 热力图主体 - 铺满容器 */}
+            <View style={styles.gridWrapper}>
+                {/* 月份标签行 */}
+                <View style={styles.monthRow}>
+                    <View style={styles.weekdayLabelSpace} />
+                    <View style={styles.monthLabelsContainer}>
                         {weekColumns.map((_, colIndex) => {
                             const label = monthLabels.find(l => l.position === colIndex);
                             return (
@@ -288,44 +285,44 @@ export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProp
                             );
                         })}
                     </View>
+                </View>
 
-                    {/* 热力图主体 */}
-                    <View style={styles.gridBody}>
-                        {/* 星期标签列 */}
-                        <View style={styles.weekdayColumn}>
-                            {weekdayLabels.map((label, i) => (
-                                <View key={i} style={styles.weekdayCell}>
-                                    <Text style={[styles.weekdayLabel, { color: colors.text.muted }]}>
-                                        {label}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
+                {/* 热力图主体 */}
+                <View style={styles.gridBody}>
+                    {/* 星期标签列 */}
+                    <View style={styles.weekdayColumn}>
+                        {weekdayLabels.map((label, i) => (
+                            <View key={i} style={styles.weekdayCell}>
+                                <Text style={[styles.weekdayLabel, { color: colors.text.muted }]}>
+                                    {label}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
 
-                        {/* 日期格子 */}
-                        <View style={styles.grid}>
-                            {weekColumns.map((week, colIndex) => (
-                                <View key={colIndex} style={styles.weekColumn}>
-                                    {[0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => {
-                                        const day = week[dayOfWeek];
-                                        const isToday = day ? isSameDay(day.date, today) : false;
-                                        return (
-                                            <HeatmapCell
-                                                key={dayOfWeek}
-                                                day={day}
-                                                isToday={isToday}
-                                                getColor={getColor}
-                                                borderColor={colors.border.subtle}
-                                                isZh={isZh}
-                                            />
-                                        );
-                                    })}
-                                </View>
-                            ))}
-                        </View>
+                    {/* 日期格子 - 铺满剩余宽度 */}
+                    <View style={styles.grid}>
+                        {weekColumns.map((week, colIndex) => (
+                            <View key={colIndex} style={styles.weekColumn}>
+                                {[0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => {
+                                    const day = week[dayOfWeek];
+                                    const isToday = day ? isSameDay(day.date, today) : false;
+                                    return (
+                                        <HeatmapCell
+                                            key={dayOfWeek}
+                                            day={day}
+                                            isToday={isToday}
+                                            getColor={getColor}
+                                            borderColor={colors.border.subtle}
+                                            isZh={isZh}
+                                        />
+                                    );
+                                })}
+                            </View>
+                        ))}
                     </View>
                 </View>
-            </ScrollView>
+            </View>
 
             {/* 图例 */}
             <View style={styles.legend}>
@@ -376,8 +373,13 @@ const styles = StyleSheet.create({
     weekdayLabelSpace: {
         width: 28,
     },
+    monthLabelsContainer: {
+        flexDirection: 'row',
+        flex: 1,
+        justifyContent: 'space-between',
+    },
     monthCell: {
-        width: CELL_SIZE + CELL_GAP,
+        flex: 1,
         alignItems: 'flex-start',
     },
     monthLabel: {
@@ -402,6 +404,8 @@ const styles = StyleSheet.create({
     },
     grid: {
         flexDirection: 'row',
+        flex: 1,
+        justifyContent: 'space-between',
         overflow: 'visible',
     },
     weekColumn: {
