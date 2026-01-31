@@ -70,7 +70,8 @@ export default function TaskDetailScreen() {
 
     // 领取退款
     const handleClaimRefund = async () => {
-        if (!task.chainTaskId) return;
+        // 使用 undefined 检查，因为 chainTaskId 可能是 0
+        if (task.chainTaskId === undefined || task.chainTaskId === null) return;
         setActionLoading(true);
         setActionError(null);
         try {
@@ -85,7 +86,8 @@ export default function TaskDetailScreen() {
 
     // 结算超时任务
     const handleSettle = async () => {
-        if (!task.chainTaskId) return;
+        // 使用 undefined 检查，因为 chainTaskId 可能是 0
+        if (task.chainTaskId === undefined || task.chainTaskId === null) return;
         setActionLoading(true);
         setActionError(null);
         try {
