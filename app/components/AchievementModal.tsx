@@ -169,7 +169,7 @@ export default function AchievementModal({ visible, onClose, contractAddress }: 
                         <View style={styles.headerLeft}>
                             <Award size={24} color={colors.primary[500]} />
                             <Text style={[styles.title, { color: colors.text.primary }]}>
-                                成就徽章
+                                {t('achievement.badge')}
                             </Text>
                         </View>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>

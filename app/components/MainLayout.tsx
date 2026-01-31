@@ -172,7 +172,7 @@ export default function MainLayout({
                                 >
                                     <Award size={16} color={colors.primary[400]} />
                                     <Text style={[styles.achievementLabel, { color: colors.text.muted }]}>
-                                        成就
+                                        {t('achievement.title')}
                                     </Text>
                                 </TouchableOpacity>
                             </HoverableView>

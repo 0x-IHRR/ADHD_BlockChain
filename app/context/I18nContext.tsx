@@ -166,6 +166,10 @@ const translations: Record<Language, Record<string, string>> = {
         'ai.taskFailed': 'Lost this hand. But a good gambler never leaves the table after one round.',
         'ai.typing': 'Dealer is shuffling...',
         'ai.empty': 'Table is ready. Waiting for your bet.',
+
+        // Achievement
+        'achievement.title': 'Achievements',
+        'achievement.badge': 'Achievement Badge',
     },
     zh: {
         // Brand
@@ -316,6 +320,10 @@ const translations: Record<Language, Record<string, string>> = {
         'ai.taskFailed': '这局输了。但好赌徒不会因为一手牌就离开牌桌。',
         'ai.typing': '荷官正在洗牌...',
         'ai.empty': '赌桌已备好，等待你下注。',
+
+        // Achievement
+        'achievement.title': '成就',
+        'achievement.badge': '成就徽章',
     }
 };
 
