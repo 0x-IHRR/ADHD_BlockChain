@@ -220,41 +220,164 @@ graph TD
 
 ## 9. 部署指南 (Deployment)
 
-由于本项目涉及区块链、AI 后端、移动端三个独立服务，建议打开 4 个终端窗口运行。
+> **⚠️ 重要提示：本项目涉及 区块链、AI 后端、移动端 三个独立服务，需要协调启动。**
 
-#### Terminal A: 启动本地链
-```bash
-# 务必使用 --chain-id 1337 (保持 symbol 为 ETH)
-anvil --chain-id 1337
-```
+### 📋 前置依赖 (Prerequisites)
 
-#### Terminal B: 部署合约
+| 工具 | 版本要求 | 安装命令 |
+|------|---------|---------|
+| Node.js | ≥ 18.x | `brew install node` |
+| Python | ≥ 3.10 | `brew install python@3.10` |
+| Foundry | latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` |
+| Expo CLI | latest | `npm install -g expo-cli` |
+
+---
+
+### 🚀 快速启动 (Quick Start)
+
+打开 **4 个终端窗口**，按顺序执行：
+
+#### Terminal A: 启动本地区块链
 ```bash
 cd contracts
-# 注意：需替换 --private-key 为你的 Anvil 私钥
-forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+anvil --chain-id 1337
 ```
+> 📍 保持此终端运行！Anvil 是本地开发链，关闭后所有链上数据将丢失。
 
-#### Terminal C: 启动 AI 引擎 (SpoonOS)
+#### Terminal B: 部署智能合约
+```bash
+cd contracts
+forge script script/Deploy.s.sol \
+  --rpc-url http://localhost:8545 \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+  --broadcast
+```
+> 📝 **部署成功后会输出新的合约地址**，记录下来！
+
+#### Terminal C: 启动 AI 引擎
 ```bash
 cd ai_engine
-# 1. 创建环境
 python3 -m venv .venv
 source .venv/bin/activate
-# 2. 安装依赖
 pip install -r requirements.txt
-# 3. 启动服务 (需配置 .env)
 python api.py
 ```
-> 服务端口: `http://localhost:8000`
+> 🔗 AI 服务端口: `http://localhost:8000`
 
 #### Terminal D: 启动 App
 ```bash
 cd app
 npm install
-npx expo start
+npx expo start -c  # -c 表示清除缓存
 ```
-> 按 `w` 预览网页，或 `i` 启动模拟器。
+> 按 `w` 打开网页预览，`i` 启动 iOS 模拟器，`a` 启动 Android 模拟器。
+
+---
+
+### 🔧 环境变量配置 (Environment Variables)
+
+#### `app/.env` (前端)
+```env
+# 智能合约地址 (部署后会变化!)
+EXPO_PUBLIC_CONTRACT_ADDRESS=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+EXPO_PUBLIC_ACHIEVEMENT_NFT_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+EXPO_PUBLIC_PET_MANAGER_ADDRESS=0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+
+# RPC 节点
+EXPO_PUBLIC_RPC_URL=http://localhost:8545
+
+# AI 引擎
+EXPO_PUBLIC_AI_ENGINE_URL=http://localhost:8000
+```
+
+#### `ai_engine/.env` (AI 后端)
+```env
+# LLM API 密钥 (任选一个)
+OPENAI_API_KEY=sk-xxx
+ZHIPU_API_KEY=xxx.xxx
+ANTHROPIC_API_KEY=sk-ant-xxx
+
+# 模型配置
+LLM_MODEL=glm-4-flash
+VISION_MODEL=glm-4v-flash
+```
+
+---
+
+### ⚠️ Anvil 重启注意事项 (Critical!)
+
+> **Anvil 是"内存链"——重启后所有链上数据和合约都会丢失！**
+
+#### 🔄 每次 Anvil 重启后必须执行：
+
+1. **重新部署合约**
+   ```bash
+   cd contracts
+   forge script script/Deploy.s.sol \
+     --rpc-url http://localhost:8545 \
+     --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+     --broadcast
+   ```
+
+2. **记录新合约地址**（部署脚本会输出）
+   ```
+   === Environment Variables ===
+   EXPO_PUBLIC_CONTRACT_ADDRESS= 0x...
+   EXPO_PUBLIC_ACHIEVEMENT_NFT_ADDRESS= 0x...
+   ```
+
+3. **更新代码中的地址**（如果地址变化了）
+   - 位置: `app/services/contract.service.ts`
+   - 函数: `getContractAddress()` 和 `getAchievementNFTAddress()`
+
+4. **重启 App**（清除缓存）
+   ```bash
+   npx expo start -c
+   ```
+
+> 💡 **提示**: 如果使用环境变量 `.env` 文件配置地址，则只需修改 `.env` 并重启 App，无需修改代码。
+
+---
+
+### 🐛 常见问题排查 (Troubleshooting)
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 任务创建成功但列表为空 | Anvil 重启后合约地址变了 | 重新部署合约并更新地址 |
+| 钱包签名一直转圈 | 网络不对或 RPC 连不上 | 检查 MetaMask 网络是否为 `localhost:8545` |
+| Chain ID 错误 | Anvil 默认 ID 不对 | 确保使用 `anvil --chain-id 1337` 启动 |
+| AI 拆解失败 | AI 引擎未启动 | 检查 `python api.py` 是否运行 |
+| 合约调用失败 | 钱包余额不足 | 使用 Anvil 默认账户（有 10000 ETH） |
+
+#### 导入 Anvil 测试账户到 MetaMask
+```
+私钥: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+地址: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+余额: 10000 ETH (测试用)
+```
+
+---
+
+### 📁 项目结构 (Project Structure)
+
+```
+ADHD_APP/
+├── app/                    # 📱 React Native 前端
+│   ├── components/         # UI 组件
+│   ├── screens/            # 页面
+│   ├── context/            # 全局状态 (Wallet, Theme, I18n)
+│   ├── services/           # API 调用 (contract.service.ts)
+│   └── hooks/              # 自定义 Hooks
+├── ai_engine/              # 🤖 AI 后端 (Python)
+│   ├── api.py              # FastAPI 入口
+│   └── agents/             # SpoonOS Agent 定义
+├── contracts/              # ⛓️ 智能合约 (Solidity)
+│   ├── src/                # 合约源码
+│   │   ├── TaskManager.sol # 核心任务管理
+│   │   └── AchievementNFT.sol # NFT 徽章
+│   └── script/             # 部署脚本
+└── README.md               # 📖 本文档
+```
 
 ---
 
