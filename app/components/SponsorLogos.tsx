@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
         gap: spacing['3xl'], // Logo 之间的间距，更大
         paddingVertical: spacing.xl,
         marginTop: spacing['6xl'], // 整体再下移
-        paddingLeft: 140, // 左侧内边距，整体右移 (约等于 14xl)
+        paddingLeft: 100, // 左侧内边距，整体左移一点
     },
     sponsorItem: {
         flexDirection: 'row',
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     sponsorName: {
         fontSize: typography.fontSize.xl, // 更大的字体
         fontWeight: '700', // 更粗的字体
-        letterSpacing: 1.5, // 更大的字间距，更酷
+        letterSpacing: 2.5, // 更大的字间距，更酷
         // 保持原始品牌名称大小写
     },
 });
