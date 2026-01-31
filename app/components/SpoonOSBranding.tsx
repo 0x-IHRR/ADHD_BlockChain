@@ -70,34 +70,37 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: spacing.xl,
+        justifyContent: 'space-between', // 拉开上下间距
+        paddingVertical: spacing['3xl'],
     },
     verticalText: {
+        flex: 1,
         alignItems: 'center',
-        gap: -4, // 负间距让字母更紧凑
+        justifyContent: 'center',
+        gap: spacing.lg, // 字母之间的间距
     },
     letter: {
-        fontSize: 32,
+        fontSize: 48, // 更大的字体
         fontWeight: '900', // 最粗
         fontFamily: Platform.OS === 'web' ? 'Inter, system-ui, sans-serif' : undefined,
-        letterSpacing: -1,
+        letterSpacing: -2,
         textTransform: 'uppercase',
+        lineHeight: 48, // 匹配字体大小
         // 科技感文字阴影
         textShadowColor: 'rgba(0, 0, 0, 0.5)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,
     },
     badge: {
-        marginTop: spacing.xl,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
+        marginTop: spacing['2xl'],
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
         borderRadius: borderRadius.sm,
         borderWidth: 1,
     },
     badgeText: {
         fontSize: typography.fontSize.xs,
         fontWeight: typography.fontWeight.medium,
-        letterSpacing: 2,
+        letterSpacing: 3,
     },
 });
