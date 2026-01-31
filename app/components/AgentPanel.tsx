@@ -37,17 +37,17 @@ import ActivityHeatmap from './ActivityHeatmap';
 import { useWallet } from '../context/WalletContext';
 import { AICompanionChat, AIMessage } from './AICompanionChat';
 
-// Demo messages - Casino Dealer personality (motivating growth through gambling metaphors)
+// Demo messages - Casino Dealer personality
 const DEMO_MESSAGES: AIMessage[] = [
     {
         id: '1',
-        text: '🎰 欢迎来到时间赌场！今天你准备下多大的注？记住，赌的不是钱，是你的未来。',
+        text: '欢迎来到时间赌场。今天你准备下多大的注？',
         emotion: 'encourage',
         timestamp: new Date(Date.now() - 1000 * 60 * 30),
     },
     {
         id: '2',
-        text: '看起来你在观望...在赌场里，不下注的人永远赢不了。找个任务，押上你的时间吧！',
+        text: '你在观望...在赌场里，不下注的人永远赢不了。',
         emotion: 'idle',
         timestamp: new Date(Date.now() - 1000 * 60 * 5),
     },

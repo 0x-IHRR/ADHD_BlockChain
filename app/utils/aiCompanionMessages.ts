@@ -43,13 +43,13 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 欢迎场景 ===
     {
         id: 'welcome_1',
-        text: '🎰 欢迎来到时间赌场！今天你准备下多大的注？记住，赌的不是钱，是你的未来。',
+        text: '欢迎来到时间赌场！今天你准备下多大的注？记住，赌的不是钱，是你的未来。',
         emotion: 'encourage',
         trigger: 'welcome',
     },
     {
         id: 'welcome_2',
-        text: '🃏 又见面了，赌徒。每一次你坐到这张桌前，都是在和过去的自己对赌。准备好赢了吗？',
+        text: '又见面了，赌徒。每一次你坐到这张桌前，都是在和过去的自己对赌。准备好赢了吗？',
         emotion: 'encourage',
         trigger: 'welcome',
     },
@@ -63,7 +63,7 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     },
     {
         id: 'idle_short_2',
-        text: '🎲 赌桌上最可惜的，不是输，而是从没敢玩。来，选张牌。',
+        text: '赌桌上最可惜的，不是输，而是从没敢玩。来，选张牌。',
         emotion: 'idle',
         trigger: 'idle_short',
     },
@@ -77,7 +77,7 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 创建任务 ===
     {
         id: 'task_created_1',
-        text: '🎯 新赌局已开！筹码已放上桌面，接下来，就看你的牌技了。All in 你的专注力！',
+        text: '新赌局已开！筹码已放上桌面，接下来，就看你的牌技了。All in 你的专注力！',
         emotion: 'encourage',
         trigger: 'task_created',
     },
@@ -91,7 +91,7 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 开始任务 ===
     {
         id: 'task_started_1',
-        text: '⏱️ 计时开始！赌场的规则很简单：在时间耗尽前完成，你就赢了。加油！',
+        text: '计时开始！赌场的规则很简单：在时间耗尽前完成，你就赢了。加油！',
         emotion: 'encourage',
         trigger: 'task_started',
     },
@@ -99,13 +99,13 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 完成任务 ===
     {
         id: 'task_completed_1',
-        text: '🎉 恭喜你赢了这局！看，赌未来比赌钱更刺激，因为赢家拿走的是成长。',
+        text: '恭喜你赢了这局！看，赌未来比赌钱更刺激，因为赢家拿走的是成长。',
         emotion: 'celebrate',
         trigger: 'task_completed',
     },
     {
         id: 'task_completed_2',
-        text: '💰 筹码落袋为安！你证明了自己的执行力。这才是真正的"稳赚不赔"。',
+        text: '筹码落袋为安！你证明了自己的执行力。这才是真正的"稳赚不赔"。',
         emotion: 'celebrate',
         trigger: 'task_completed',
     },
@@ -133,13 +133,13 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 连续记录 ===
     {
         id: 'streak_3',
-        text: '🔥 连续 3 天完成任务！你开始有职业赌徒的样子了。继续保持手感！',
+        text: '连续 3 天完成任务！你开始有职业赌徒的样子了。继续保持手感！',
         emotion: 'celebrate',
         trigger: 'streak_3',
     },
     {
         id: 'streak_7',
-        text: '🏆 连续 7 天！在时间赌场，你已经是 VIP 玩家了。普通人早就离场，你还在。',
+        text: '连续 7 天！在时间赌场，你已经是 VIP 玩家了。普通人早就离场，你还在。',
         emotion: 'celebrate',
         trigger: 'streak_7',
     },
@@ -147,7 +147,7 @@ export const MESSAGE_BANK: MessageTemplate[] = [
     // === 高额质押 ===
     {
         id: 'high_stakes_1',
-        text: '👀 大手笔啊！高额质押说明你认真了。好，这局我亲自给你发牌。',
+        text: '大手笔啊！高额质押说明你认真了。好，这局我亲自给你发牌。',
         emotion: 'encourage',
         trigger: 'high_stakes',
     },

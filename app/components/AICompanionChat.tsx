@@ -102,7 +102,7 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
                 {visibleMessages.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>
-                            {isTyping ? '荷官正在洗牌...' : '🎲 赌桌已备好，等待你下注'}
+                            {isTyping ? '荷官正在洗牌...' : '赌桌已备好，等待你下注'}
                         </Text>
                     </View>
                 ) : (
