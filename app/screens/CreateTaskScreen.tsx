@@ -14,7 +14,6 @@ import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
 import SponsorLogos from '../components/SponsorLogos';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const MAX_WIDTH = 480;
 
@@ -418,12 +417,7 @@ export default function CreateTaskScreen() {
                             >
                                 {/* Main Input Card */}
                                 <FadeInView delay={50}>
-                                    <LinearGradient
-                                        colors={[colors.background.tertiary, colors.background.surface]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 0, y: 1 }}
-                                        style={styles.card}
-                                    >
+                                    <View style={[styles.card, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
                                         <Text style={styles.label}>{t('createTask.goalLabel')}</Text>
                                         <TextInput
                                             style={styles.input}
@@ -452,17 +446,12 @@ export default function CreateTaskScreen() {
                                         </TouchableOpacity>
 
                                         {/* AI 建议已移至右侧面板 */}
-                                    </LinearGradient>
+                                    </View>
                                 </FadeInView>
 
                                 {/* Settings Card */}
                                 <FadeInView delay={100}>
-                                    <LinearGradient
-                                        colors={[colors.background.tertiary, colors.background.surface]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 0, y: 1 }}
-                                        style={styles.card}
-                                    >
+                                    <View style={[styles.card, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
                                         {/* 质押金额 */}
                                         <View style={styles.settingRow}>
                                             <View style={styles.settingInfo}>
@@ -575,7 +564,7 @@ export default function CreateTaskScreen() {
                                                 <Text style={styles.customTimeLabel}>hours</Text>
                                             </View>
                                         )}
-                                    </LinearGradient>
+                                    </View>
                                 </FadeInView>
 
                                 {/* Warning */}
