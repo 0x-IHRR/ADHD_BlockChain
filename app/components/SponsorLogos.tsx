@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     sponsorItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.lg, // 图标和文字之间的间距，更大
+        gap: spacing.xl, // 图标和文字之间的间距，更大
         opacity: 0.9,
     },
     logo: {
