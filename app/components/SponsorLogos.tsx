@@ -10,14 +10,8 @@ import { useTheme } from '../context/ThemeContext';
 import { spacing, typography } from '../styles/tokens';
 import { FadeInView } from '../styles/animations';
 
-// 赞助商数据
+// 赞助商数据（顺序：ETHPanda → LXDAO → SpoonOS）
 const SPONSORS = [
-    {
-        id: 'spoonos',
-        name: 'SpoonOS',
-        logo: require('../assets/sponsors/spoonos.png'),
-        url: 'https://spoonos.io',
-    },
     {
         id: 'ethpanda',
         name: 'ETHPanda',
@@ -29,6 +23,12 @@ const SPONSORS = [
         name: 'LXDAO',
         logo: require('../assets/sponsors/lxdao.png'),
         url: 'https://lxdao.io',
+    },
+    {
+        id: 'spoonos',
+        name: 'SpoonOS',
+        logo: require('../assets/sponsors/spoonos.png'),
+        url: 'https://spoonos.io',
     },
 ];
 
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: spacing['2xl'], // 更大的间距
         paddingVertical: spacing.xl,
-        marginTop: spacing['4xl'], // 整体再下移
+        marginTop: spacing['6xl'], // 整体再下移
         paddingLeft: 140, // 左侧内边距，整体右移 (约等于 14xl)
     },
     sponsorItem: {
