@@ -30,6 +30,7 @@ import { spacing, typography, borderRadius } from '../styles/tokens';
 import WalletSelectorModal from './WalletSelectorModal';
 import AchievementModal from './AchievementModal';
 import HoverableView from './HoverableView';
+import { GradientText } from './GradientText';
 import { USE_MOCK_DATA, MOCK_CONFIG } from '../config/demo';
 import { MOCK_JACKPOT } from '../mocks/leaderboard';
 
@@ -132,9 +133,12 @@ export default function MainLayout({
                         <View style={[styles.logoContainer, { backgroundColor: colors.glass.backgroundLight }]}>
                             <Zap size={20} color={colors.primary[500]} fill={colors.primary[500]} />
                         </View>
-                        <Text style={[styles.brandName, { color: colors.text.primary }]}>
-                            Time Gambler
-                        </Text>
+                        <GradientText
+                            colors={colors.gradient.primary as unknown as readonly [string, string, ...string[]]}
+                            style={styles.brandName}
+                        >
+                            TIME GAMBLER
+                        </GradientText>
                     </View>
 
                     {/* Center: Jackpot & Stats (Desktop only) */}
