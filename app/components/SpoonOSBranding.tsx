@@ -71,7 +71,8 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'space-between', // 拉开上下间距
-        paddingVertical: spacing['3xl'],
+        paddingTop: spacing['4xl'], // 往下移一点
+        paddingBottom: spacing['2xl'],
     },
     verticalText: {
         flex: 1,
