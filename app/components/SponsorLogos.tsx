@@ -1,13 +1,13 @@
 /**
  * SponsorLogos - 赞助商 Logo 展示组件
  * 
- * 显示三个赞助商的 Logo（SpoonOS, ETHPanda, LXDAO）
+ * 显示三个赞助商的 Logo + 名字（SpoonOS, ETHPanda, LXDAO）
  * 用于 CreateTaskScreen 左侧面板底部
  */
 import React from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, Linking, Text } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { spacing } from '../styles/tokens';
+import { spacing, typography } from '../styles/tokens';
 import { FadeInView } from '../styles/animations';
 
 // 赞助商数据
@@ -46,18 +46,21 @@ export default function SponsorLogos({ size = 48 }: SponsorLogosProps) {
     return (
         <FadeInView delay={300}>
             <View style={styles.container}>
-                {SPONSORS.map((sponsor, index) => (
+                {SPONSORS.map((sponsor) => (
                     <TouchableOpacity
                         key={sponsor.id}
                         onPress={() => handlePress(sponsor.url)}
                         activeOpacity={0.7}
-                        style={styles.logoWrapper}
+                        style={styles.sponsorItem}
                     >
                         <Image
                             source={sponsor.logo}
                             style={[styles.logo, { width: size, height: size }]}
                             resizeMode="contain"
                         />
+                        <Text style={[styles.sponsorName, { color: colors.text.secondary }]}>
+                            {sponsor.name}
+                        </Text>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -70,13 +73,21 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: spacing.xl,
+        gap: spacing.lg,
         paddingVertical: spacing.xl,
     },
-    logoWrapper: {
-        opacity: 0.8,
+    sponsorItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        opacity: 0.85,
     },
     logo: {
         // 尺寸由 props 控制
+    },
+    sponsorName: {
+        fontSize: typography.fontSize.sm,
+        fontWeight: '500',
+        letterSpacing: 0.5,
     },
 });
