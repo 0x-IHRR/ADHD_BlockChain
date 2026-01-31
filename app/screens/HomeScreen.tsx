@@ -157,18 +157,21 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             <View style={[styles.content, {
-                marginTop: spacing.xl, // Align with AgentPanel top padding
+                marginTop: spacing.xl,
                 overflow: 'hidden',
                 borderRadius: borderRadius['2xl'],
                 backgroundColor: 'transparent',
                 borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.08)',
             }]}>
+                {/* Base Background Layer - Match Right Panel's Board Color */}
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background.secondary }]} />
+
                 {/* Background Layer: Subtle Focus Gradient */}
                 <MeshGradientBackground
                     primaryColor={colors.primary[500]}
-                    secondaryColor={colors.primary[600]} // Use a visible secondary color (deep purple)
-                // opacity removed (default 1) to match right panel brightness
+                    secondaryColor={colors.accent.purple} // Use Purple for better visibility and Focus theme
+                    opacity={1}
                 />
                 {/* Header */}
 
