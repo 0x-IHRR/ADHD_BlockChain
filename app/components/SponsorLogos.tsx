@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
         gap: spacing['2xl'], // 更大的间距
         paddingVertical: spacing.xl,
         marginTop: spacing['4xl'], // 整体再下移
-        paddingLeft: 80, // 左侧内边距，整体右移 (约等于 8xl)
+        paddingLeft: 140, // 左侧内边距，整体右移 (约等于 14xl)
     },
     sponsorItem: {
         flexDirection: 'row',
