@@ -37,17 +37,17 @@ import ActivityHeatmap from './ActivityHeatmap';
 import { useWallet } from '../context/WalletContext';
 import { AICompanionChat, AIMessage } from './AICompanionChat';
 
-// Demo messages - Casino Dealer personality
-const DEMO_MESSAGES: AIMessage[] = [
+// Helper to create demo messages with i18n support
+const createDemoMessages = (t: (key: string) => string): AIMessage[] => [
     {
         id: '1',
-        text: '欢迎来到时间赌场。今天你准备下多大的注？',
+        text: t('ai.welcome'),
         emotion: 'encourage',
         timestamp: new Date(Date.now() - 1000 * 60 * 30),
     },
     {
         id: '2',
-        text: '你在观望...在赌场里，不下注的人永远赢不了。',
+        text: t('ai.idle'),
         emotion: 'idle',
         timestamp: new Date(Date.now() - 1000 * 60 * 5),
     },
@@ -182,6 +182,9 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
     const { pet, isDead, isDying, revivePet, loading: petLoading } = usePet();
     const { isConnected: walletActive } = useWallet();
     const { tasks } = useApp();
+
+    // Create localized demo messages
+    const demoMessages = React.useMemo(() => createDemoMessages(t), [t]);
 
     // 计算热力图数据 (如果不使用 Mock)
     const heatmapData = React.useMemo(() => {
@@ -332,7 +335,7 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                     {/* AI 朋友聊天区 */}
                     <View style={styles.glassContainerInner}>
                         <AICompanionChat
-                            messages={DEMO_MESSAGES}
+                            messages={demoMessages}
                             isTyping={false}
                         />
                     </View>

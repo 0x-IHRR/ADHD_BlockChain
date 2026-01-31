@@ -157,6 +157,15 @@ const translations: Record<Language, Record<string, string>> = {
         'createTask.tx.syncing': 'Syncing Data...',
         'createTask.successTitle': 'Task Created!',
         'createTask.successDesc': 'Your commitment is staked. Time to flow!',
+
+        // AI Companion - Casino Dealer
+        'ai.welcome': 'Welcome to the Time Casino. How much are you betting today?',
+        'ai.idle': "You're watching... In a casino, those who don't bet never win.",
+        'ai.taskCreated': 'New game started. All in on your focus.',
+        'ai.taskCompleted': 'You won this round. Chips in your pocket.',
+        'ai.taskFailed': 'Lost this hand. But a good gambler never leaves the table after one round.',
+        'ai.typing': 'Dealer is shuffling...',
+        'ai.empty': 'Table is ready. Waiting for your bet.',
     },
     zh: {
         // Brand
@@ -298,6 +307,15 @@ const translations: Record<Language, Record<string, string>> = {
 
         // Common
         'common.copied': '已复制',
+
+        // AI Companion - Casino Dealer
+        'ai.welcome': '欢迎来到时间赌场。今天你准备下多大的注？',
+        'ai.idle': '你在观望...在赌场里，不下注的人永远赢不了。',
+        'ai.taskCreated': '新赌局开启。All in 你的专注力。',
+        'ai.taskCompleted': '这局你赢了。筹码落袋为安。',
+        'ai.taskFailed': '这局输了。但好赌徒不会因为一手牌就离开牌桌。',
+        'ai.typing': '荷官正在洗牌...',
+        'ai.empty': '赌桌已备好，等待你下注。',
     }
 };
 

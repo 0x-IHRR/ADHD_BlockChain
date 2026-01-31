@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated as RNAnimated } from 'react-native';
 import { TypewriterText } from './TypewriterText';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import { spacing, borderRadius, typography } from '../styles/tokens';
 import { MessageCircle, Sparkles, Heart, Coffee, Moon, Zap } from 'lucide-react-native';
 
@@ -53,6 +54,7 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
     maxVisibleMessages = 5
 }) => {
     const { colors } = useTheme();
+    const { t } = useI18n();
     const scrollViewRef = useRef<ScrollView>(null);
     const [currentTypingIndex, setCurrentTypingIndex] = useState(-1);
     const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
@@ -102,7 +104,7 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
                 {visibleMessages.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>
-                            {isTyping ? '荷官正在洗牌...' : '赌桌已备好，等待你下注'}
+                            {isTyping ? t('ai.typing') : t('ai.empty')}
                         </Text>
                     </View>
                 ) : (
