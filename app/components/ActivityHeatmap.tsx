@@ -259,32 +259,45 @@ export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProp
 
     return (
         <View style={styles.container}>
-            {/* 标题栏 */}
+            {/* 标题栏 + 图例（右上角） */}
             <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.text.primary }]}>
-                    {isZh ? `${totalTasks} 个任务完成记录` : `${totalTasks} tasks completed`}
+                    {isZh ? `${totalTasks} 个任务完成` : `${totalTasks} completed`}
                 </Text>
+                {/* 图例放右上角 */}
+                <View style={styles.legend}>
+                    <Text style={[styles.legendText, { color: colors.text.muted }]}>
+                        {isZh ? '少' : 'Less'}
+                    </Text>
+                    {[0, 1, 2, 3, 4].map((level) => (
+                        <View
+                            key={level}
+                            style={[styles.legendCell, { backgroundColor: getColor(level) }]}
+                        />
+                    ))}
+                    <Text style={[styles.legendText, { color: colors.text.muted }]}>
+                        {isZh ? '多' : 'More'}
+                    </Text>
+                </View>
             </View>
 
-            {/* 热力图主体 - 铺满容器 */}
+            {/* 热力图主体 - 紧凑布局 */}
             <View style={styles.gridWrapper}>
                 {/* 月份标签行 */}
                 <View style={styles.monthRow}>
                     <View style={styles.weekdayLabelSpace} />
-                    <View style={styles.monthLabelsContainer}>
-                        {weekColumns.map((_, colIndex) => {
-                            const label = monthLabels.find(l => l.position === colIndex);
-                            return (
-                                <View key={colIndex} style={styles.monthCell}>
-                                    {label && (
-                                        <Text style={[styles.monthLabel, { color: colors.text.muted }]}>
-                                            {label.month}
-                                        </Text>
-                                    )}
-                                </View>
-                            );
-                        })}
-                    </View>
+                    {weekColumns.map((_, colIndex) => {
+                        const label = monthLabels.find(l => l.position === colIndex);
+                        return (
+                            <View key={colIndex} style={styles.monthCell}>
+                                {label && (
+                                    <Text style={[styles.monthLabel, { color: colors.text.muted }]}>
+                                        {label.month}
+                                    </Text>
+                                )}
+                            </View>
+                        );
+                    })}
                 </View>
 
                 {/* 热力图主体 */}
@@ -300,7 +313,7 @@ export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProp
                         ))}
                     </View>
 
-                    {/* 日期格子 - 铺满剩余宽度 */}
+                    {/* 日期格子 - 紧凑排列 */}
                     <View style={styles.grid}>
                         {weekColumns.map((week, colIndex) => (
                             <View key={colIndex} style={styles.weekColumn}>
@@ -323,36 +336,20 @@ export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProp
                     </View>
                 </View>
             </View>
-
-            {/* 图例 */}
-            <View style={styles.legend}>
-                <Text style={[styles.legendText, { color: colors.text.muted }]}>
-                    {isZh ? '少' : 'Less'}
-                </Text>
-                {[0, 1, 2, 3, 4].map((level) => (
-                    <View
-                        key={level}
-                        style={[styles.legendCell, { backgroundColor: getColor(level) }]}
-                    />
-                ))}
-                <Text style={[styles.legendText, { color: colors.text.muted }]}>
-                    {isZh ? '多' : 'More'}
-                </Text>
-            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        paddingVertical: spacing.md,
+        paddingVertical: spacing.sm,
         paddingHorizontal: spacing.sm,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.md,
+        marginBottom: spacing.sm,
         paddingHorizontal: spacing.xs,
     },
     title: {
@@ -379,7 +376,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     monthCell: {
-        flex: 1,
+        width: CELL_SIZE + CELL_GAP,
         alignItems: 'flex-start',
     },
     monthLabel: {
@@ -404,8 +401,6 @@ const styles = StyleSheet.create({
     },
     grid: {
         flexDirection: 'row',
-        flex: 1,
-        justifyContent: 'space-between',
         overflow: 'visible',
     },
     weekColumn: {
@@ -422,9 +417,6 @@ const styles = StyleSheet.create({
     legend: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end',
-        marginTop: spacing.md,
-        paddingRight: spacing.xs,
     },
     legendText: {
         fontSize: 10,
