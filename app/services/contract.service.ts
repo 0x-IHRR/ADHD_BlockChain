@@ -47,8 +47,8 @@ const DEFAULT_RPC_URL = 'http://localhost:8545';
 export function getContractAddress(): string {
     const address = process.env.EXPO_PUBLIC_CONTRACT_ADDRESS;
     if (!address) {
-        // 开发环境默认地址 (Anvil 本地链部署 - Updated)
-        return '0xb7f8bc63bbcad18155201308c8f3540b07f84f5e';
+        // 开发环境默认地址 (Anvil 本地链部署 - 2026-01-31 更新)
+        return '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9';
     }
     return address;
 }
@@ -56,7 +56,7 @@ export function getContractAddress(): string {
 export function getAchievementNFTAddress(): string {
     const address = process.env.EXPO_PUBLIC_ACHIEVEMENT_NFT_ADDRESS;
     if (!address) {
-        return '0x610178da211fef7d417bc0e6fed39f05609ad788';
+        return '0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0';
     }
     return address;
 }

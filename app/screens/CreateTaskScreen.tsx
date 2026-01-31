@@ -45,6 +45,62 @@ export default function CreateTaskScreen() {
     const [createdTxHash, setCreatedTxHash] = useState<string | null>(null);
     const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
+    // 格式化 AI 建议文本：时间用强调色，标签加粗
+    const renderFormattedSuggestion = (text: string) => {
+        const lines = text.split('\n');
+        return lines.map((line, lineIndex) => {
+            // 匹配时间标记，如 (5m), (15m), (25m)
+            const parts: React.ReactNode[] = [];
+            let remaining = line;
+            let key = 0;
+
+            // 先处理【标签】
+            const tagMatch = remaining.match(/【([^】]+)】/);
+            if (tagMatch) {
+                const beforeTag = remaining.slice(0, tagMatch.index);
+                const tag = tagMatch[1];
+                const afterTag = remaining.slice((tagMatch.index || 0) + tagMatch[0].length);
+
+                if (beforeTag) {
+                    parts.push(<Text key={key++}>{beforeTag}</Text>);
+                }
+                parts.push(
+                    <Text key={key++} style={{ fontWeight: 'bold', color: colors.primary[400] }}>
+                        【{tag}】
+                    </Text>
+                );
+                remaining = afterTag;
+            }
+
+            // 再处理时间 (Xm)
+            const timeMatch = remaining.match(/\((\d+)m\)/);
+            if (timeMatch) {
+                const beforeTime = remaining.slice(0, timeMatch.index);
+                const time = timeMatch[1];
+                const afterTime = remaining.slice((timeMatch.index || 0) + timeMatch[0].length);
+
+                parts.push(<Text key={key++}>{beforeTime}</Text>);
+                parts.push(
+                    <Text key={key++} style={{ color: colors.semantic.warning, fontWeight: '600' }}>
+                        ({time}m)
+                    </Text>
+                );
+                if (afterTime) {
+                    parts.push(<Text key={key++}>{afterTime}</Text>);
+                }
+            } else {
+                parts.push(<Text key={key++}>{remaining}</Text>);
+            }
+
+            return (
+                <Text key={lineIndex} style={styles.suggestionText}>
+                    {parts}
+                    {lineIndex < lines.length - 1 ? '\n' : ''}
+                </Text>
+            );
+        });
+    };
+
     // 新增: 自定义 Prompt 和 AI 思考过程
     const [customPrompt, setCustomPrompt] = useState('');
     const [aiThinkingSteps, setAiThinkingSteps] = useState<string[]>([]);
@@ -582,7 +638,7 @@ export default function CreateTaskScreen() {
                                             <Sparkles size={14} color={colors.primary[500]} />
                                             <Text style={styles.suggestionTitle}>{t('createTask.aiSuggestionTitle')}</Text>
                                         </View>
-                                        <Text style={styles.suggestionText}>{aiSuggestion}</Text>
+                                        <View>{renderFormattedSuggestion(aiSuggestion)}</View>
                                     </View>
                                 </FadeInView>
                             )}
@@ -790,8 +846,9 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         textAlign: 'center',
     },
     thinkingStep: {
-        padding: spacing.md,
-        marginBottom: spacing.sm,  // 增加步骤间距
+        paddingVertical: spacing.xs,  // 紧凑一点
+        paddingHorizontal: spacing.sm,
+        marginBottom: 4,  // 固定 4px 间距
         borderRadius: borderRadius.md,
     },
     thinkingStepText: {
@@ -807,10 +864,9 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
         fontSize: typography.fontSize.sm,
     },
     resultSummary: {
-        padding: spacing.lg,
+        padding: spacing.md,
         borderRadius: borderRadius.lg,
-        marginTop: spacing.lg,  // 增加与上方内容的间距
-        marginBottom: spacing.md,
+        marginTop: spacing.sm,
     },
     resultSummaryTitle: {
         fontSize: typography.fontSize.sm,
@@ -920,7 +976,7 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     suggestionText: {
         color: colors.text.secondary,
         fontSize: typography.fontSize.sm,
-        lineHeight: typography.fontSize.sm * 2.2,  // 增加行高，减少密集感
+        lineHeight: typography.fontSize.sm * 1.8,  // 适中的行高
     },
 
     // Settings
