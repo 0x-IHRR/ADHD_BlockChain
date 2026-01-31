@@ -122,7 +122,7 @@ const HeatmapCell = ({ day, isToday, getColor, borderColor, isZh }: HeatmapCellP
     } : {};
 
     if (!day) {
-        return <View style={[styles.cell, { backgroundColor: 'transparent' }]} />;
+        return <View style={styles.cellWrapper}><View style={[styles.cell, { backgroundColor: 'transparent' }]} /></View>;
     }
 
     const tooltipText = isZh
@@ -411,8 +411,6 @@ const styles = StyleSheet.create({
         width: CELL_SIZE,
         height: CELL_SIZE,
         borderRadius: 2,
-        marginRight: CELL_GAP,
-        marginBottom: CELL_GAP,
     },
     legend: {
         flexDirection: 'row',
