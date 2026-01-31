@@ -160,13 +160,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 marginTop: spacing.xl,
                 overflow: 'hidden',
                 borderRadius: borderRadius['2xl'],
-                backgroundColor: colors.background.secondary, // Directly use the lighter board color
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.08)',
+                // 无实心背景，让渐变显示出来（与右栏风格一致）
             }]}>
-                {/* Glass Tint Overlay - Critical for brightness match */}
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.02)' }]} />
-
                 {/* Background Layer: Subtle Focus Gradient */}
                 <MeshGradientBackground
                     primaryColor={colors.primary[500]}
