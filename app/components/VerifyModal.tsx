@@ -211,10 +211,12 @@ export default function VerifyModal({
     const submitToChain = async (aiResult: VerifyAndSubmitResult) => {
         setState('submitting');
         try {
-            if (!chainTaskId) console.warn('Using local ID, chain interaction might fail if not synced.');
+            // 使用 undefined 检查而不是 falsy 检查，因为 chainTaskId 可能是 0
+            const hasChainTaskId = chainTaskId !== undefined && chainTaskId !== null;
+            if (!hasChainTaskId) console.warn('Using local ID, chain interaction might fail if not synced.');
 
             let realTxHash = null;
-            if (chainTaskId) {
+            if (hasChainTaskId) {
                 try {
                     realTxHash = await submitProofOnChain(chainTaskId, true);
                     console.log('Proof submitted on chain:', realTxHash);
