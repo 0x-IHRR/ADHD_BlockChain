@@ -157,6 +157,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             <View style={[styles.content, {
+                marginTop: spacing.xl, // Align with AgentPanel top padding
                 overflow: 'hidden',
                 borderRadius: borderRadius['2xl'],
                 backgroundColor: 'rgba(255,255,255,0.02)', // 更通透的玻璃底色
