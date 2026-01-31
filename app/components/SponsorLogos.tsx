@@ -58,7 +58,7 @@ export default function SponsorLogos({ size = 64 }: SponsorLogosProps) {
                             style={[styles.logo, { width: size, height: size }]}
                             resizeMode="contain"
                         />
-                        <Text style={[styles.sponsorName, { color: colors.text.primary }]}>
+                        <Text style={[styles.sponsorName, { color: colors.primary[500] }]}>
                             {sponsor.name}
                         </Text>
                     </TouchableOpacity>
@@ -71,11 +71,12 @@ export default function SponsorLogos({ size = 64 }: SponsorLogosProps) {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'column',
-        alignItems: 'center', // 居中对齐
+        alignItems: 'flex-start', // 左对齐，保证 Logo 垂直对齐
         justifyContent: 'center',
         gap: spacing['2xl'], // 更大的间距
         paddingVertical: spacing.xl,
-        marginTop: spacing['3xl'], // 整体下移
+        marginTop: spacing['4xl'], // 整体再下移
+        paddingLeft: spacing.xl, // 左侧内边距
     },
     sponsorItem: {
         flexDirection: 'row',
