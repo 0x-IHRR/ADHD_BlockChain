@@ -917,11 +917,11 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
 
     // Card
     card: {
-        backgroundColor: 'rgba(255, 255, 255, 0.03)', // 首页同款毛玻璃风格
+        backgroundColor: colors.background.tertiary,
         borderRadius: borderRadius.xl,
         padding: spacing.xl,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderColor: colors.border.subtle,
         marginBottom: spacing.lg,
     },
     label: {

@@ -1,5 +1,5 @@
 /**
- * Time Gamble Design Tokens v2
+ * Time Gambler Design Tokens v2
  * 参考 UniSwap / Pendle 风格
  * 特点: 居中布局、毛玻璃、紧凑按钮、大圆角
  */
