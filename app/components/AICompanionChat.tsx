@@ -116,11 +116,8 @@ export const AICompanionChat: React.FC<AICompanionChatProps> = ({
 
                         return (
                             <View key={message.id} style={styles.messageWrapper}>
-                                {/* Message content - Clean bubble only */}
-                                <View style={[styles.messageBubble, {
-                                    backgroundColor: colors.glass.backgroundLight,
-                                    borderColor: colors.border.default
-                                }]}>
+                                {/* Message content - 无背景，文字从虚空中浮现 */}
+                                <View style={styles.messageBubble}>
                                     {isCurrentlyTyping && !isAlreadyTyped ? (
                                         <TypewriterText
                                             text={message.text}
@@ -255,9 +252,9 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     messageBubble: {
-        padding: spacing.md,
-        borderRadius: borderRadius.lg,
-        borderWidth: 1,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        // 无背景无边框，文字从虚空中浮现
     },
     messageText: {
         fontSize: typography.fontSize.sm,
