@@ -168,7 +168,7 @@ export default function AgentPanel({ state }: AgentPanelProps) {
     const heatmapData = React.useMemo(() => {
         if (MOCK_CONFIG.heatmap) return undefined; // 使用 Mock 数据
 
-        const weeks = 5;
+        const weeks = 26;
         const totalDays = weeks * 7;
         const today = new Date();
         const data: { date: Date; count: number; intensity: 0 | 1 | 2 | 3 | 4 }[] = [];

@@ -177,7 +177,7 @@ const HeatmapCell = ({ day, isToday, getColor, borderColor, isZh }: HeatmapCellP
 const CELL_SIZE = 11;
 const CELL_GAP = 3;
 
-export default function ActivityHeatmap({ data, weeks = 5 }: ActivityHeatmapProps) {
+export default function ActivityHeatmap({ data, weeks = 26 }: ActivityHeatmapProps) {
     const { colors } = useTheme();
     const { language } = useI18n();
 
