@@ -13,6 +13,7 @@ import { createTaskOnChain } from '../services/contract.service';
 import { spacing, typography, borderRadius, shadows } from '../styles/tokens';
 import { ThemeColors } from '../styles/themes';
 import { FadeInView, PulseGlow } from '../styles/animations';
+import SponsorLogos from '../components/SponsorLogos';
 
 const MAX_WIDTH = 480;
 
@@ -387,6 +388,9 @@ export default function CreateTaskScreen() {
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
+
+                                {/* 赞助商 Logo 展示 */}
+                                <SponsorLogos size={56} />
                             </View>
                         </View>
 
