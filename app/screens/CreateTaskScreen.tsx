@@ -417,7 +417,7 @@ export default function CreateTaskScreen() {
                             >
                                 {/* Main Input Card */}
                                 <FadeInView delay={50}>
-                                    <View style={[styles.card, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                                    <View style={styles.card}>
                                         <Text style={styles.label}>{t('createTask.goalLabel')}</Text>
                                         <TextInput
                                             style={styles.input}
@@ -451,7 +451,7 @@ export default function CreateTaskScreen() {
 
                                 {/* Settings Card */}
                                 <FadeInView delay={100}>
-                                    <View style={[styles.card, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                                    <View style={styles.card}>
                                         {/* 质押金额 */}
                                         <View style={styles.settingRow}>
                                             <View style={styles.settingInfo}>
@@ -917,11 +917,11 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
 
     // Card
     card: {
-        backgroundColor: colors.background.tertiary,
+        backgroundColor: 'rgba(255, 255, 255, 0.03)', // 首页同款毛玻璃风格
         borderRadius: borderRadius.xl,
         padding: spacing.xl,
         borderWidth: 1,
-        borderColor: colors.border.subtle,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
         marginBottom: spacing.lg,
     },
     label: {
