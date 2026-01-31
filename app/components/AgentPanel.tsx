@@ -35,6 +35,23 @@ import FocusDragon, { FocusDragonMood } from './FocusDragon';
 import { usePet } from '../context/PetContext';
 import ActivityHeatmap from './ActivityHeatmap';
 import { useWallet } from '../context/WalletContext';
+import { AICompanionChat, AIMessage } from './AICompanionChat';
+
+// Demo messages for testing
+const DEMO_MESSAGES: AIMessage[] = [
+    {
+        id: '1',
+        text: '嘿！准备好开始今天的冒险了吗？我会一直陪着你的~ 💪',
+        emotion: 'encourage',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
+    },
+    {
+        id: '2',
+        text: '发现你有一会儿没动了...要不要来点新挑战？还是需要休息一下？',
+        emotion: 'idle',
+        timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
+    },
+];
 
 // Dragon Hover Glow Wrapper - Thin skin-hugging glow
 const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
@@ -304,7 +321,7 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                     </View>
                 )}
 
-                {/* AI Output Area (Placeholder) - 透明区域，占据上方空间 */}
+                {/* AI Companion Chat Area */}
                 <View style={styles.aiOutputArea}>
                     {/* 背景光晕层 */}
                     <MeshGradientBackground
@@ -312,11 +329,12 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                         secondaryColor={colors.semantic.error}
                     />
 
-                    {/* 玻璃质感边框容器 */}
+                    {/* AI 朋友聊天区 */}
                     <View style={styles.glassContainerInner}>
-                        <Text style={{ color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: 40 }}>
-                            Waiting for Prompt Design...
-                        </Text>
+                        <AICompanionChat
+                            messages={DEMO_MESSAGES}
+                            isTyping={false}
+                        />
                     </View>
                 </View>
 
