@@ -135,11 +135,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // const jackpotAmount = '12.45'; (已替换为真实数据)
     const [isLeaderboardVisible, setLeaderboardVisible] = useState(false);
 
-    // 左侧面板：热力图 + 用户资料
+    // 左侧面板：用户资料
     const leftPanel = (
-        <View style={{ gap: spacing.md, flex: 1 }}>
-            {/* 紧凑型热力图 (只显示最近8周) */}
-            <ActivityHeatmap weeks={8} />
+        <View style={{ flex: 1 }}>
             <UserProfileCard />
         </View>
     );
@@ -162,6 +160,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             <View style={styles.content}>
+                {/* Heatmap Section - 移至中间顶部 */}
+                <FadeInView delay={0}>
+                    <View style={{ marginBottom: spacing.xl }}>
+                        {/* 宽屏热力图 (显示20周) */}
+                        <ActivityHeatmap weeks={20} />
+                    </View>
+                </FadeInView>
+
                 {/* Stats Row */}
                 <FadeInView delay={50}>
                     <View style={styles.statsContainer}>
