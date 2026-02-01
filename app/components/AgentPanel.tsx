@@ -36,22 +36,9 @@ import { usePet } from '../context/PetContext';
 import ActivityHeatmap from './ActivityHeatmap';
 import { useWallet } from '../context/WalletContext';
 import { AICompanionChat, AIMessage } from './AICompanionChat';
+import { useAICompanion } from '../hooks/useAICompanion';
 
-// Helper to create demo messages with i18n support
-const createDemoMessages = (t: (key: string) => string): AIMessage[] => [
-    {
-        id: '1',
-        text: t('ai.welcome'),
-        emotion: 'encourage',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    },
-    {
-        id: '2',
-        text: t('ai.idle'),
-        emotion: 'idle',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    },
-];
+
 
 // Dragon Hover Glow Wrapper - Thin skin-hugging glow
 const DragonHoverGlow = ({ children, glowColor }: { children: React.ReactNode; glowColor?: string }) => {
@@ -186,8 +173,12 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
     const { isConnected: walletActive } = useWallet();
     const { tasks } = useApp();
 
-    // Create localized demo messages
-    const demoMessages = React.useMemo(() => createDemoMessages(t), [t]);
+    // AI 荷官动态消息管理
+    const { messages: aiMessages, isTyping: aiTyping } = useAICompanion({
+        tasks,
+        petHP: pet?.hp ?? 100,
+        isActive: state.isActive,
+    });
 
     // 计算热力图数据 (如果不使用 Mock)
     const heatmapData = React.useMemo(() => {
@@ -360,8 +351,8 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                     {/* AI 朋友聊天区 */}
                     <View style={styles.glassContainerInner}>
                         <AICompanionChat
-                            messages={demoMessages}
-                            isTyping={false}
+                            messages={aiMessages}
+                            isTyping={aiTyping}
                         />
                     </View>
                 </View>

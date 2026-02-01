@@ -159,6 +159,20 @@ export const MESSAGE_BANK: MessageTemplate[] = [
         emotion: 'encourage',
         trigger: 'comeback',
     },
+
+    // === 宠物低能量 ===
+    {
+        id: 'low_energy_1',
+        text: '你的小龙看起来有点累了...失败会让它受伤，照顾好你的伙伴！',
+        emotion: 'warning',
+        trigger: 'low_energy',
+    },
+    {
+        id: 'low_energy_2',
+        text: 'Spoons 能量快耗尽了！连续失败会让它倒下。慎重选择你的下一场赌局。',
+        emotion: 'warning',
+        trigger: 'low_energy',
+    },
 ];
 
 // ============================================

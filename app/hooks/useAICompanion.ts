@@ -1,0 +1,255 @@
+/**
+ * useAICompanion - AI 荷官动态消息管理 Hook
+ * 
+ * 功能：
+ * - 监听应用状态变化（任务、宠物、空闲时间等）
+ * - 根据事件触发从消息库选取随机消息
+ * - 管理消息队列，避免刷屏
+ * - 支持打字机效果的消息输出
+ */
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AIMessage, MessageEmotion } from '../components/AICompanionChat';
+import {
+    MessageTrigger,
+    getRandomMessage,
+    createAIMessage,
+    MESSAGE_BANK
+} from '../utils/aiCompanionMessages';
+import { Task, TaskStatus } from '../context/AppContext';
+
+// ============================================
+// 配置常量
+// ============================================
+const CONFIG = {
+    IDLE_SHORT_TIMEOUT: 5 * 60 * 1000,    // 5 分钟
+    IDLE_LONG_TIMEOUT: 15 * 60 * 1000,    // 15 分钟
+    MESSAGE_COOLDOWN: 30 * 1000,          // 消息冷却时间 (防刷屏)
+    MAX_MESSAGES: 10,                      // 最大消息历史数
+    HIGH_STAKE_THRESHOLD: 0.1,            // 高额质押阈值 (ETH)
+};
+
+// ============================================
+// 类型定义
+// ============================================
+export interface AICompanionState {
+    messages: AIMessage[];
+    isTyping: boolean;
+    lastTrigger: MessageTrigger | null;
+    lastTriggerTime: number;
+}
+
+interface AICompanionActions {
+    triggerMessage: (trigger: MessageTrigger) => void;
+    clearMessages: () => void;
+}
+
+interface UseAICompanionProps {
+    tasks?: Task[];
+    petHP?: number;
+    isActive?: boolean;
+    stakeAmount?: number;
+}
+
+// ============================================
+// Hook 实现
+// ============================================
+export function useAICompanion({
+    tasks = [],
+    petHP = 100,
+    isActive = false,
+    stakeAmount = 0,
+}: UseAICompanionProps = {}): AICompanionState & AICompanionActions {
+    const [messages, setMessages] = useState<AIMessage[]>([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [lastTrigger, setLastTrigger] = useState<MessageTrigger | null>(null);
+    const [lastTriggerTime, setLastTriggerTime] = useState(0);
+
+    // Refs 用于跟踪状态变化
+    const prevTaskCountRef = useRef(tasks.length);
+    const prevCompletedCountRef = useRef(0);
+    const prevFailedCountRef = useRef(0);
+    const lastActivityRef = useRef(Date.now());
+    const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const hasWelcomedRef = useRef(false);
+
+    // ========================================
+    // 触发消息
+    // ========================================
+    const triggerMessage = useCallback((trigger: MessageTrigger) => {
+        const now = Date.now();
+
+        // 冷却时间检查 (防止刷屏)
+        if (now - lastTriggerTime < CONFIG.MESSAGE_COOLDOWN) {
+            console.log('[AICompanion] 消息冷却中，跳过:', trigger);
+            return;
+        }
+
+        // 获取随机消息
+        const template = getRandomMessage(trigger);
+        const newMessage = createAIMessage(template);
+
+        console.log('[AICompanion] 触发消息:', trigger, newMessage.text.substring(0, 20) + '...');
+
+        // 添加到消息列表
+        setMessages(prev => {
+            const updated = [...prev, newMessage];
+            // 限制消息历史数量
+            if (updated.length > CONFIG.MAX_MESSAGES) {
+                return updated.slice(-CONFIG.MAX_MESSAGES);
+            }
+            return updated;
+        });
+
+        setLastTrigger(trigger);
+        setLastTriggerTime(now);
+        setIsTyping(true);
+
+        // 模拟打字完成
+        setTimeout(() => setIsTyping(false), 2000);
+    }, [lastTriggerTime]);
+
+    // ========================================
+    // 清空消息
+    // ========================================
+    const clearMessages = useCallback(() => {
+        setMessages([]);
+    }, []);
+
+    // ========================================
+    // 欢迎消息 (首次加载)
+    // ========================================
+    useEffect(() => {
+        if (!hasWelcomedRef.current) {
+            hasWelcomedRef.current = true;
+            // 延迟显示欢迎消息，避免页面加载时立即弹出
+            const timer = setTimeout(() => {
+                triggerMessage('welcome');
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [triggerMessage]);
+
+    // ========================================
+    // 监听任务创建
+    // ========================================
+    useEffect(() => {
+        const currentCount = tasks.length;
+        const prevCount = prevTaskCountRef.current;
+
+        if (currentCount > prevCount) {
+            console.log('[AICompanion] 检测到新任务创建');
+
+            // 检查是否是高额质押
+            if (stakeAmount >= CONFIG.HIGH_STAKE_THRESHOLD) {
+                triggerMessage('high_stakes');
+            } else {
+                triggerMessage('task_created');
+            }
+        }
+
+        prevTaskCountRef.current = currentCount;
+    }, [tasks.length, stakeAmount, triggerMessage]);
+
+    // ========================================
+    // 监听任务完成/失败
+    // ========================================
+    useEffect(() => {
+        const completedCount = tasks.filter(t => t.status === 'verified' || t.status === 'settled').length;
+        const failedCount = tasks.filter(t => t.status === 'failed').length;
+
+        // 检测新完成的任务
+        if (completedCount > prevCompletedCountRef.current) {
+            console.log('[AICompanion] 检测到任务完成');
+            triggerMessage('task_completed');
+        }
+
+        // 检测新失败的任务
+        if (failedCount > prevFailedCountRef.current) {
+            console.log('[AICompanion] 检测到任务失败');
+            triggerMessage('task_failed');
+        }
+
+        prevCompletedCountRef.current = completedCount;
+        prevFailedCountRef.current = failedCount;
+    }, [tasks, triggerMessage]);
+
+    // ========================================
+    // 监听宠物状态 (低能量警告)
+    // ========================================
+    useEffect(() => {
+        if (petHP > 0 && petHP <= 30) {
+            console.log('[AICompanion] 检测到低能量:', petHP);
+            triggerMessage('low_energy');
+        }
+    }, [petHP, triggerMessage]);
+
+    // ========================================
+    // 空闲检测
+    // ========================================
+    useEffect(() => {
+        // 有活动时重置计时器
+        if (isActive) {
+            lastActivityRef.current = Date.now();
+        }
+
+        // 清除旧的计时器
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+        }
+
+        // 设置空闲检测
+        const checkIdle = () => {
+            const idleTime = Date.now() - lastActivityRef.current;
+
+            if (idleTime >= CONFIG.IDLE_LONG_TIMEOUT) {
+                triggerMessage('idle_long');
+            } else if (idleTime >= CONFIG.IDLE_SHORT_TIMEOUT) {
+                triggerMessage('idle_short');
+            }
+        };
+
+        // 每分钟检查一次
+        idleTimerRef.current = setInterval(checkIdle, 60 * 1000);
+
+        return () => {
+            if (idleTimerRef.current) {
+                clearInterval(idleTimerRef.current);
+            }
+        };
+    }, [isActive, triggerMessage]);
+
+    // ========================================
+    // 用户活动追踪
+    // ========================================
+    useEffect(() => {
+        const handleActivity = () => {
+            lastActivityRef.current = Date.now();
+        };
+
+        // 监听用户活动 (仅 Web)
+        if (typeof window !== 'undefined') {
+            window.addEventListener('click', handleActivity);
+            window.addEventListener('keydown', handleActivity);
+            window.addEventListener('touchstart', handleActivity);
+        }
+
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('click', handleActivity);
+                window.removeEventListener('keydown', handleActivity);
+                window.removeEventListener('touchstart', handleActivity);
+            }
+        };
+    }, []);
+
+    return {
+        messages,
+        isTyping,
+        lastTrigger,
+        lastTriggerTime,
+        triggerMessage,
+        clearMessages,
+    };
+}
+
+export default useAICompanion;
