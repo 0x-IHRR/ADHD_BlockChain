@@ -18,10 +18,9 @@
 4. [硬核技术挑战 (Hard Tech Challenges)](#4-硬核技术挑战-hard-tech-challenges)
 5. [商业闭环与招聘 (The Flywheel)](#5-商业闭环与招聘-the-flywheel)
 6. [竞品对比 (Web2 vs Web3)](#6-竞品对比-web2-vs-web3)
-7. [评委常见问答 (Judging FAQ)](#7-评委常见问答-judging-faq)
-8. [技术架构 (Tech Stack)](#8-技术架构-tech-stack)
-9. [部署指南 (Deployment)](#9-部署指南-deployment)
-10. [未来路线图 (Future Roadmap)](#10-未来路线图-future-roadmap)
+7. [技术架构 (Tech Stack)](#7-技术架构-tech-stack)
+8. [部署指南 (Deployment)](#8-部署指南-deployment)
+9. [未来路线图 (Future Roadmap)](#9-未来路线图-future-roadmap)
 
 ---
 
@@ -176,26 +175,7 @@ We classify the current landscape into three generations. Time Gambler represent
 
 ---
 
-## 7. 评委常见问答 (Judging FAQ)
-
-> **Q1: 用户能不能用 Photoshop P 图来骗取 SBT？**
-> *   **A**: 理论上可以，但**经济账算不过来**。
-> *   为了骗取一个价值 0 元的 SBT（不仅没钱拿，还可能损失质押金），用户需要花费大量时间精修图片。Time Gambler 的核心逻辑是 **"Cost of Cheating > Benefit"**。
-> *   此外，我们的 VLM 会检查图片元数据和光影一致性，且未来会加入及时的视频验证。
-
-> **Q2: 为什么一定要用区块链？中心化服务器做不到吗？**
-> *   **A**: **Trust (信任)**。
-> *   中心化服务器可以随意增发 "Verified" 徽章给付费会员，导致徽章贬值。
-> *   Time Gambler 的智能合约确保了 **"Code is Law"**。没有 AI 的验证签名，SBT 绝对无法铸造。没有完成任务，质押金绝对无法取回。这种**不被收买的中立性**，只有区块链能提供。
-
-> **Q3: 你们如何获取初始用户 (Go-to-market)？**
-> *   **A**: **"Learn-to-Earn" 合作**。
-> *   我们不直接找 C 端用户，而是与 **Hackathon 组织方 (如 ETHGlobal)** 和 **教育平台** 合作。
-> *   例如：完成 "Base Camp" 课程不仅给证书，还通过 Time Gambler 返还报名费。我们是 Web3 教育的最佳伴侣工具。
-
----
-
-## 8. 技术架构 (Tech Stack)
+## 7. 技术架构 (Tech Stack)
 
 ```mermaid
 graph TD
@@ -217,7 +197,7 @@ graph TD
 
 ---
 
-## 9. 部署指南 (Deployment)
+## 8. 部署指南 (Deployment)
 
 > **⚠️ 重要提示：本项目涉及 区块链、AI 后端、移动端 三个独立服务，需要协调启动。**
 
@@ -382,7 +362,7 @@ ADHD_APP/
 
 ---
 
-## 10. 未来路线图 (Future Roadmap)
+## 9. 未来路线图 (Future Roadmap)
 
 ### Phase 1: MVP (Current)
 *   ✅ **Web3 Staking**: 基础质押与罚没。
