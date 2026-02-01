@@ -150,11 +150,11 @@ export default function MainLayout({
                                     onPress={onJackpotPress}
                                     activeOpacity={0.7}
                                 >
-                                    <Trophy size={16} color={colors.primary[400]} />
+                                    <Trophy size={16} color={colors.primary[500]} />
                                     <Text style={[styles.jackpotLabel, { color: colors.text.muted }]}>
                                         {t('common.jackpot')}
                                     </Text>
-                                    <Text style={[styles.jackpotValue, { color: colors.primary[400] }]}>
+                                    <Text style={[styles.jackpotValue, { color: colors.primary[500] }]}>
                                         {USE_MOCK_DATA && MOCK_CONFIG.jackpot ? MOCK_JACKPOT.current : jackpotAmount} ETH
                                     </Text>
                                 </TouchableOpacity>
@@ -170,7 +170,7 @@ export default function MainLayout({
                                     onPress={() => setShowAchievementModal(true)}
                                     activeOpacity={0.7}
                                 >
-                                    <Award size={16} color={colors.primary[400]} />
+                                    <Award size={16} color={colors.primary[500]} />
                                     <Text style={[styles.achievementLabel, { color: colors.text.muted }]}>
                                         {t('achievement.title')}
                                     </Text>

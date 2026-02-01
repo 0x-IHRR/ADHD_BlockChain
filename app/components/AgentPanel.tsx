@@ -54,9 +54,12 @@ const createDemoMessages = (t: (key: string) => string): AIMessage[] => [
 ];
 
 // Dragon Hover Glow Wrapper - Thin skin-hugging glow
-const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
+const DragonHoverGlow = ({ children, glowColor }: { children: React.ReactNode; glowColor?: string }) => {
     const { colors } = useTheme();
     const glowOpacity = useSharedValue(0);
+
+    // 使用传入的颜色或默认主题色
+    const ringColor = glowColor || colors.primary[400];
 
     const handleHoverIn = () => {
         glowOpacity.value = withRepeat(
@@ -81,10 +84,10 @@ const DragonHoverGlow = ({ children }: { children: React.ReactNode }) => {
         borderRadius: 70,
         backgroundColor: 'transparent',
         borderWidth: 3,
-        borderColor: colors.primary[400],
+        borderColor: ringColor,
         opacity: glowOpacity.value,
         // Slight glow via shadow
-        shadowColor: colors.primary[400],
+        shadowColor: ringColor,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.8,
         shadowRadius: 6,
@@ -274,6 +277,28 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
         return 'neutral';
     };
 
+    // 根据 mood 获取光圈颜色 (与 FocusDragon 内部颜色保持一致)
+    const getDragonGlowColor = (mood: FocusDragonMood): string => {
+        switch (mood) {
+            case 'thinking':
+                return '#7AB7FF'; // 蓝色思考
+            case 'happy':
+            case 'working':
+            case 'neutral':
+                return colors.primary[500]; // 主题色
+            case 'tired':
+                return '#808080'; // 疲惫灰
+            case 'shaking':
+                return colors.semantic.error; // 失败红
+            case 'dying':
+                return '#FFA502'; // 橙色虚弱
+            case 'dead':
+                return '#747D8C'; // 灰色死亡
+            default:
+                return colors.primary[400];
+        }
+    };
+
     // 空闲状态
     if (!state.isActive && !state.result) {
         // 如果宠物死亡，显示复活界面
@@ -287,7 +312,7 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
                         </Text>
                     </View>
                     <View style={styles.idleState}>
-                        <DragonHoverGlow>
+                        <DragonHoverGlow glowColor={getDragonGlowColor('dead')}>
                             <FocusDragon mood="dead" size={140} />
                         </DragonHoverGlow>
                         <Text style={[styles.idleText, { color: colors.semantic.error }]}>
@@ -343,7 +368,7 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
 
                 <View style={styles.idleState}>
                     {/* Focus Dragon 吉祥物 */}
-                    <DragonHoverGlow>
+                    <DragonHoverGlow glowColor={getDragonGlowColor('neutral')}>
                         <FocusDragon mood="neutral" size={140} />
                     </DragonHoverGlow>
                     <Text style={[styles.idleText, { color: colors.text.muted }]}>
@@ -361,7 +386,7 @@ export default function AgentPanel({ state, showHeatmap = true }: AgentPanelProp
         <View style={styles.container}>
             {/* Focus Dragon 吉祥物 - 工作状态 */}
             <Animated.View style={[styles.spoonsContainer, { transform: [{ translateX: shakeAnim }] }]}>
-                <DragonHoverGlow>
+                <DragonHoverGlow glowColor={getDragonGlowColor(getFocusDragonMood())}>
                     <FocusDragon mood={getFocusDragonMood()} size={120} />
                 </DragonHoverGlow>
 
