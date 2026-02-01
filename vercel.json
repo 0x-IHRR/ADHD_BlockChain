@@ -1,0 +1,9 @@
+{
+    "version": 2,
+    "buildCommand": "cd app && npm install && npm run build",
+    "outputDirectory": "app/dist",
+    "framework": "other",
+    "regions": [
+        "hnd1"
+    ]
+}

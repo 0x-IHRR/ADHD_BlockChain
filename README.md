@@ -1,8 +1,14 @@
 # Time Gambler — Mint Your Future Self
 
+<div align="center">
+  <img src="app/assets/logo-readme.png" alt="Time Gambler Logo" width="120" />
+</div>
+
 > **赌注驱动的专注力协议** (Stake-Driven Productivity Protocol)
 >
 > *Powered by **SpoonOS** | Mint Your Future Self*
+
+[![Demo Video](https://img.shields.io/badge/📺_Watch_Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/wohYNf3YUdM)
 
 [![SpoonOS](https://img.shields.io/badge/AI-SpoonOS-6366F1.svg)](https://github.com/spoon-ai/spoon-core)
 [![Expo](https://img.shields.io/badge/Mobile-Expo-000020.svg)](https://expo.dev/)

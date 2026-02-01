@@ -51,6 +51,24 @@ interface UseAICompanionProps {
 }
 
 // ============================================
+// 初始消息 (欢迎 + 观望)
+// ============================================
+const INITIAL_MESSAGES: AIMessage[] = [
+    {
+        id: 'init_welcome',
+        text: '欢迎来到时间赌场。今天你准备下多大的注?',
+        emotion: 'encourage' as MessageEmotion,
+        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
+    },
+    {
+        id: 'init_idle',
+        text: '你在观望...在赌场里，不下注的人永远赢不了。',
+        emotion: 'idle' as MessageEmotion,
+        timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5分钟前
+    },
+];
+
+// ============================================
 // Hook 实现
 // ============================================
 export function useAICompanion({
@@ -59,7 +77,8 @@ export function useAICompanion({
     isActive = false,
     stakeAmount = 0,
 }: UseAICompanionProps = {}): AICompanionState & AICompanionActions {
-    const [messages, setMessages] = useState<AIMessage[]>([]);
+    // 初始化时就包含两条消息
+    const [messages, setMessages] = useState<AIMessage[]>(INITIAL_MESSAGES);
     const [isTyping, setIsTyping] = useState(false);
     const [lastTrigger, setLastTrigger] = useState<MessageTrigger | null>(null);
     const [lastTriggerTime, setLastTriggerTime] = useState(0);
@@ -70,10 +89,9 @@ export function useAICompanion({
     const prevFailedCountRef = useRef(0);
     const lastActivityRef = useRef(Date.now());
     const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const hasWelcomedRef = useRef(false);
 
     // ========================================
-    // 触发消息
+    // 触发消息 (追加到现有消息下方)
     // ========================================
     const triggerMessage = useCallback((trigger: MessageTrigger) => {
         const now = Date.now();
@@ -90,10 +108,10 @@ export function useAICompanion({
 
         console.log('[AICompanion] 触发消息:', trigger, newMessage.text.substring(0, 20) + '...');
 
-        // 添加到消息列表
+        // 追加到消息列表末尾 (新消息在下方)
         setMessages(prev => {
             const updated = [...prev, newMessage];
-            // 限制消息历史数量
+            // 限制消息历史数量，超过后最旧的消失
             if (updated.length > CONFIG.MAX_MESSAGES) {
                 return updated.slice(-CONFIG.MAX_MESSAGES);
             }
@@ -115,19 +133,7 @@ export function useAICompanion({
         setMessages([]);
     }, []);
 
-    // ========================================
-    // 欢迎消息 (首次加载)
-    // ========================================
-    useEffect(() => {
-        if (!hasWelcomedRef.current) {
-            hasWelcomedRef.current = true;
-            // 延迟显示欢迎消息，避免页面加载时立即弹出
-            const timer = setTimeout(() => {
-                triggerMessage('welcome');
-            }, 1500);
-            return () => clearTimeout(timer);
-        }
-    }, [triggerMessage]);
+    // 注意：移除了欢迎消息触发，因为初始消息已包含欢迎语
 
     // ========================================
     // 监听任务创建
