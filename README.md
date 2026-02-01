@@ -239,7 +239,9 @@ forge script script/Deploy.s.sol \
 ```
 > 📝 **部署成功后会输出新的合约地址**，记录下来！
 > 用下面这段命令查看 Anvil 重新部署后的 Contract Address 和 NFT Address
+```bash
 cat contracts/broadcast/Deploy.s.sol/1337/run-latest.json | grep -A 2 '"contractName"'
+```
 
 #### Terminal C: 启动 AI 引擎
 ```bash
